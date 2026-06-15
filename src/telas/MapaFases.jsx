@@ -25,7 +25,7 @@ function MapaFases({
   const progressoPorFase = {
     1: 0.03,
     2: 0.11,
-    3: 0.30,
+    3: 0.3,
     4: 0.39,
     5: 0.55,
     6: 0.65,
@@ -269,13 +269,6 @@ function Fase({ n, nome, x, y, bloqueada, concluida, onClick }) {
         }
       }}
       whileTap={!bloqueada ? { scale: 0.95 } : {}}
-      animate={{
-        y: concluida ? 0 : 0,
-      }}
-      transition={{
-        duration: 0.45,
-        ease: "easeOut",
-      }}
       style={{
         position: "absolute",
         left: `${(x / 900) * 100}%`,
@@ -314,8 +307,8 @@ const pagina = {
     "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
   display: "flex",
   justifyContent: "center",
-  alignItems: "center",
-  padding: "12px",
+  alignItems: "flex-start",
+  padding: "24px 12px 12px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
 };
@@ -333,15 +326,17 @@ const card = {
   overflow: "hidden",
   boxSizing: "border-box",
   position: "relative",
+  marginTop: "0",
 };
 
 const barraSuperior = {
   display: "grid",
-  gridTemplateColumns: "44px minmax(90px, auto) minmax(110px, auto) minmax(82px, auto)",
+  gridTemplateColumns:
+    "44px minmax(90px, auto) minmax(110px, auto) minmax(82px, auto)",
   alignItems: "center",
   justifyContent: "space-between",
   gap: "8px",
-  marginBottom: "10px",
+  marginBottom: "8px",
   width: "100%",
 };
 
@@ -419,11 +414,9 @@ const containerMapa = {
   position: "relative",
   width: "100%",
   maxWidth: "980px",
-  aspectRatio: "900 / 520",
-  margin: "0 auto",
+  aspectRatio: "900 / 560",
+  margin: "4px auto 0",
   flexShrink: 0,
-  transform: "scale(1)",
-  transformOrigin: "center",
 };
 
 const svgCaminho = {
@@ -475,7 +468,7 @@ const nomeFase = {
 const presente = {
   position: "absolute",
   left: `${(445 / 900) * 100}%`,
-  top: `${(394 / 520) * 100}%`,
+  top: `${(420 / 520) * 100}%`,
   transform: "translate(-50%, -50%)",
   fontSize: "clamp(24px, 7vw, 44px)",
   zIndex: 25,
@@ -484,8 +477,8 @@ const presente = {
 
 const footer = {
   textAlign: "center",
-  padding: "10px 0 0",
-  marginTop: "8px",
+  padding: "8px 0 0",
+  marginTop: "6px",
   borderTop: "1px solid rgba(0,0,0,0.05)",
 };
 
