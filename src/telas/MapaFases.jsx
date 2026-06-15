@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function MapaFases({
@@ -19,21 +19,24 @@ function MapaFases({
 }) {
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [finalAberto, setFinalAberto] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function verificarTela() {
+      setIsMobile(window.innerWidth <= 768);
+    }
+
+    verificarTela();
+    window.addEventListener("resize", verificarTela);
+
+    return () => {
+      window.removeEventListener("resize", verificarTela);
+    };
+  }, []);
 
   const finalLiberada = pecas.length === 7;
 
-  const progressoPorFase = {
-    1: 0.03,
-    2: 0.11,
-    3: 0.3,
-    4: 0.39,
-    5: 0.55,
-    6: 0.65,
-    7: 0.75,
-    8: 1,
-  };
-
-  const fases = [
+  const fasesDesktop = [
     { n: 1, nome: "Fila", x: 90, y: 220, onClick: abrirFila },
     { n: 2, nome: "Pilha", x: 190, y: 120, onClick: abrirPilha },
     { n: 3, nome: "Árvore", x: 330, y: 250, onClick: abrirArvore },
@@ -41,16 +44,23 @@ function MapaFases({
     { n: 5, nome: "Grafo", x: 580, y: 300, onClick: abrirGrafo },
     { n: 6, nome: "Hash", x: 700, y: 180, onClick: abrirHash },
     { n: 7, nome: "Heap", x: 790, y: 330, onClick: abrirHeap },
-    {
-      n: 8,
-      nome: "Núcleo",
-      x: 420,
-      y: 430,
-      onClick: () => setFinalAberto(true),
-    },
+    { n: 8, nome: "Núcleo", x: 420, y: 430, onClick: () => setFinalAberto(true) },
   ];
 
-  const caminhoMapa = `
+  const fasesMobile = [
+    { n: 1, nome: "Fila", x: 120, y: 90, onClick: abrirFila },
+    { n: 2, nome: "Pilha", x: 300, y: 190, onClick: abrirPilha },
+    { n: 3, nome: "Árvore", x: 120, y: 290, onClick: abrirArvore },
+    { n: 4, nome: "Lista", x: 300, y: 390, onClick: abrirLista },
+    { n: 5, nome: "Grafo", x: 120, y: 500, onClick: abrirGrafo },
+    { n: 6, nome: "Hash", x: 300, y: 610, onClick: abrirHash },
+    { n: 7, nome: "Heap", x: 120, y: 720, onClick: abrirHeap },
+    { n: 8, nome: "Núcleo", x: 300, y: 830, onClick: () => setFinalAberto(true) },
+  ];
+
+  const fases = isMobile ? fasesMobile : fasesDesktop;
+
+  const caminhoDesktop = `
     M 115 245
     C 180 120, 260 90, 220 150
     C 190 230, 330 310, 360 275
@@ -61,15 +71,52 @@ function MapaFases({
     C 690 440, 520 450, 445 445
   `;
 
+  const caminhoMobile = `
+    M 120 90
+    C 220 120, 330 120, 300 190
+    C 270 260, 130 230, 120 290
+    C 110 360, 280 330, 300 390
+    C 330 470, 120 430, 120 500
+    C 120 580, 300 530, 300 610
+    C 300 690, 120 650, 120 720
+    C 120 800, 290 760, 300 830
+  `;
+
+  const progressoDesktop = {
+    1: 0.03,
+    2: 0.11,
+    3: 0.3,
+    4: 0.39,
+    5: 0.55,
+    6: 0.65,
+    7: 0.75,
+    8: 1,
+  };
+
+  const progressoMobile = {
+    1: 0.02,
+    2: 0.15,
+    3: 0.28,
+    4: 0.42,
+    5: 0.56,
+    6: 0.7,
+    7: 0.84,
+    8: 1,
+  };
+
   const progressoCaminho = finalLiberada
     ? 1
-    : progressoPorFase[fasesLiberadas] || 0.03;
+    : isMobile
+    ? progressoMobile[fasesLiberadas] || 0.02
+    : progressoDesktop[fasesLiberadas] || 0.03;
+
+  const caminhoMapa = isMobile ? caminhoMobile : caminhoDesktop;
+  const viewBox = isMobile ? "0 0 420 900" : "0 0 900 520";
+  const viewW = isMobile ? 420 : 900;
+  const viewH = isMobile ? 900 : 520;
 
   function bloqueada(numero) {
-    if (numero === 8) {
-      return !finalLiberada;
-    }
-
+    if (numero === 8) return !finalLiberada;
     return fasesLiberadas < numero;
   }
 
@@ -99,12 +146,14 @@ function MapaFases({
           </button>
         </div>
 
-        <div style={containerMapa}>
-          <svg
-            style={svgCaminho}
-            viewBox="0 0 900 520"
-            preserveAspectRatio="xMidYMid meet"
-          >
+        <div
+          style={{
+            ...containerMapa,
+            aspectRatio: isMobile ? "420 / 900" : "900 / 560",
+            maxWidth: isMobile ? "430px" : "980px",
+          }}
+        >
+          <svg style={svgCaminho} viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="rosaCaminho" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#f9a8d4" />
@@ -116,7 +165,7 @@ function MapaFases({
               d={caminhoMapa}
               fill="none"
               stroke="white"
-              strokeWidth="58"
+              strokeWidth={isMobile ? 42 : 58}
               strokeLinecap="round"
             />
 
@@ -124,7 +173,7 @@ function MapaFases({
               d={caminhoMapa}
               fill="none"
               stroke="#e2e8f0"
-              strokeWidth="42"
+              strokeWidth={isMobile ? 30 : 42}
               strokeLinecap="round"
             />
 
@@ -132,7 +181,7 @@ function MapaFases({
               d={caminhoMapa}
               fill="none"
               stroke="url(#rosaCaminho)"
-              strokeWidth="42"
+              strokeWidth={isMobile ? 30 : 42}
               strokeLinecap="round"
               initial={false}
               animate={{ pathLength: progressoCaminho }}
@@ -144,24 +193,26 @@ function MapaFases({
             <Fase
               key={fase.n}
               {...fase}
+              viewW={viewW}
+              viewH={viewH}
+              isMobile={isMobile}
               bloqueada={bloqueada(fase.n)}
               concluida={fasesConcluidas.includes(fase.n)}
               onClick={() => {
-                if (!bloqueada(fase.n) && fase.onClick) {
-                  fase.onClick();
-                }
+                if (!bloqueada(fase.n) && fase.onClick) fase.onClick();
               }}
             />
           ))}
 
           <motion.div
-            style={presente}
+            style={{
+              ...presente,
+              left: isMobile ? `${(300 / 420) * 100}%` : `${(445 / 900) * 100}%`,
+              top: isMobile ? `${(830 / 900) * 100}%` : `${(420 / 520) * 100}%`,
+            }}
             animate={
               finalAberto
-                ? {
-                    scale: [1, 1.4, 0.9, 1.2],
-                    rotate: [0, -15, 15, 0],
-                  }
+                ? { scale: [1, 1.4, 0.9, 1.2], rotate: [0, -15, 15, 0] }
                 : { scale: 1 }
             }
             transition={{ duration: 0.7 }}
@@ -171,25 +222,23 @@ function MapaFases({
         </div>
 
         <div style={footer}>
-          <p style={textoFooter}>
-            Complete os labirintos para restaurar o núcleo!
-          </p>
+          <p style={textoFooter}>Complete os labirintos para restaurar o núcleo!</p>
         </div>
 
         <AnimatePresence>
           {ajudaAberta && (
             <motion.div
+              style={modalFundo}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={modalFundo}
               onClick={() => setAjudaAberta(false)}
             >
               <motion.div
+                style={modal}
                 initial={{ scale: 0.8, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.8, y: 20 }}
-                style={modal}
                 onClick={(e) => e.stopPropagation()}
               >
                 <h2 style={{ color: "#4f46e5" }}>📜 Ajuda</h2>
@@ -206,10 +255,7 @@ function MapaFases({
                   • O caminho rosa mostra seu progresso.
                 </p>
 
-                <button
-                  onClick={() => setAjudaAberta(false)}
-                  style={botaoFechar}
-                >
+                <button onClick={() => setAjudaAberta(false)} style={botaoFechar}>
                   ENTENDI
                 </button>
               </motion.div>
@@ -234,7 +280,6 @@ function MapaFases({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div style={iconeFinal}>🎁✨</div>
-
                 <h2 style={tituloFinal}>Parabéns!</h2>
 
                 <p style={textoFinal}>
@@ -260,23 +305,32 @@ function MapaFases({
   );
 }
 
-function Fase({ n, nome, x, y, bloqueada, concluida, onClick }) {
+function Fase({
+  n,
+  nome,
+  x,
+  y,
+  viewW,
+  viewH,
+  bloqueada,
+  concluida,
+  onClick,
+  isMobile,
+}) {
   return (
     <motion.div
       onClick={() => {
-        if (!bloqueada && onClick) {
-          onClick();
-        }
+        if (!bloqueada && onClick) onClick();
       }}
       whileTap={!bloqueada ? { scale: 0.95 } : {}}
       style={{
         position: "absolute",
-        left: `${(x / 900) * 100}%`,
-        top: `${(y / 520) * 100}%`,
+        left: `${(x / viewW) * 100}%`,
+        top: `${(y / viewH) * 100}%`,
         transform: "translate(-50%, -50%)",
         zIndex: 10,
         cursor: bloqueada ? "not-allowed" : "pointer",
-        padding: "8px",
+        padding: isMobile ? "6px" : "8px",
       }}
     >
       {concluida && (
@@ -290,25 +344,34 @@ function Fase({ n, nome, x, y, bloqueada, concluida, onClick }) {
       <div
         style={{
           ...circuloFase,
+          width: isMobile ? "52px" : "clamp(38px, 8vw, 60px)",
+          height: isMobile ? "52px" : "clamp(38px, 8vw, 60px)",
+          fontSize: isMobile ? "20px" : "clamp(15px, 4vw, 22px)",
           background: bloqueada ? "#cbd5e1" : concluida ? "#7e22ce" : "#9333ea",
         }}
       >
         {bloqueada ? "🔒" : n}
       </div>
 
-      <span style={nomeFase}>{nome}</span>
+      <span
+        style={{
+          ...nomeFase,
+          fontSize: isMobile ? "12px" : "clamp(8px, 2.2vw, 13px)",
+        }}
+      >
+        {nome}
+      </span>
     </motion.div>
   );
 }
 
 const pagina = {
   minHeight: "100svh",
-  background:
-    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  background: "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
   display: "flex",
   justifyContent: "center",
   alignItems: "flex-start",
-  padding: "24px 12px 12px",
+  padding: "18px 10px 12px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
 };
@@ -326,29 +389,28 @@ const card = {
   overflow: "hidden",
   boxSizing: "border-box",
   position: "relative",
-  marginTop: "0",
 };
 
 const barraSuperior = {
   display: "grid",
   gridTemplateColumns:
-    "44px minmax(90px, auto) minmax(110px, auto) minmax(82px, auto)",
+    "44px minmax(88px, auto) minmax(92px, auto) minmax(82px, auto)",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: "8px",
-  marginBottom: "8px",
+  gap: "7px",
+  marginBottom: "10px",
   width: "100%",
 };
 
 const statusItem = {
   background: "rgba(79, 70, 229, 0.16)",
   border: "2px solid rgba(147, 51, 234, 0.25)",
-  padding: "7px 10px",
+  padding: "7px 9px",
   borderRadius: "999px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "6px",
+  gap: "5px",
   color: "#4c1d95",
   fontSize: "clamp(11px, 3vw, 14px)",
   fontWeight: "900",
@@ -358,7 +420,7 @@ const statusItem = {
 };
 
 const nomeJogadorStyle = {
-  maxWidth: "92px",
+  maxWidth: "70px",
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
@@ -393,7 +455,7 @@ const botaoPlus = {
 
 const botaoAjuda = {
   height: "44px",
-  padding: "0 12px",
+  padding: "0 10px",
   borderRadius: "999px",
   background: "rgba(147, 51, 234, 0.16)",
   border: "2px solid rgba(147, 51, 234, 0.25)",
@@ -413,8 +475,6 @@ const botaoAjuda = {
 const containerMapa = {
   position: "relative",
   width: "100%",
-  maxWidth: "980px",
-  aspectRatio: "900 / 560",
   margin: "4px auto 0",
   flexShrink: 0,
 };
@@ -434,14 +494,12 @@ const estrelas = {
   transform: "translateX(-50%)",
   display: "flex",
   gap: "2px",
-  fontSize: "clamp(8px, 2vw, 14px)",
+  fontSize: "12px",
   zIndex: 20,
   pointerEvents: "none",
 };
 
 const circuloFase = {
-  width: "clamp(38px, 8vw, 60px)",
-  height: "clamp(38px, 8vw, 60px)",
   borderRadius: "50%",
   border: "4px solid white",
   boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
@@ -450,7 +508,6 @@ const circuloFase = {
   justifyContent: "center",
   color: "white",
   fontWeight: "bold",
-  fontSize: "clamp(15px, 4vw, 22px)",
 };
 
 const nomeFase = {
@@ -458,7 +515,6 @@ const nomeFase = {
   top: "calc(100% + 4px)",
   left: "50%",
   transform: "translateX(-50%)",
-  fontSize: "clamp(8px, 2.2vw, 13px)",
   color: "#64748b",
   fontWeight: "bold",
   textTransform: "uppercase",
@@ -467,10 +523,8 @@ const nomeFase = {
 
 const presente = {
   position: "absolute",
-  left: `${(445 / 900) * 100}%`,
-  top: `${(420 / 520) * 100}%`,
   transform: "translate(-50%, -50%)",
-  fontSize: "clamp(24px, 7vw, 44px)",
+  fontSize: "clamp(28px, 8vw, 46px)",
   zIndex: 25,
   pointerEvents: "none",
 };
@@ -537,10 +591,7 @@ const modalFinal = {
   boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
 };
 
-const iconeFinal = {
-  fontSize: "56px",
-  marginBottom: "10px",
-};
+const iconeFinal = { fontSize: "56px", marginBottom: "10px" };
 
 const tituloFinal = {
   fontSize: "34px",
