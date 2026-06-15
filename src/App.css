@@ -1,0 +1,331 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+}
+
+.tela {
+  min-height: 100vh;
+  background: #0f172a;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  gap: 20px;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+
+  background: #2563eb;
+  color: white;
+
+  cursor: pointer;
+  font-size: 16px;
+}
+
+input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  width: 250px;
+  font-size: 16px;
+}
+
+/* MAPA */
+
+.mapa-labirinto {
+  min-height: 100vh;
+  width: 100vw;
+  background: #0f172a;
+  color: white;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: auto;
+  text-align: center;
+  padding-top: 25px;
+}
+
+.mapa-labirinto h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.jogador {
+  font-size: 20px;
+  margin-top: 5px;
+}
+
+.area-mapa {
+  position: relative;
+  width: 850px;
+  height: 600px;
+  margin: 20px auto;
+}
+
+/* FASES */
+
+.fase-card {
+  width: 110px;
+  height: 60px;
+
+  border: 3px solid #38bdf8;
+  border-radius: 12px;
+
+  background: #1e293b;
+  color: white;
+
+  position: absolute;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 0 12px #38bdf8;
+
+  font-weight: bold;
+  font-size: 14px;
+
+  cursor: pointer;
+  z-index: 2;
+}
+
+.bloqueada {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* POSIÇÕES DAS FASES */
+
+.fase-1 {
+  left: 50px;
+  top: 100px;
+}
+
+.fase-2 {
+  left: 220px;
+  top: 100px;
+}
+
+.fase-3 {
+  left: 220px;
+  top: 220px;
+}
+
+.fase-4 {
+  left: 390px;
+  top: 220px;
+}
+
+.fase-5 {
+  left: 390px;
+  top: 340px;
+}
+
+.fase-6 {
+  left: 560px;
+  top: 340px;
+}
+
+.fase-7 {
+  left: 560px;
+  top: 460px;
+}
+
+.fase-8 {
+  left: 730px;
+  top: 460px;
+}
+
+/* LINHAS */
+
+.linha {
+  position: absolute;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+  z-index: 1;
+}
+
+.linha-1 {
+  left: 160px;
+  top: 130px;
+  width: 60px;
+  height: 4px;
+}
+
+.linha-2 {
+  left: 275px;
+  top: 160px;
+  width: 4px;
+  height: 60px;
+}
+
+.linha-3 {
+  left: 330px;
+  top: 250px;
+  width: 60px;
+  height: 4px;
+}
+
+.linha-4 {
+  left: 445px;
+  top: 280px;
+  width: 4px;
+  height: 60px;
+}
+
+.linha-5 {
+  left: 500px;
+  top: 370px;
+  width: 60px;
+  height: 4px;
+}
+
+.linha-6 {
+  left: 615px;
+  top: 400px;
+  width: 4px;
+  height: 60px;
+}
+
+.linha-7 {
+  left: 670px;
+  top: 490px;
+  width: 60px;
+  height: 4px;
+}
+
+/* PERSONAGEM */
+
+.personagem {
+  position: absolute;
+  font-size: 28px;
+  z-index: 10;
+  filter: drop-shadow(0 0 10px #38bdf8);
+}
+
+.personagem-1 {
+  left: 90px;
+  top: 55px;
+}
+
+.personagem-2 {
+  left: 260px;
+  top: 55px;
+}
+
+.personagem-3 {
+  left: 260px;
+  top: 175px;
+}
+
+.personagem-4 {
+  left: 430px;
+  top: 175px;
+}
+
+.personagem-5 {
+  left: 430px;
+  top: 295px;
+}
+
+.personagem-6 {
+  left: 600px;
+  top: 295px;
+}
+
+.personagem-7 {
+  left: 600px;
+  top: 415px;
+}
+
+.personagem-8 {
+  left: 770px;
+  top: 415px;
+}
+
+/* INVENTÁRIO */
+
+.painel-inventario {
+  position: absolute;
+  top: 170px;
+  right: 80px;
+
+  width: 220px;
+
+  background: #1e293b;
+  border: 3px solid #38bdf8;
+  border-radius: 15px;
+
+  padding: 15px;
+
+  color: white;
+
+  box-shadow: 0 0 15px #38bdf8;
+
+  text-align: left;
+
+  z-index: 5;
+}
+
+.painel-inventario h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.painel-inventario p {
+  font-size: 15px;
+}
+
+.painel-inventario button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 1200px) {
+  .painel-inventario {
+    right: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .mapa-labirinto h1 {
+    font-size: 32px;
+  }
+
+  .jogador {
+    font-size: 18px;
+  }
+
+  .painel-inventario {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin: 20px auto;
+    width: 220px;
+  }
+}
+
+@media (max-width: 600px) {
+  .mapa-labirinto h1 {
+    font-size: 26px;
+  }
+
+  .jogador {
+    font-size: 16px;
+  }
+
+  .painel-inventario {
+    width: 200px;
+  }
+}
