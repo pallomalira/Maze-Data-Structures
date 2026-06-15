@@ -19,17 +19,19 @@ function MapaFases({
 }) {
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [finalAberto, setFinalAberto] = useState(false);
+
   const finalLiberada = pecas.length === 7;
+
   const progressoPorFase = {
-  1: 0.03,
-  2: 0.11,
-  3: 0.30,
-  4: 0.39,
-  5: 0.55,
-  6: 0.65,
-  7: 0.75,
-  8: 1
-};
+    1: 0.03,
+    2: 0.11,
+    3: 0.30,
+    4: 0.39,
+    5: 0.55,
+    6: 0.65,
+    7: 0.75,
+    8: 1,
+  };
 
   const fases = [
     { n: 1, nome: "Fila", x: 90, y: 220, onClick: abrirFila },
@@ -39,7 +41,13 @@ function MapaFases({
     { n: 5, nome: "Grafo", x: 580, y: 300, onClick: abrirGrafo },
     { n: 6, nome: "Hash", x: 700, y: 180, onClick: abrirHash },
     { n: 7, nome: "Heap", x: 790, y: 330, onClick: abrirHeap },
-    { n: 8, nome: "Núcleo", x: 420, y: 420, onClick: () => setFinalAberto(true) },
+    {
+      n: 8,
+      nome: "Núcleo",
+      x: 420,
+      y: 430,
+      onClick: () => setFinalAberto(true),
+    },
   ];
 
   const caminhoMapa = `
@@ -53,18 +61,17 @@ function MapaFases({
     C 690 440, 520 450, 445 445
   `;
 
-
   const progressoCaminho = finalLiberada
-  ? 1
-  : progressoPorFase[fasesLiberadas];
+    ? 1
+    : progressoPorFase[fasesLiberadas] || 0.03;
 
   function bloqueada(numero) {
-  if (numero === 8) {
-    return !finalLiberada;
-  }
+    if (numero === 8) {
+      return !finalLiberada;
+    }
 
-  return fasesLiberadas < numero;
-}
+    return fasesLiberadas < numero;
+  }
 
   return (
     <div style={pagina}>
@@ -84,21 +91,18 @@ function MapaFases({
 
           <div style={statusItem}>
             <span>🧙</span>
-            <span>{nomeJogador || "Jogador"}</span>
+            <span style={nomeJogadorStyle}>{nomeJogador || "Jogador"}</span>
           </div>
 
-          <button
-              onClick={() => setAjudaAberta(true)}
-              style={botaoAjuda}
-          >
-            📜 Ajuda
+          <button onClick={() => setAjudaAberta(true)} style={botaoAjuda}>
+            📜 <span>Ajuda</span>
           </button>
         </div>
 
         <div style={containerMapa}>
           <svg
-              style={svgCaminho}
-              viewBox="0 0 900 520"
+            style={svgCaminho}
+            viewBox="0 0 900 520"
             preserveAspectRatio="xMidYMid meet"
           >
             <defs>
@@ -188,19 +192,16 @@ function MapaFases({
                 style={modal}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 style={{ color: "#4f46e5" }}>Como Jogar</h2>
+                <h2 style={{ color: "#4f46e5" }}>📜 Ajuda</h2>
 
                 <p style={textoAjuda}>
                   • Clique em uma fase liberada.
                   <br />
-
                   • Ao concluir uma fase, você recebe um fragmento.
-
+                  <br />
                   • Colete os 7 fragmentos.
-
+                  <br />
                   • Complete o inventário para desbloquear o Núcleo Final.
-
-                  • Ao concluir, a fase entra no labirinto.
                   <br />
                   • O caminho rosa mostra seu progresso.
                 </p>
@@ -261,64 +262,60 @@ function MapaFases({
 
 function Fase({ n, nome, x, y, bloqueada, concluida, onClick }) {
   return (
-      <motion.div
-          onClick={() => {
-            if (!bloqueada && onClick) {
-              onClick();
-            }
-          }}
-          whileTap={!bloqueada ? {scale: 0.95} : {}}
-          animate={{
-            y: concluida ? 0 : -55,
-          }}
-          transition={{
-            duration: 0.45,
-            ease: "easeOut",
-          }}
-          style={{
-            position: "absolute",
-            left: `${(x / 900) * 100}%`,
-            top: `${(y / 520) * 100}%`,
-            transform: "translate(-50%, -50%)",
-            zIndex: 10,
-            cursor: bloqueada ? "not-allowed" : "pointer",
-            padding: "15px",
-          }}
-      >
-        {concluida && (
-            <div style={estrelas}>
-              <span>⭐</span>
-              <span>⭐</span>
-              <span>⭐</span>
-            </div>
-        )}
-
-        <div
-            style={{
-              ...circuloFase,
-              background: bloqueada
-                  ? "#cbd5e1"
-                  : concluida
-                  ? "#7e22ce"
-                  : "#9333ea",
-            }}
-        >
-          {bloqueada ? "🔒" : n}
+    <motion.div
+      onClick={() => {
+        if (!bloqueada && onClick) {
+          onClick();
+        }
+      }}
+      whileTap={!bloqueada ? { scale: 0.95 } : {}}
+      animate={{
+        y: concluida ? 0 : 0,
+      }}
+      transition={{
+        duration: 0.45,
+        ease: "easeOut",
+      }}
+      style={{
+        position: "absolute",
+        left: `${(x / 900) * 100}%`,
+        top: `${(y / 520) * 100}%`,
+        transform: "translate(-50%, -50%)",
+        zIndex: 10,
+        cursor: bloqueada ? "not-allowed" : "pointer",
+        padding: "8px",
+      }}
+    >
+      {concluida && (
+        <div style={estrelas}>
+          <span>⭐</span>
+          <span>⭐</span>
+          <span>⭐</span>
         </div>
+      )}
 
-        <span style={nomeFase}>{nome}</span>
-      </motion.div>
+      <div
+        style={{
+          ...circuloFase,
+          background: bloqueada ? "#cbd5e1" : concluida ? "#7e22ce" : "#9333ea",
+        }}
+      >
+        {bloqueada ? "🔒" : n}
+      </div>
+
+      <span style={nomeFase}>{nome}</span>
+    </motion.div>
   );
 }
 
 const pagina = {
-  minHeight: "100vh",
+  minHeight: "100svh",
   background:
-      "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "16px",
+  padding: "12px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
 };
@@ -326,10 +323,10 @@ const pagina = {
 const card = {
   width: "100%",
   maxWidth: "1100px",
-  background: "rgba(255, 255, 255, 0.86)",
+  background: "rgba(255, 255, 255, 0.88)",
   backdropFilter: "blur(10px)",
   borderRadius: "28px",
-  padding: "clamp(14px, 3vw, 24px)",
+  padding: "clamp(12px, 3vw, 24px)",
   boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
   display: "flex",
   flexDirection: "column",
@@ -340,30 +337,42 @@ const card = {
 
 const barraSuperior = {
   display: "grid",
-  gridTemplateColumns: "1fr auto 1fr auto",
+  gridTemplateColumns: "44px minmax(90px, auto) minmax(110px, auto) minmax(82px, auto)",
   alignItems: "center",
-  gap: "14px",
-  marginBottom: "18px",
+  justifyContent: "space-between",
+  gap: "8px",
+  marginBottom: "10px",
+  width: "100%",
 };
 
 const statusItem = {
   background: "rgba(79, 70, 229, 0.16)",
   border: "2px solid rgba(147, 51, 234, 0.25)",
-  padding: "8px 16px",
+  padding: "7px 10px",
   borderRadius: "999px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "8px",
+  gap: "6px",
   color: "#4c1d95",
-  fontSize: "14px",
+  fontSize: "clamp(11px, 3vw, 14px)",
   fontWeight: "900",
   boxShadow: "0 8px 18px rgba(147,51,234,0.12)",
+  minWidth: 0,
+  whiteSpace: "nowrap",
+};
+
+const nomeJogadorStyle = {
+  maxWidth: "92px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  display: "inline-block",
 };
 
 const botaoVoltar = {
-  width: "46px",
-  height: "46px",
+  width: "44px",
+  height: "44px",
   borderRadius: "50%",
   border: "none",
   background: "linear-gradient(135deg, #9333ea, #7e22ce)",
@@ -378,30 +387,32 @@ const botaoPlus = {
   background: "linear-gradient(135deg, #4ade80, #22c55e)",
   border: "3px solid white",
   borderRadius: "50%",
-  width: "28px",
-  height: "28px",
+  width: "27px",
+  height: "27px",
   color: "white",
   cursor: "pointer",
   fontWeight: "900",
   boxShadow: "0 6px 12px rgba(34,197,94,0.3)",
+  flexShrink: 0,
 };
 
 const botaoAjuda = {
-  height: "46px",
-  padding: "0 18px",
+  height: "44px",
+  padding: "0 12px",
   borderRadius: "999px",
   background: "rgba(147, 51, 234, 0.16)",
   border: "2px solid rgba(147, 51, 234, 0.25)",
   color: "#6b21a8",
-  fontSize: "16px",
+  fontSize: "clamp(11px, 3vw, 15px)",
   fontWeight: "900",
   cursor: "pointer",
   boxShadow: "0 8px 18px rgba(147,51,234,0.12)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "8px",
-  minWidth: "120px",
+  gap: "5px",
+  minWidth: "82px",
+  whiteSpace: "nowrap",
 };
 
 const containerMapa = {
@@ -411,6 +422,8 @@ const containerMapa = {
   aspectRatio: "900 / 520",
   margin: "0 auto",
   flexShrink: 0,
+  transform: "scale(1)",
+  transformOrigin: "center",
 };
 
 const svgCaminho = {
@@ -423,19 +436,19 @@ const svgCaminho = {
 
 const estrelas = {
   position: "absolute",
-  top: "-30px",
+  top: "-24px",
   left: "50%",
   transform: "translateX(-50%)",
   display: "flex",
-  gap: "3px",
-  fontSize: "clamp(10px, 1.5vw, 14px)",
+  gap: "2px",
+  fontSize: "clamp(8px, 2vw, 14px)",
   zIndex: 20,
   pointerEvents: "none",
 };
 
 const circuloFase = {
-  width: "clamp(38px, 6vw, 60px)",
-  height: "clamp(38px, 6vw, 60px)",
+  width: "clamp(38px, 8vw, 60px)",
+  height: "clamp(38px, 8vw, 60px)",
   borderRadius: "50%",
   border: "4px solid white",
   boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
@@ -444,15 +457,15 @@ const circuloFase = {
   justifyContent: "center",
   color: "white",
   fontWeight: "bold",
-  fontSize: "clamp(15px, 2.5vw, 22px)",
+  fontSize: "clamp(15px, 4vw, 22px)",
 };
 
 const nomeFase = {
   position: "absolute",
-  top: "calc(100% + 6px)",
+  top: "calc(100% + 4px)",
   left: "50%",
   transform: "translateX(-50%)",
-  fontSize: "clamp(9px, 1.6vw, 13px)",
+  fontSize: "clamp(8px, 2.2vw, 13px)",
   color: "#64748b",
   fontWeight: "bold",
   textTransform: "uppercase",
@@ -462,25 +475,24 @@ const nomeFase = {
 const presente = {
   position: "absolute",
   left: `${(445 / 900) * 100}%`,
-  top: `${(400 / 520) * 100}%`,
+  top: `${(394 / 520) * 100}%`,
   transform: "translate(-50%, -50%)",
-  fontSize: "clamp(28px, 4vw, 44px)",
+  fontSize: "clamp(24px, 7vw, 44px)",
   zIndex: 25,
-
-  // IMPORTANTE
   pointerEvents: "none",
 };
+
 const footer = {
   textAlign: "center",
-  padding: "14px 0 0",
-  marginTop: "14px",
+  padding: "10px 0 0",
+  marginTop: "8px",
   borderTop: "1px solid rgba(0,0,0,0.05)",
 };
 
 const textoFooter = {
-  fontSize: "clamp(11px, 2vw, 13px)",
+  fontSize: "clamp(11px, 2.7vw, 13px)",
   color: "#64748b",
-  fontWeight: "600",
+  fontWeight: "700",
   margin: 0,
 };
 
@@ -498,7 +510,7 @@ const modalFundo = {
 
 const modal = {
   width: "min(90%, 420px)",
-  padding: "30px",
+  padding: "26px",
   background: "white",
   borderRadius: "24px",
   textAlign: "center",
