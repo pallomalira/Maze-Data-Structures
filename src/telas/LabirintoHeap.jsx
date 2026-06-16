@@ -17,6 +17,11 @@ function LabirintoHeap({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [novaPrioridade, setNovaPrioridade] = useState("");
+  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
+  const [nomeAtualizado, setNomeAtualizado] = useState("");
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio do Heap."
   );
@@ -24,7 +29,7 @@ function LabirintoHeap({ voltar, concluir }) {
   function iniciarFase() {
     setEtapa(1);
     setMensagem(
-      "📥 FORMAR HEAP\n\nArraste os guardiões para a torre.\n\nA cada inserção, o Heap reorganiza sozinho para deixar o maior valor no topo."
+      "📥 FORMAR HEAP\n\nArraste os guardiões para a torre.\n\nNo Max Heap, quem tem maior prioridade deve ficar mais acima.\n\nA cada inserção, o Heap se reorganiza."
     );
   }
 
@@ -40,6 +45,16 @@ function LabirintoHeap({ voltar, concluir }) {
       [novoHeap[pai], novoHeap[index]] = [novoHeap[index], novoHeap[pai]];
       index = pai;
     }
+
+    return novoHeap;
+  }
+
+  function reconstruirHeap(lista) {
+    let novoHeap = [];
+
+    lista.forEach((item) => {
+      novoHeap = inserirHeap(novoHeap, item);
+    });
 
     return novoHeap;
   }
@@ -90,7 +105,7 @@ function LabirintoHeap({ voltar, concluir }) {
     if (novoHeap.length === 5) {
       setEtapa(2);
       setMensagem(
-        "🔍 BUSCAR PRIORIDADE\n\nA torre precisa encontrar o guardião de prioridade 75.\n\nNo Heap, o acesso principal é o TOPO, mas para buscar outro valor precisamos verificar os nós.\n\nClique nos guardiões até encontrar a prioridade 75."
+        "🔍 BUSCAR PRIORIDADE\n\nPrecisamos encontrar o guardião de prioridade 75.\n\nNo Heap, o acesso principal é o TOPO.\n\nMas, para buscar outro valor que não está no topo, precisamos verificar os nós.\n\nClique no Guardião Raio, prioridade 75."
       );
     } else {
       setMensagem(
@@ -105,7 +120,7 @@ function LabirintoHeap({ voltar, concluir }) {
     if (heap[index].prioridade === 75) {
       setEtapa(3);
       setMensagem(
-        "✅ Guardião Raio encontrado!\n\nEle tem prioridade 75.\n\nAgora atualize sua prioridade para 95, para mostrar que ele ficou mais forte."
+        "✅ Guardião Raio encontrado!\n\nEle tem prioridade 75.\n\nAgora clique nele, digite um novo nome e uma nova prioridade.\n\nUse prioridade 95 para ele subir ao topo."
       );
     } else {
       setMensagem(
@@ -114,36 +129,64 @@ function LabirintoHeap({ voltar, concluir }) {
     }
   }
 
-  function atualizarGuardiao(index) {
+  function selecionarGuardiaoParaAtualizar(index) {
     if (etapa !== 3) return;
 
     if (heap[index].prioridade !== 75) {
       setMensagem(
-        "❌ Não é esse guardião.\n\nClique no Guardião Raio, prioridade 75."
+        "❌ Não é esse guardião.\n\nSelecione o Guardião Raio, prioridade 75."
       );
       return;
     }
 
-    const heapAtualizado = heap.map((item, i) =>
-      i === index
+    setIndiceSelecionado(index);
+    setMensagem(
+      "✅ Guardião selecionado.\n\nDigite o novo nome e a nova prioridade, depois clique em ATUALIZAR."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (indiceSelecionado === null) {
+      setMensagem("❌ Primeiro selecione o Guardião Raio.");
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite o novo nome do guardião.");
+      return;
+    }
+
+    const prioridadeConvertida = Number(novaPrioridade);
+
+    if (!novaPrioridade || Number.isNaN(prioridadeConvertida)) {
+      setMensagem("❌ Digite uma prioridade numérica válida.");
+      return;
+    }
+
+    const heapAtualizado = heap.map((item, index) =>
+      index === indiceSelecionado
         ? {
             ...item,
-            prioridade: 95,
-            nome: "Guardião Raio Supremo",
+            nome: novoNome.trim(),
+            prioridade: prioridadeConvertida,
             icone: "🌩️",
           }
         : item
     );
 
-    let heapReorganizado = [];
-    heapAtualizado.forEach((item) => {
-      heapReorganizado = inserirHeap(heapReorganizado, item);
-    });
+    const heapReorganizado = reconstruirHeap(heapAtualizado);
 
     setHeap(heapReorganizado);
+    setNomeAtualizado(novoNome.trim());
+    setNovoNome("");
+    setNovaPrioridade("");
+    setIndiceSelecionado(null);
     setEtapa(4);
+
     setMensagem(
-      "✏️ Prioridade atualizada!\n\nO Guardião Raio virou Guardião Raio Supremo, prioridade 95.\n\nComo ele agora tem a maior prioridade, subiu para o TOPO.\n\nArraste o topo para a zona de remoção."
+      `✏️ Guardião atualizado!\n\nAgora ele tem prioridade ${prioridadeConvertida}.\n\nNo Max Heap, quando uma prioridade aumenta, o nó pode subir.\n\nSe ele virou a maior prioridade, ele vai para o TOPO.\n\nAgora remova o TOPO do Heap.`
     );
   }
 
@@ -152,7 +195,7 @@ function LabirintoHeap({ voltar, concluir }) {
 
     if (index !== 0) {
       setMensagem(
-        "❌ Esse guardião não pode sair agora.\n\nNo Max Heap, removemos primeiro quem está no TOPO, ou seja, a maior prioridade."
+        "❌ Esse guardião não pode sair agora.\n\nNo Max Heap, a remoção principal tira o TOPO.\n\nO topo representa a maior prioridade."
       );
       setDragged(null);
       return;
@@ -170,8 +213,9 @@ function LabirintoHeap({ voltar, concluir }) {
     setHeap(reorganizado);
     setDragged(null);
     setEtapa(5);
+
     setMensagem(
-      `✅ ${removido.nome} foi removido do topo.\n\nAgora o Heap se reorganizou.\n\nQual guardião ficou com a maior prioridade agora?`
+      `✅ ${removido.nome} foi removido do topo.\n\nDepois da remoção, o último elemento ocupou o topo temporariamente.\n\nEntão o Heap se reorganizou para colocar a maior prioridade no topo novamente.\n\nQual guardião ficou com a maior prioridade agora?`
     );
   }
 
@@ -180,7 +224,7 @@ function LabirintoHeap({ voltar, concluir }) {
 
     if (index === 0) {
       setMensagem(
-        "🏆 Perfeito!\n\nVocê entendeu o Heap:\n\n📥 Inserir reorganiza a estrutura\n👑 Maior prioridade fica no topo\n🔍 Buscar pode exigir verificar nós\n✏️ Atualizar prioridade reorganiza o Heap\n🗑️ Remover tira o topo"
+        "🏆 Perfeito!\n\nVocê entendeu o Heap:\n\n📥 Inserir reorganiza a estrutura.\n👑 No Max Heap, maior prioridade fica no topo.\n🔍 Buscar pode exigir verificar nós.\n✏️ Atualizar prioridade pode mudar a posição.\n🗑️ Remover tira o topo e reorganiza."
       );
       setConcluido(true);
     } else {
@@ -192,7 +236,7 @@ function LabirintoHeap({ voltar, concluir }) {
 
   function clicarGuardiao(index) {
     if (etapa === 2) buscarGuardiao(index);
-    if (etapa === 3) atualizarGuardiao(index);
+    if (etapa === 3) selecionarGuardiaoParaAtualizar(index);
     if (etapa === 5) responderDesafio(index);
   }
 
@@ -213,6 +257,10 @@ function LabirintoHeap({ voltar, concluir }) {
     setDragged(null);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setNovaPrioridade("");
+    setIndiceSelecionado(null);
+    setNomeAtualizado("");
     setMensagem("Clique em COMEÇAR para iniciar o desafio do Heap.");
   }
 
@@ -266,7 +314,8 @@ function LabirintoHeap({ voltar, concluir }) {
           const topo = index === 0;
           const buscar = etapa === 2 && item.prioridade === 75;
           const atualizar = etapa === 3 && item.prioridade === 75;
-          const atualizado = item.prioridade === 95;
+          const selecionado = etapa === 3 && index === indiceSelecionado;
+          const atualizado = nomeAtualizado && item.nome === nomeAtualizado;
 
           return (
             <foreignObject
@@ -274,20 +323,20 @@ function LabirintoHeap({ voltar, concluir }) {
               x={pos.x - 58}
               y={pos.y - 46}
               width="116"
-              height="105"
+              height="110"
             >
               <div
-                draggable={etapa === 4}
+                draggable={etapa === 4 && topo}
                 onClick={() => interativo && clicarGuardiao(index)}
                 onDragStart={() => setDragged({ tipo: "heap", index })}
                 style={{
                   ...estilos.noHeap,
                   border:
-                    topo || buscar || atualizar || atualizado
+                    topo || buscar || atualizar || selecionado || atualizado
                       ? "3px solid #ec4899"
                       : "3px solid #818cf8",
                   cursor:
-                    etapa === 4
+                    etapa === 4 && topo
                       ? "grab"
                       : etapa === 2 || etapa === 3 || etapa === 5
                       ? "pointer"
@@ -297,7 +346,12 @@ function LabirintoHeap({ voltar, concluir }) {
                 {topo && <span style={estilos.seloTopo}>TOPO</span>}
                 {buscar && <span style={estilos.seloBaixo}>BUSCAR</span>}
                 {atualizar && <span style={estilos.seloBaixo}>ATUALIZAR</span>}
-                {atualizado && <span style={estilos.seloBaixo}>SUPREMO</span>}
+                {selecionado && (
+                  <span style={estilos.seloBaixoVerde}>SELECIONADO</span>
+                )}
+                {atualizado && (
+                  <span style={estilos.seloBaixoVerde}>ATUALIZADO</span>
+                )}
 
                 <span style={estilos.avatarNo}>{item.icone}</span>
                 <span style={estilos.nomeItem}>{item.nome}</span>
@@ -324,11 +378,11 @@ function LabirintoHeap({ voltar, concluir }) {
           <h1 style={estilos.titulo}>HEAP CONCLUÍDO!</h1>
 
           <div style={estilos.resumoBox}>
-            <p>🏔️ Heap é uma estrutura de prioridade.</p>
+            <p>🏔️ Heap é uma estrutura baseada em prioridade.</p>
             <p>👑 No Max Heap, o maior valor fica no topo.</p>
             <p>📥 Inserir reorganiza a estrutura.</p>
             <p>✏️ Atualizar prioridade pode mudar a posição.</p>
-            <p>🗑️ Remover retira o topo.</p>
+            <p>🗑️ Remover retira o topo e reorganiza.</p>
           </div>
 
           <button onClick={concluir} style={estilos.botaoPrincipal}>
@@ -342,20 +396,21 @@ function LabirintoHeap({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🏔️</div>
-          <h1 style={estilos.titulo}>TORRE DAS PRIORIDADES</h1>
+          <h1 style={estilos.titulo}>MUNDO DO HEAP</h1>
           <p style={estilos.regra}>
             Max Heap: maior prioridade fica no topo.
           </p>
@@ -390,8 +445,9 @@ function LabirintoHeap({ voltar, concluir }) {
             <div style={estilos.caixaTema}>👑 Torre dos Guardiões</div>
 
             <p style={estilos.textoIntro}>
-              Imagine uma torre onde o guardião mais forte sempre sobe para o
-              topo. Isso representa a prioridade no Max Heap.
+              No Max Heap, o guardião com maior prioridade sempre deve ficar no
+              topo. Quando inserimos, atualizamos ou removemos, a estrutura pode
+              se reorganizar.
             </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
@@ -447,6 +503,42 @@ function LabirintoHeap({ voltar, concluir }) {
         {(etapa === 2 || etapa === 3 || etapa === 5) && (
           <div style={estilos.colunaGrande}>
             <h2 style={estilos.tituloCaixa}>Heap montado</h2>
+
+            {etapa === 3 && (
+              <div style={estilos.formAtualizacao}>
+                <h3 style={estilos.tituloAtualizacao}>
+                  ✏️ Atualizar prioridade
+                </h3>
+
+                <p style={estilos.textoAtualizacao}>
+                  Clique no Guardião Raio, digite novo nome e nova prioridade.
+                </p>
+
+                <input
+                  type="text"
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  placeholder="Ex: Guardião Raio Supremo"
+                  style={estilos.inputAtualizacao}
+                />
+
+                <input
+                  type="number"
+                  value={novaPrioridade}
+                  onChange={(e) => setNovaPrioridade(e.target.value)}
+                  placeholder="Ex: 95"
+                  style={estilos.inputAtualizacao}
+                />
+
+                <button
+                  onClick={confirmarAtualizacao}
+                  style={estilos.botaoAtualizar}
+                >
+                  ATUALIZAR
+                </button>
+              </div>
+            )}
+
             <div style={estilos.heapGrande}>{renderHeap(true)}</div>
           </div>
         )}
@@ -460,6 +552,15 @@ function LabirintoHeap({ voltar, concluir }) {
 
             <div style={estilos.coluna}>
               <h2 style={estilos.tituloCaixa}>Zona de remoção</h2>
+
+              <div style={estilos.explicacaoRemocao}>
+                <strong>Remoção no Max Heap</strong>
+                <p>
+                  Removemos o topo porque ele representa a maior prioridade. Depois
+                  disso, o Heap se reorganiza para colocar o próximo maior valor no
+                  topo.
+                </p>
+              </div>
 
               <div
                 style={estilos.zonaRemocao}
@@ -483,7 +584,7 @@ function LabirintoHeap({ voltar, concluir }) {
           <p>📥 Inserir: adiciona e reorganiza.</p>
           <p>🔍 Buscar: pode exigir verificar nós.</p>
           <p>✏️ Atualizar: muda a prioridade e reorganiza.</p>
-          <p>🗑️ Remover: retira o topo.</p>
+          <p>🗑️ Remover: retira o topo e reorganiza.</p>
         </div>
 
         <button onClick={resetar} style={estilos.botaoResetar}>
@@ -540,6 +641,15 @@ const estilos = {
     position: "relative",
   },
 
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+
   header: { textAlign: "center", marginBottom: "24px" },
 
   icone: { fontSize: "46px" },
@@ -567,20 +677,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -777,6 +888,30 @@ const estilos = {
     fontWeight: "900",
   },
 
+  seloBaixoVerde: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "9px",
+    padding: "3px 7px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
+  explicacaoRemocao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "16px",
+  },
+
   zonaRemocao: {
     border: "3px dashed #ec4899",
     borderRadius: "18px",
@@ -790,6 +925,50 @@ const estilos = {
     fontSize: "20px",
     background: "rgba(236,72,153,0.08)",
     textAlign: "center",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   caixaConceito: {

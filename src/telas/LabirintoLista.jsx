@@ -17,6 +17,10 @@ function LabirintoLista({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
+  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da lista encadeada."
   );
@@ -43,7 +47,7 @@ function LabirintoLista({ voltar, concluir }) {
       setEtapa(2);
       setIndiceBusca(0);
       setMensagem(
-        "🔍 BUSCAR PORTAL\n\nPrecisamos encontrar o Portal Água.\n\nNa lista encadeada, você não pula direto para qualquer posição.\n\nVocê começa no primeiro nó e segue de um em um.\n\nClique no portal marcado como VERIFICAR."
+        "🔍 BUSCAR PORTAL\n\nPrecisamos encontrar o Portal Água.\n\nNa lista encadeada, você começa no primeiro nó e segue de um em um.\n\nClique no portal marcado como VERIFICAR."
       );
     } else {
       setMensagem(
@@ -67,7 +71,7 @@ function LabirintoLista({ voltar, concluir }) {
     if (atual.nome === "Portal Água") {
       setEtapa(3);
       setMensagem(
-        "✅ Portal Água encontrado!\n\nVocê percorreu a lista até chegar nele.\n\nAgora atualize esse portal para Portal Água Cristalina."
+        "✅ Portal Água encontrado!\n\nAgora clique nele, digite o novo nome e aperte ATUALIZAR."
       );
       return;
     }
@@ -78,26 +82,47 @@ function LabirintoLista({ voltar, concluir }) {
     );
   }
 
-  function atualizarPortal(index) {
+  function selecionarPortalParaAtualizar(index) {
     if (etapa !== 3) return;
 
     if (lista[index].nome !== "Portal Água") {
-      setMensagem(
-        "❌ Não é esse portal.\n\nClique no Portal Água para atualizar."
-      );
+      setMensagem("❌ Não é esse portal.\n\nSelecione o Portal Água.");
       return;
     }
 
-    const novaLista = lista.map((portal) =>
-      portal.nome === "Portal Água"
-        ? { ...portal, nome: "Portal Água Cristalina", icone: "💎" }
+    setIndiceSelecionado(index);
+    setMensagem(
+      "✅ Portal selecionado.\n\nDigite o novo nome no campo e clique em ATUALIZAR."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (indiceSelecionado === null) {
+      setMensagem("❌ Primeiro selecione o Portal Água.");
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      return;
+    }
+
+    const novaLista = lista.map((portal, index) =>
+      index === indiceSelecionado
+        ? { ...portal, nome: novoNome.trim(), icone: "💎" }
         : portal
     );
 
     setLista(novaLista);
+    setIndiceAtualizado(indiceSelecionado);
+    setNovoNome("");
+    setIndiceSelecionado(null);
     setEtapa(4);
+
     setMensagem(
-      "✏️ Portal atualizado!\n\nO Portal Água virou Portal Água Cristalina.\n\nAgora remova o primeiro portal da lista arrastando ele para a zona de remoção."
+      "✏️ Portal atualizado!\n\nAgora vamos remover o primeiro nó da lista.\n\nAo remover um nó, a ligação precisa ser reorganizada para o próximo nó."
     );
   }
 
@@ -116,8 +141,9 @@ function LabirintoLista({ voltar, concluir }) {
     setLista(lista.slice(1));
     setDragged(null);
     setEtapa(5);
+
     setMensagem(
-      `✅ ${removido.nome} foi removido.\n\nAgora observe a lista restante.\n\nQual portal virou o primeiro nó da lista?`
+      `✅ ${removido.nome} foi removido.\n\nA lista foi reorganizada.\n\nAgora observe a lista restante.\n\nQual portal virou o primeiro nó?`
     );
   }
 
@@ -126,7 +152,7 @@ function LabirintoLista({ voltar, concluir }) {
 
     if (index === 0) {
       setMensagem(
-        "🏆 Perfeito!\n\nVocê entendeu a Lista Encadeada:\n\n🔗 Cada nó aponta para o próximo\n🔍 Para buscar, percorremos de um em um\n✏️ Podemos atualizar um nó encontrado\n🗑️ Podemos remover um nó e reorganizar os ponteiros"
+        "🏆 Perfeito!\n\nVocê entendeu a Lista Encadeada:\n\n🔗 Cada nó aponta para o próximo\n🔍 A busca percorre de um em um\n✏️ Podemos atualizar um nó encontrado\n🗑️ Podemos remover um nó e reorganizar a ligação"
       );
       setConcluido(true);
     } else {
@@ -138,7 +164,7 @@ function LabirintoLista({ voltar, concluir }) {
 
   function clicarPortal(index) {
     if (etapa === 2) buscarPortal(index);
-    if (etapa === 3) atualizarPortal(index);
+    if (etapa === 3) selecionarPortalParaAtualizar(index);
     if (etapa === 5) responderDesafio(index);
   }
 
@@ -160,6 +186,9 @@ function LabirintoLista({ voltar, concluir }) {
     setIndiceBusca(0);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setIndiceSelecionado(null);
+    setIndiceAtualizado(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio da lista encadeada.");
   }
 
@@ -192,38 +221,44 @@ function LabirintoLista({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🔗</div>
-          <h1 style={estilos.titulo}>CORREDOR DOS PORTAIS</h1>
+          <h1 style={estilos.titulo}>MUNDO DA LISTA</h1>
           <p style={estilos.regra}>Lista: cada nó aponta para o próximo.</p>
         </div>
 
         <div style={estilos.etapas}>
-          {["História", "Montar lista", "Buscar", "Atualizar", "Remover", "Desafio"].map(
-            (nome, index) => (
-              <div
-                key={nome}
-                style={{
-                  ...estilos.etapaBox,
-                  background: etapa === index ? "#ec4899" : "#e2e8f0",
-                  color: etapa === index ? "white" : "#475569",
-                }}
-              >
-                {index}. {nome}
-              </div>
-            )
-          )}
+          {[
+            "História",
+            "Montar lista",
+            "Buscar",
+            "Atualizar",
+            "Remover",
+            "Desafio",
+          ].map((nome, index) => (
+            <div
+              key={nome}
+              style={{
+                ...estilos.etapaBox,
+                background: etapa === index ? "#ec4899" : "#e2e8f0",
+                color: etapa === index ? "white" : "#475569",
+              }}
+            >
+              {index}. {nome}
+            </div>
+          ))}
         </div>
 
         <div style={estilos.mensagemEtapa}>{mensagem}</div>
@@ -231,10 +266,6 @@ function LabirintoLista({ voltar, concluir }) {
         {etapa === 0 && (
           <div style={estilos.introBox}>
             <div style={estilos.caixaTema}>🔗 Corredor dos Portais</div>
-            <p style={estilos.textoIntro}>
-              Imagine vários portais em sequência. Para chegar a um portal, você
-              precisa passar pelo anterior.
-            </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
               COMEÇAR
@@ -289,41 +320,84 @@ function LabirintoLista({ voltar, concluir }) {
           <div style={estilos.colunaGrande}>
             <h2 style={estilos.tituloCaixa}>Lista encadeada</h2>
 
+            {etapa === 3 && (
+              <div style={estilos.formAtualizacao}>
+                <h3 style={estilos.tituloAtualizacao}>✏️ Atualizar portal</h3>
+
+                <p style={estilos.textoAtualizacao}>
+                  Clique no Portal Água, digite o novo nome e confirme.
+                </p>
+
+                <input
+                  type="text"
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  placeholder="Ex: Portal Água Cristalina"
+                  style={estilos.inputAtualizacao}
+                />
+
+                <button
+                  onClick={confirmarAtualizacao}
+                  style={estilos.botaoAtualizar}
+                >
+                  ATUALIZAR
+                </button>
+              </div>
+            )}
+
             <div style={estilos.listaVisualGrande}>
               {lista.map((portal, index) => (
-                <motion.div
+                <div
                   key={`${portal.nome}-${index}`}
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => clicarPortal(index)}
-                  style={{
-                    ...estilos.itemLista,
-                    border: definirBordaLista(
-                      portal.nome,
-                      index,
-                      etapa,
-                      indiceBusca
-                    ),
-                    cursor: "pointer",
-                  }}
+                  style={estilos.itemComSeta}
                 >
-                  {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
-                  {etapa === 2 && index === indiceBusca && (
-                    <span style={estilos.busca}>VERIFICAR</span>
-                  )}
-                  {etapa === 2 && index < indiceBusca && (
-                    <span style={estilos.verificado}>VISTO</span>
-                  )}
-                  {etapa === 3 && portal.nome === "Portal Água" && (
-                    <span style={estilos.busca}>ATUALIZAR</span>
-                  )}
-                  {portal.nome === "Portal Água Cristalina" && (
-                    <span style={estilos.atualizado}>ATUALIZADO</span>
-                  )}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    onClick={() => clicarPortal(index)}
+                    style={{
+                      ...estilos.itemLista,
+                      border: definirBordaLista(
+                        portal.nome,
+                        index,
+                        etapa,
+                        indiceBusca,
+                        indiceSelecionado,
+                        indiceAtualizado
+                      ),
+                      cursor: "pointer",
+                    }}
+                  >
+                    {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
 
-                  <span style={estilos.avatarLista}>{portal.icone}</span>
-                  <span style={estilos.nomeItem}>{portal.nome}</span>
-                  <span style={estilos.indice}>Nó {index + 1}</span>
-                </motion.div>
+                    {etapa === 2 && index === indiceBusca && (
+                      <span style={estilos.busca}>VERIFICAR</span>
+                    )}
+
+                    {etapa === 2 && index < indiceBusca && (
+                      <span style={estilos.verificado}>VISTO</span>
+                    )}
+
+                    {etapa === 3 && portal.nome === "Portal Água" && (
+                      <span style={estilos.busca}>ATUALIZAR</span>
+                    )}
+
+                    {etapa === 3 && index === indiceSelecionado && (
+                      <span style={estilos.selecionado}>SELECIONADO</span>
+                    )}
+
+                    {etapa >= 4 && index === indiceAtualizado && (
+                      <span style={estilos.atualizado}>ATUALIZADO</span>
+                    )}
+
+                    <span style={estilos.avatarLista}>{portal.icone}</span>
+                    <span style={estilos.nomeItem}>{portal.nome}</span>
+                    <span style={estilos.indice}>Nó {index + 1}</span>
+                  </motion.div>
+
+                  {index < lista.length - 1 && (
+                    <span style={estilos.setaLista}>➜</span>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -336,31 +410,56 @@ function LabirintoLista({ voltar, concluir }) {
 
               <div style={estilos.listaVisualGrande}>
                 {lista.map((portal, index) => (
-                  <motion.div
+                  <div
                     key={`${portal.nome}-${index}`}
-                    draggable
-                    whileHover={{ scale: 1.05 }}
-                    onDragStart={() => setDragged({ tipo: "lista", index })}
-                    style={{
-                      ...estilos.itemLista,
-                      border:
-                        index === 0
-                          ? "3px solid #ec4899"
-                          : "3px solid #818cf8",
-                      cursor: "grab",
-                    }}
+                    style={estilos.itemComSeta}
                   >
-                    {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
-                    <span style={estilos.avatarLista}>{portal.icone}</span>
-                    <span style={estilos.nomeItem}>{portal.nome}</span>
-                    <span style={estilos.indice}>Nó {index + 1}</span>
-                  </motion.div>
+                    <motion.div
+                      draggable
+                      whileHover={{ scale: 1.05 }}
+                      onDragStart={() => setDragged({ tipo: "lista", index })}
+                      style={{
+                        ...estilos.itemLista,
+                        border:
+                          index === 0
+                            ? "3px solid #ec4899"
+                            : index === indiceAtualizado
+                            ? "3px solid #22c55e"
+                            : "3px solid #818cf8",
+                        cursor: "grab",
+                      }}
+                    >
+                      {index === 0 && (
+                        <span style={estilos.inicio}>INÍCIO</span>
+                      )}
+
+                      {index === indiceAtualizado && (
+                        <span style={estilos.atualizado}>ATUALIZADO</span>
+                      )}
+
+                      <span style={estilos.avatarLista}>{portal.icone}</span>
+                      <span style={estilos.nomeItem}>{portal.nome}</span>
+                      <span style={estilos.indice}>Nó {index + 1}</span>
+                    </motion.div>
+
+                    {index < lista.length - 1 && (
+                      <span style={estilos.setaLista}>➜</span>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
 
             <div style={estilos.coluna}>
               <h2 style={estilos.tituloCaixa}>Zona de remoção</h2>
+
+              <div style={estilos.explicacaoRemocao}>
+                <strong>Remoção na lista</strong>
+                <p>
+                  Ao remover o primeiro nó, o próximo nó passa a ser o novo
+                  início da lista.
+                </p>
+              </div>
 
               <div
                 style={estilos.zonaRemocao}
@@ -375,8 +474,12 @@ function LabirintoLista({ voltar, concluir }) {
 
         <div style={estilos.caixaConceito}>
           <h3>📚 Conceito da Lista Encadeada</h3>
-          <p><strong>Nó:</strong> cada elemento da lista.</p>
-          <p><strong>Ponteiro:</strong> ligação para o próximo nó.</p>
+          <p>
+            <strong>Nó:</strong> cada elemento da lista.
+          </p>
+          <p>
+            <strong>Ponteiro:</strong> ligação para o próximo nó.
+          </p>
           <p>🔍 Buscar: percorre de nó em nó.</p>
           <p>✏️ Atualizar: altera um nó encontrado.</p>
           <p>🗑️ Remover: tira um nó e reorganiza a sequência.</p>
@@ -416,9 +519,18 @@ function LabirintoLista({ voltar, concluir }) {
   );
 }
 
-function definirBordaLista(nome, index, etapa, indiceBusca) {
+function definirBordaLista(
+  nome,
+  index,
+  etapa,
+  indiceBusca,
+  indiceSelecionado,
+  indiceAtualizado
+) {
   if (etapa === 2 && index === indiceBusca) return "3px solid #ec4899";
+  if (etapa === 3 && index === indiceSelecionado) return "3px solid #22c55e";
   if (etapa === 3 && nome === "Portal Água") return "3px solid #ec4899";
+  if (etapa >= 4 && index === indiceAtualizado) return "3px solid #22c55e";
   if (etapa === 5 && index === 0) return "3px solid #ec4899";
   if (index === 0) return "3px solid #ec4899";
   return "3px solid #818cf8";
@@ -428,17 +540,22 @@ function ListaVisual({ lista }) {
   return (
     <div style={estilos.listaVisualGrande}>
       {lista.map((portal, index) => (
-        <div
-          key={`${portal.nome}-${index}`}
-          style={{
-            ...estilos.itemLista,
-            border: index === 0 ? "3px solid #ec4899" : "3px solid #818cf8",
-          }}
-        >
-          {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
-          <span style={estilos.avatarLista}>{portal.icone}</span>
-          <span style={estilos.nomeItem}>{portal.nome}</span>
-          <span style={estilos.indice}>Nó {index + 1}</span>
+        <div key={`${portal.nome}-${index}`} style={estilos.itemComSeta}>
+          <div
+            style={{
+              ...estilos.itemLista,
+              border: index === 0 ? "3px solid #ec4899" : "3px solid #818cf8",
+            }}
+          >
+            {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
+            <span style={estilos.avatarLista}>{portal.icone}</span>
+            <span style={estilos.nomeItem}>{portal.nome}</span>
+            <span style={estilos.indice}>Nó {index + 1}</span>
+          </div>
+
+          {index < lista.length - 1 && (
+            <span style={estilos.setaLista}>➜</span>
+          )}
         </div>
       ))}
     </div>
@@ -463,6 +580,15 @@ const estilos = {
     padding: "clamp(20px, 4vw, 42px)",
     boxSizing: "border-box",
     position: "relative",
+  },
+
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
   },
 
   header: { textAlign: "center", marginBottom: "24px" },
@@ -492,20 +618,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -550,13 +677,6 @@ const estilos = {
     fontWeight: "900",
     color: "#9333ea",
     marginBottom: "14px",
-  },
-
-  textoIntro: {
-    color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.7",
-    fontWeight: "700",
   },
 
   conteudoDesafio: {
@@ -653,6 +773,13 @@ const estilos = {
     boxSizing: "border-box",
   },
 
+  itemComSeta: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexShrink: 0,
+  },
+
   itemLista: {
     width: "clamp(110px, 26vw, 145px)",
     minWidth: "105px",
@@ -711,6 +838,19 @@ const estilos = {
     fontWeight: "900",
   },
 
+  selecionado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "10px",
+    padding: "3px 8px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
   verificado: {
     position: "absolute",
     bottom: "-12px",
@@ -735,6 +875,27 @@ const estilos = {
     padding: "3px 8px",
     borderRadius: "999px",
     fontWeight: "900",
+  },
+
+  setaLista: {
+    fontSize: "28px",
+    fontWeight: "900",
+    color: "#9333ea",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: "28px",
+  },
+
+  explicacaoRemocao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "16px",
   },
 
   zonaRemocao: {
@@ -773,6 +934,50 @@ const estilos = {
     fontWeight: "bold",
     cursor: "pointer",
     marginTop: "18px",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   fundoModal: {

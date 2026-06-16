@@ -318,11 +318,7 @@ function Fase({
   isMobile,
 }) {
   return (
-    <motion.div
-      onClick={() => {
-        if (!bloqueada && onClick) onClick();
-      }}
-      whileTap={!bloqueada ? { scale: 0.95 } : {}}
+    <div
       style={{
         position: "absolute",
         left: `${(x / viewW) * 100}%`,
@@ -330,41 +326,51 @@ function Fase({
         transform: "translate(-50%, -50%)",
         zIndex: 10,
         cursor: bloqueada ? "not-allowed" : "pointer",
-        padding: isMobile ? "6px" : "8px",
       }}
     >
-      {concluida && (
-        <div style={estrelas}>
-          <span>⭐</span>
-          <span>⭐</span>
-          <span>⭐</span>
+      <motion.div
+        whileTap={!bloqueada ? { scale: 0.95 } : {}}
+        onClick={() => {
+          if (!bloqueada && onClick) {
+            onClick();
+          }
+        }}
+      >
+        {concluida && (
+          <div style={estrelas}>
+            <span>⭐</span>
+            <span>⭐</span>
+            <span>⭐</span>
+          </div>
+        )}
+
+        <div
+          style={{
+            ...circuloFase,
+            width: isMobile ? "70px" : "80px",
+            height: isMobile ? "70px" : "80px",
+            background: bloqueada
+              ? "#cbd5e1"
+              : concluida
+              ? "#9333ea"
+              : "#9333ea",
+          }}
+        >
+          {bloqueada ? "🔒" : n}
         </div>
-      )}
 
-      <div
-        style={{
-          ...circuloFase,
-          width: isMobile ? "52px" : "clamp(38px, 8vw, 60px)",
-          height: isMobile ? "52px" : "clamp(38px, 8vw, 60px)",
-          fontSize: isMobile ? "20px" : "clamp(15px, 4vw, 22px)",
-          background: bloqueada ? "#cbd5e1" : concluida ? "#7e22ce" : "#9333ea",
-        }}
-      >
-        {bloqueada ? "🔒" : n}
-      </div>
-
-      <span
-        style={{
-          ...nomeFase,
-          fontSize: isMobile ? "12px" : "clamp(8px, 2.2vw, 13px)",
-        }}
-      >
-        {nome}
-      </span>
-    </motion.div>
+        <span
+          style={{
+            ...nomeFase,
+            fontSize: isMobile ? "12px" : "14px",
+          }}
+        >
+          {nome}
+        </span>
+      </motion.div>
+    </div>
   );
 }
-
 const pagina = {
   minHeight: "100svh",
   background: "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",

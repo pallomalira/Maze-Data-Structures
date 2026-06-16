@@ -1,7 +1,6 @@
 import { useState } from "react";
 import "./App.css";
 
-import MapaLabirinto from "./telas/MapaLabirinto";
 import MenuInicial from "./telas/MenuInicial";
 import CriarJogador from "./telas/CriarJogador";
 
@@ -101,17 +100,6 @@ function App() {
           setJogoEmAndamento(true);
           setTela("mapa");
         }}
-      />
-    );
-  }
-
-  if (tela === "mapaLabirinto") {
-    return (
-      <MapaLabirinto
-        voltar={() => setTela("mapa")}
-        abrirFila={() => setTela("labirintoFila")}
-        abrirPilha={() => setTela("labirintoPilha")}
-        abrirArvore={() => setTela("labirintoArvore")}
       />
     );
   }

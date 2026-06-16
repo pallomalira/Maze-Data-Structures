@@ -17,6 +17,10 @@ function LabirintoFila({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
+  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da fila."
   );
@@ -67,7 +71,7 @@ function LabirintoFila({ voltar, concluir }) {
     if (atual.nome === "Arqueira Maria") {
       setEtapa(3);
       setMensagem(
-        "✅ Arqueira Maria encontrada!\n\nVocê percorreu a fila em ordem até chegar nela.\n\nAgora atualize o registro dela para: Arqueira Maria Clara."
+        "✅ Arqueira Maria encontrada!\n\nAgora clique nela, escreva o novo nome no campo e aperte ATUALIZAR."
       );
       return;
     }
@@ -78,26 +82,49 @@ function LabirintoFila({ voltar, concluir }) {
     );
   }
 
-  function atualizarPersonagem(index) {
+  function selecionarParaAtualizar(index) {
     if (etapa !== 3) return;
 
     if (fila[index].nome !== "Arqueira Maria") {
       setMensagem(
-        "❌ Não é esse personagem.\n\nClique na Arqueira Maria para atualizar o registro."
+        "❌ Esse não é o personagem correto.\n\nSelecione a Arqueira Maria para atualizar."
       );
       return;
     }
 
-    const novaFila = fila.map((p) =>
-      p.nome === "Arqueira Maria"
-        ? { ...p, nome: "Arqueira Maria Clara" }
-        : p
+    setIndiceSelecionado(index);
+    setMensagem(
+      "✅ Personagem selecionada.\n\nAgora digite o novo nome no campo e clique em ATUALIZAR."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (indiceSelecionado === null) {
+      setMensagem(
+        "❌ Primeiro selecione a personagem que será atualizada.\n\nClique na Arqueira Maria."
+      );
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      return;
+    }
+
+    const novaFila = fila.map((p, index) =>
+      index === indiceSelecionado ? { ...p, nome: novoNome.trim() } : p
     );
 
     setFila(novaFila);
+    setIndiceAtualizado(indiceSelecionado);
+    setNovoNome("");
+    setIndiceSelecionado(null);
     setEtapa(4);
+
     setMensagem(
-      "✏️ Registro atualizado!\n\nMaria agora é Arqueira Maria Clara.\n\nAgora o primeiro viajante será atendido.\n\nArraste quem está no INÍCIO para a saída do mercado."
+      "✏️ Registro atualizado!\n\nO personagem agora tem o novo nome.\n\nAgora o primeiro viajante será atendido.\n\nArraste quem está no INÍCIO para a saída do mercado."
     );
   }
 
@@ -137,7 +164,7 @@ function LabirintoFila({ voltar, concluir }) {
 
   function clicarPersonagem(index) {
     if (etapa === 2) buscarPersonagem(index);
-    if (etapa === 3) atualizarPersonagem(index);
+    if (etapa === 3) selecionarParaAtualizar(index);
     if (etapa === 5) responderDesafio(index);
   }
 
@@ -159,6 +186,9 @@ function LabirintoFila({ voltar, concluir }) {
     setIndiceBusca(0);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setIndiceSelecionado(null);
+    setIndiceAtualizado(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio da fila.");
   }
 
@@ -192,222 +222,284 @@ function LabirintoFila({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+              onClick={() => setMostrarHistoria(true)}
+              style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🛒</div>
-          <h1 style={estilos.titulo}>MERCADO DA FILA</h1>
+
+          <h1 style={estilos.titulo}>MUNDO DA FILA</h1>
           <p style={estilos.regra}>FIFO: quem chega primeiro, sai primeiro.</p>
         </div>
 
         <div style={estilos.etapas}>
-          {["História", "Formar fila", "Buscar", "Atualizar", "Atender", "Desafio"].map(
-            (nome, index) => (
+          {[
+            "História",
+            "Formar fila",
+            "Buscar",
+            "Atualizar",
+            "Atender",
+            "Desafio",
+          ].map((nome, index) => (
               <div
-                key={nome}
-                style={{
-                  ...estilos.etapaBox,
-                  background: etapa === index ? "#ec4899" : "#e2e8f0",
-                  color: etapa === index ? "white" : "#475569",
-                }}
+                  key={nome}
+                  style={{
+                    ...estilos.etapaBox,
+                    background: etapa === index ? "#ec4899" : "#e2e8f0",
+                    color: etapa === index ? "white" : "#475569",
+                  }}
               >
                 {index}. {nome}
               </div>
-            )
-          )}
+          ))}
         </div>
 
         <div style={estilos.mensagemEtapa}>{mensagem}</div>
 
         {etapa === 0 && (
-          <div style={estilos.introBox}>
-            <div style={estilos.caixaTema}>🏪 Entrada do Mercado</div>
-            <p style={estilos.textoIntro}>
-              Imagine uma fila de mercado dentro do labirinto. Quem chega por
-              último entra no final. Quem chegou primeiro é atendido primeiro.
-            </p>
-            <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
-              COMEÇAR
-            </button>
-          </div>
+            <div style={estilos.introBox}>
+              <div style={estilos.caixaTema}>🏪 Entrada do Mercado</div>
+
+              <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
+                COMEÇAR
+              </button>
+            </div>
         )}
 
         {etapa === 1 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Viajantes chegando</h2>
+            <div style={estilos.conteudoDesafio}>
+              <div style={estilos.coluna}>
+                <h2 style={estilos.tituloCaixa}>Viajantes chegando</h2>
 
-              <div style={estilos.disponiveisContainer}>
-                {disponiveis.map((p, index) => (
-                  <motion.div
-                    key={p.nome}
-                    draggable
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => adicionarPersonagem(index)}
-                    onDragStart={() =>
-                      setDragged({ tipo: "disponivel", index })
-                    }
-                    style={estilos.itemDraggable}
-                  >
-                    <span style={estilos.avatar}>{p.icone}</span>
-                    <span>{p.nome}</span>
-                  </motion.div>
-                ))}
+                <div style={estilos.disponiveisContainer}>
+                  {disponiveis.map((p, index) => (
+                      <motion.div
+                          key={p.nome}
+                          draggable
+                          whileHover={{scale: 1.08}}
+                          whileTap={{scale: 0.95}}
+                          onClick={() => adicionarPersonagem(index)}
+                          onDragStart={() =>
+                              setDragged({tipo: "disponivel", index})
+                          }
+                          style={estilos.itemDraggable}
+                      >
+                        <span style={estilos.avatar}>{p.icone}</span>
+                        <span>{p.nome}</span>
+                      </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={estilos.coluna}>
+                <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
+
+                <div
+                    style={estilos.zonaDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={soltarParaAdicionar}
+                >
+                  {fila.length === 0 && (
+                      <span style={estilos.vazio}>Solte os viajantes aqui</span>
+                  )}
+
+                  <FilaVisual fila={fila}/>
+                </div>
               </div>
             </div>
-
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
-
-              <div
-                style={estilos.zonaDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaAdicionar}
-              >
-                {fila.length === 0 && (
-                  <span style={estilos.vazio}>Solte os viajantes aqui</span>
-                )}
-
-                <FilaVisual fila={fila} />
-              </div>
-            </div>
-          </div>
         )}
 
         {(etapa === 2 || etapa === 3 || etapa === 5) && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.colunaGrande}>
-              <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
+            <div style={estilos.conteudoDesafio}>
+              <div style={estilos.colunaGrande}>
+                <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
 
-              <div style={estilos.filaVisualGrande}>
-                {fila.map((p, index) => (
-                  <motion.div
-                    key={`${p.nome}-${index}`}
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => clicarPersonagem(index)}
-                    style={{
-                      ...estilos.itemFila,
-                      border: definirBordaFila(p.nome, index, etapa, indiceBusca),
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span style={estilos.avatarFila}>{p.icone}</span>
-                    <span style={estilos.nomeItem}>{p.nome}</span>
-                    <span style={estilos.indice}>Posição {index + 1}</span>
+                {etapa === 3 && (
+                    <div style={estilos.formAtualizacao}>
+                      <h3 style={estilos.tituloAtualizacao}>
+                        ✏️ Atualizar personagem
+                      </h3>
 
-                    {index === 0 && <span style={estilos.head}>INÍCIO</span>}
-                    {etapa === 2 && index < indiceBusca && (
-                      <span style={estilos.verificado}>VISTO</span>
-                    )}
-                    {etapa === 2 && index === indiceBusca && (
-                      <span style={estilos.busca}>VERIFICAR</span>
-                    )}
-                    {etapa === 3 && p.nome === "Arqueira Maria" && (
-                      <span style={estilos.busca}>ATUALIZAR</span>
-                    )}
-                    {p.nome === "Arqueira Maria Clara" && (
-                      <span style={estilos.atualizado}>ATUALIZADO</span>
-                    )}
-                  </motion.div>
-                ))}
+                      <p style={estilos.textoAtualizacao}>
+                        Clique na Arqueira Maria, escreva o novo nome e confirme.
+                      </p>
+
+                      <input
+                          type="text"
+                          value={novoNome}
+                          onChange={(e) => setNovoNome(e.target.value)}
+                          placeholder="Digite o novo nome"
+                          style={estilos.inputAtualizacao}
+                      />
+
+                      <button
+                          onClick={confirmarAtualizacao}
+                          style={estilos.botaoAtualizar}
+                      >
+                        ATUALIZAR
+                      </button>
+                    </div>
+                )}
+
+                <div style={estilos.filaVisualGrande}>
+                  {fila.map((p, index) => (
+                      <motion.div
+                          key={`${p.nome}-${index}`}
+                          whileHover={{scale: 1.05}}
+                          onClick={() => clicarPersonagem(index)}
+                          style={{
+                            ...estilos.itemFila,
+                            border: definirBordaFila(
+                                p.nome,
+                                index,
+                                etapa,
+                                indiceBusca,
+                                indiceSelecionado,
+                                indiceAtualizado
+                            ),
+                            cursor: "pointer",
+                          }}
+                      >
+                        <span style={estilos.avatarFila}>{p.icone}</span>
+                        <span style={estilos.nomeItem}>{p.nome}</span>
+                        <span style={estilos.indice}>Posição {index + 1}</span>
+
+                        {index === 0 && <span style={estilos.head}>INÍCIO</span>}
+
+                        {etapa === 2 && index < indiceBusca && (
+                            <span style={estilos.verificado}>VISTO</span>
+                        )}
+
+                        {etapa === 2 && index === indiceBusca && (
+                            <span style={estilos.busca}>VERIFICAR</span>
+                        )}
+
+                        {etapa === 3 && p.nome === "Arqueira Maria" && (
+                            <span style={estilos.busca}>ATUALIZAR</span>
+                        )}
+
+                        {etapa === 3 && index === indiceSelecionado && (
+                            <span style={estilos.selecionado}>SELECIONADO</span>
+                        )}
+
+                        {etapa >= 4 && index === indiceAtualizado && (
+                            <span style={estilos.atualizado}>ATUALIZADO</span>
+                        )}
+                      </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
         )}
 
         {etapa === 4 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
+            <div style={estilos.conteudoDesafio}>
+              <div style={estilos.coluna}>
+                <h2 style={estilos.tituloCaixa}>Fila do mercado</h2>
 
-              <div style={estilos.filaVisualGrande}>
-                {fila.map((p, index) => (
-                  <motion.div
-                    key={`${p.nome}-${index}`}
-                    draggable
-                    whileHover={{ scale: 1.05 }}
-                    onDragStart={() => setDragged({ tipo: "fila", index })}
-                    style={{
-                      ...estilos.itemFila,
-                      border:
-                        index === 0
-                          ? "3px solid #ec4899"
-                          : "3px solid #818cf8",
-                      cursor: "grab",
-                    }}
-                  >
-                    <span style={estilos.avatarFila}>{p.icone}</span>
-                    <span style={estilos.nomeItem}>{p.nome}</span>
-                    <span style={estilos.indice}>Posição {index + 1}</span>
-                    {index === 0 && <span style={estilos.head}>INÍCIO</span>}
-                  </motion.div>
-                ))}
+                <div style={estilos.filaVisualGrande}>
+                  {fila.map((p, index) => (
+                      <motion.div
+                          key={`${p.nome}-${index}`}
+                          draggable
+                          whileHover={{scale: 1.05}}
+                          onDragStart={() => setDragged({tipo: "fila", index})}
+                          style={{
+                            ...estilos.itemFila,
+                            border:
+                                index === 0
+                                    ? "3px solid #ec4899"
+                                    : index === indiceAtualizado
+                                        ? "3px solid #22c55e"
+                                        : "3px solid #818cf8",
+                            cursor: "grab",
+                          }}
+                      >
+                        <span style={estilos.avatarFila}>{p.icone}</span>
+                        <span style={estilos.nomeItem}>{p.nome}</span>
+                        <span style={estilos.indice}>Posição {index + 1}</span>
+
+                        {index === 0 && <span style={estilos.head}>INÍCIO</span>}
+
+                        {index === indiceAtualizado && (
+                            <span style={estilos.atualizado}>ATUALIZADO</span>
+                        )}
+                      </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={estilos.coluna}>
+                <h2 style={estilos.tituloCaixa}>Saída do mercado</h2>
+
+                <div
+                    style={estilos.zonaRemocao}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={soltarParaRemover}
+                >
+                  🧾 Viajante atendido sai por aqui
+                </div>
               </div>
             </div>
-
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Saída do mercado</h2>
-
-              <div
-                style={estilos.zonaRemocao}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaRemover}
-              >
-                🧾 Viajante atendido sai por aqui
-              </div>
-            </div>
-          </div>
         )}
 
-        <Conceito tipo="fila" />
+        <Conceito tipo="fila"/>
 
         <button onClick={resetar} style={estilos.botaoResetar}>
           ↻ RESETAR FASE
         </button>
 
         {mostrarHistoria && (
-          <div style={estilos.fundoModal}>
-            <div style={estilos.modalHistoria}>
-              <h2>📜 HISTÓRIA</h2>
+            <div style={estilos.fundoModal}>
+              <div style={estilos.modalHistoria}>
+                <h2>📜 HISTÓRIA</h2>
 
-              <p>Você chegou ao Mercado do Reino dos Dados.</p>
+                <p>Você chegou ao Mercado do Reino dos Dados.</p>
 
-              <p>
-                Os viajantes precisam atravessar o Labirinto da Fila para comprar
-                seus suprimentos.
-              </p>
+                <p>
+                  Os viajantes precisam atravessar o Labirinto da Fila para comprar
+                  seus suprimentos.
+                </p>
 
-              <p>Aqui vale a regra FIFO:</p>
+                <p>Aqui vale a regra FIFO:</p>
 
-              <strong>Quem chega primeiro, sai primeiro.</strong>
+                <strong>Quem chega primeiro, sai primeiro.</strong>
 
-              <button
-                onClick={() => setMostrarHistoria(false)}
-                style={estilos.botaoEntendi}
-              >
-                ENTENDI
-              </button>
+                <button
+                    onClick={() => setMostrarHistoria(false)}
+                    style={estilos.botaoEntendi}
+                >
+                  ENTENDI
+                </button>
+              </div>
             </div>
-          </div>
         )}
       </div>
     </div>
   );
 }
 
-function definirBordaFila(nome, index, etapa, indiceBusca) {
+function definirBordaFila(
+    nome,
+    index,
+    etapa,
+    indiceBusca,
+    indiceSelecionado,
+    indiceAtualizado
+) {
   if (etapa === 2 && index === indiceBusca) return "3px solid #ec4899";
+  if (etapa === 3 && index === indiceSelecionado) return "3px solid #22c55e";
   if (etapa === 3 && nome === "Arqueira Maria") return "3px solid #ec4899";
+  if (etapa >= 4 && index === indiceAtualizado) return "3px solid #22c55e";
   if (etapa === 5 && index === 0) return "3px solid #ec4899";
   if (index === 0) return "3px solid #ec4899";
   return "3px solid #818cf8";
@@ -440,7 +532,9 @@ function Conceito({ tipo }) {
       {tipo === "fila" && (
         <>
           <h3>📚 Conceito da Fila</h3>
-          <p><strong>FIFO</strong>: First In, First Out.</p>
+          <p>
+            <strong>FIFO</strong>: First In, First Out.
+          </p>
           <p>📥 Inserir: entra no final.</p>
           <p>🔍 Buscar: percorre do início até encontrar.</p>
           <p>✏️ Atualizar: altera o personagem encontrado.</p>
@@ -488,30 +582,40 @@ const estilos = {
     margin: "10px 0",
   },
 
-  botaoVoltar: {
-    background: "#9333ea",
-    border: "none",
-    borderRadius: "18px",
-    color: "white",
-    fontWeight: "900",
-    padding: "12px 18px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
+barraTopo: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "10px",
+  marginBottom: "20px",
+  flexWrap: "wrap",
+},
 
-  botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "999px",
-    padding: "12px 18px",
-    fontWeight: "900",
-    cursor: "pointer",
-    zIndex: 50,
-  },
+botaoVoltar: {
+  background: "#9333ea",
+  border: "none",
+  borderRadius: "18px",
+  color: "white",
+  fontWeight: "900",
+  padding: "12px 18px",
+  cursor: "pointer",
+  fontSize: "14px",
+  flex: "1",
+  minWidth: "150px",
+},
+
+botaoHistoria: {
+  background: "#9333ea",
+  color: "white",
+  border: "none",
+  borderRadius: "18px",
+  padding: "12px 18px",
+  fontWeight: "900",
+  cursor: "pointer",
+  fontSize: "14px",
+  flex: "1",
+  minWidth: "130px",
+},
 
   etapas: {
     display: "grid",
@@ -555,13 +659,6 @@ const estilos = {
     fontWeight: "900",
     color: "#9333ea",
     marginBottom: "14px",
-  },
-
-  textoIntro: {
-    color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.7",
-    fontWeight: "700",
   },
 
   conteudoDesafio: {
@@ -640,70 +737,70 @@ const estilos = {
     alignItems: "center",
   },
 
-filaVisual: {
-  minHeight: "160px",
-  display: "flex",
-  flexDirection: "row",
-  gap: "8px",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  flexWrap: "nowrap",
-  overflowX: "auto",
-  width: "100%",
-  padding: "12px",
-  boxSizing: "border-box",
-},
+  filaVisual: {
+    minHeight: "160px",
+    display: "flex",
+    flexDirection: "row",
+    gap: "8px",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    flexWrap: "nowrap",
+    overflowX: "auto",
+    width: "100%",
+    padding: "12px",
+    boxSizing: "border-box",
+  },
 
-filaVisualGrande: {
-  minHeight: "160px",
-  display: "flex",
-  flexDirection: "row",
-  gap: "8px",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  background: "white",
-  borderRadius: "18px",
-  padding: "14px",
-  flexWrap: "nowrap",
-  overflowX: "auto",
-  width: "100%",
-  boxSizing: "border-box",
-},
+  filaVisualGrande: {
+    minHeight: "160px",
+    display: "flex",
+    flexDirection: "row",
+    gap: "8px",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    background: "white",
+    borderRadius: "18px",
+    padding: "14px",
+    flexWrap: "nowrap",
+    overflowX: "auto",
+    width: "100%",
+    boxSizing: "border-box",
+  },
 
-itemFila: {
-  width: "clamp(90px, 22vw, 125px)",
-  minWidth: "90px",
-  minHeight: "92px",
-  background: "rgba(129,140,248,0.12)",
-  borderRadius: "16px",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  position: "relative",
-  padding: "8px",
-  boxSizing: "border-box",
-},
+  itemFila: {
+    width: "clamp(90px, 22vw, 125px)",
+    minWidth: "90px",
+    minHeight: "92px",
+    background: "rgba(129,140,248,0.12)",
+    borderRadius: "16px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+    padding: "8px",
+    boxSizing: "border-box",
+  },
 
-avatarFila: {
-  fontSize: "clamp(20px, 5vw, 28px)",
-  marginBottom: "4px",
-},
+  avatarFila: {
+    fontSize: "clamp(20px, 5vw, 28px)",
+    marginBottom: "4px",
+  },
 
-nomeItem: {
-  fontSize: "clamp(10px, 2.7vw, 14px)",
-  fontWeight: "900",
-  color: "#475569",
-  marginBottom: "4px",
-  textAlign: "center",
-  lineHeight: "1.1",
-},
+  nomeItem: {
+    fontSize: "clamp(10px, 2.7vw, 14px)",
+    fontWeight: "900",
+    color: "#475569",
+    marginBottom: "4px",
+    textAlign: "center",
+    lineHeight: "1.1",
+  },
 
-indice: {
-  fontSize: "clamp(9px, 2.4vw, 11px)",
-  fontWeight: "bold",
-  color: "#64748b",
-},
+  indice: {
+    fontSize: "clamp(9px, 2.4vw, 11px)",
+    fontWeight: "bold",
+    color: "#64748b",
+  },
 
   head: {
     position: "absolute",
@@ -724,6 +821,19 @@ indice: {
     left: "50%",
     transform: "translateX(-50%)",
     background: "#9333ea",
+    color: "white",
+    fontSize: "10px",
+    padding: "3px 8px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
+  selecionado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
     color: "white",
     fontSize: "10px",
     padding: "3px 8px",
@@ -793,6 +903,50 @@ indice: {
     fontWeight: "bold",
     cursor: "pointer",
     marginTop: "18px",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   fundoModal: {

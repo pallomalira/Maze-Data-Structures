@@ -17,6 +17,10 @@ function LabirintoPilha({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
+  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da pilha."
   );
@@ -67,7 +71,7 @@ function LabirintoPilha({ voltar, concluir }) {
     if (atual.nome === "Livro do Fogo") {
       setEtapa(3);
       setMensagem(
-        "✅ Livro do Fogo encontrado!\n\nVocê verificou a pilha a partir do topo.\n\nAgora atualize o livro para: Livro do Fogo Supremo."
+        "✅ Livro do Fogo encontrado!\n\nAgora clique nele, digite o novo nome e aperte ATUALIZAR."
       );
       return;
     }
@@ -78,26 +82,47 @@ function LabirintoPilha({ voltar, concluir }) {
     );
   }
 
-  function atualizarLivro(index) {
+  function selecionarLivroParaAtualizar(index) {
     if (etapa !== 3) return;
 
     if (pilha[index].nome !== "Livro do Fogo") {
-      setMensagem(
-        "❌ Não é esse livro.\n\nClique no Livro do Fogo para atualizar."
-      );
+      setMensagem("❌ Não é esse livro.\n\nSelecione o Livro do Fogo.");
       return;
     }
 
-    const novaPilha = pilha.map((livro) =>
-      livro.nome === "Livro do Fogo"
-        ? { ...livro, nome: "Livro do Fogo Supremo", icone: "🔥" }
+    setIndiceSelecionado(index);
+    setMensagem(
+      "📚 Livro selecionado.\n\nDigite o novo nome no campo e clique em ATUALIZAR."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (indiceSelecionado === null) {
+      setMensagem("❌ Primeiro selecione o Livro do Fogo.");
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite o novo nome antes de atualizar.");
+      return;
+    }
+
+    const novaPilha = pilha.map((livro, index) =>
+      index === indiceSelecionado
+        ? { ...livro, nome: novoNome.trim() }
         : livro
     );
 
     setPilha(novaPilha);
+    setIndiceAtualizado(indiceSelecionado);
+    setNovoNome("");
+    setIndiceSelecionado(null);
     setEtapa(4);
+
     setMensagem(
-      "✏️ Livro atualizado!\n\nO Livro do Fogo virou Livro do Fogo Supremo.\n\nAgora remova o livro que está no TOPO da pilha.\n\nArraste o TOPO para a zona de remoção."
+      "✏️ Livro atualizado!\n\nAgora remova o livro que está no TOPO da pilha.\n\nArraste o TOPO para a zona de remoção."
     );
   }
 
@@ -133,15 +158,13 @@ function LabirintoPilha({ voltar, concluir }) {
       );
       setConcluido(true);
     } else {
-      setMensagem(
-        "❌ Ainda não.\n\nObserve qual livro está no TOPO da pilha."
-      );
+      setMensagem("❌ Ainda não.\n\nObserve qual livro está no TOPO da pilha.");
     }
   }
 
   function clicarLivro(index) {
     if (etapa === 2) buscarLivro(index);
-    if (etapa === 3) atualizarLivro(index);
+    if (etapa === 3) selecionarLivroParaAtualizar(index);
     if (etapa === 5) responderDesafio(index);
   }
 
@@ -163,6 +186,9 @@ function LabirintoPilha({ voltar, concluir }) {
     setIndiceBusca(null);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setIndiceSelecionado(null);
+    setIndiceAtualizado(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio da pilha.");
   }
 
@@ -196,20 +222,21 @@ function LabirintoPilha({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>📚</div>
-          <h1 style={estilos.titulo}>BIBLIOTECA DA PILHA</h1>
+          <h1 style={estilos.titulo}>MUNDO DA PILHA</h1>
           <p style={estilos.regra}>LIFO: quem entra por último, sai primeiro.</p>
         </div>
 
@@ -235,10 +262,6 @@ function LabirintoPilha({ voltar, concluir }) {
         {etapa === 0 && (
           <div style={estilos.introBox}>
             <div style={estilos.caixaTema}>📚 Biblioteca Perdida</div>
-            <p style={estilos.textoIntro}>
-              Imagine uma pilha de livros. O último livro colocado fica no topo,
-              e é o primeiro que pode ser retirado.
-            </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
               COMEÇAR
@@ -294,6 +317,33 @@ function LabirintoPilha({ voltar, concluir }) {
             <div style={estilos.colunaGrande}>
               <h2 style={estilos.tituloCaixa}>Pilha de livros</h2>
 
+              {etapa === 3 && (
+                <div style={estilos.formAtualizacao}>
+                  <h3 style={estilos.tituloAtualizacao}>
+                    ✏️ Atualizar livro
+                  </h3>
+
+                  <p style={estilos.textoAtualizacao}>
+                    Clique no Livro do Fogo, escreva o novo nome e confirme.
+                  </p>
+
+                  <input
+                    type="text"
+                    value={novoNome}
+                    onChange={(e) => setNovoNome(e.target.value)}
+                    placeholder="Digite o novo nome do livro"
+                    style={estilos.inputAtualizacao}
+                  />
+
+                  <button
+                    onClick={confirmarAtualizacao}
+                    style={estilos.botaoAtualizar}
+                  >
+                    ATUALIZAR
+                  </button>
+                </div>
+              )}
+
               <div style={estilos.pilhaVisualGrande}>
                 {pilha.map((livro, index) => {
                   const topo = index === pilha.length - 1;
@@ -310,7 +360,9 @@ function LabirintoPilha({ voltar, concluir }) {
                           index,
                           etapa,
                           indiceBusca,
-                          pilha.length
+                          pilha.length,
+                          indiceSelecionado,
+                          indiceAtualizado
                         ),
                         cursor: "pointer",
                       }}
@@ -329,7 +381,11 @@ function LabirintoPilha({ voltar, concluir }) {
                         <span style={estilos.busca}>ATUALIZAR</span>
                       )}
 
-                      {livro.nome === "Livro do Fogo Supremo" && (
+                      {etapa === 3 && index === indiceSelecionado && (
+                        <span style={estilos.selecionado}>SELECIONADO</span>
+                      )}
+
+                      {etapa >= 4 && index === indiceAtualizado && (
                         <span style={estilos.atualizado}>ATUALIZADO</span>
                       )}
                     </motion.div>
@@ -361,6 +417,8 @@ function LabirintoPilha({ voltar, concluir }) {
                         ...estilos.itemPilha,
                         border: topo
                           ? "3px solid #ec4899"
+                          : index === indiceAtualizado
+                          ? "3px solid #22c55e"
                           : "3px solid #818cf8",
                         cursor: "grab",
                       }}
@@ -370,6 +428,10 @@ function LabirintoPilha({ voltar, concluir }) {
                       <span style={estilos.indice}>Nível {index + 1}</span>
 
                       {topo && <span style={estilos.topo}>TOPO</span>}
+
+                      {index === indiceAtualizado && (
+                        <span style={estilos.atualizado}>ATUALIZADO</span>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -426,11 +488,21 @@ function LabirintoPilha({ voltar, concluir }) {
   );
 }
 
-function definirBordaPilha(nome, index, etapa, indiceBusca, tamanho) {
+function definirBordaPilha(
+  nome,
+  index,
+  etapa,
+  indiceBusca,
+  tamanho,
+  indiceSelecionado,
+  indiceAtualizado
+) {
   const topo = index === tamanho - 1;
 
   if (etapa === 2 && index === indiceBusca) return "3px solid #ec4899";
+  if (etapa === 3 && index === indiceSelecionado) return "3px solid #22c55e";
   if (etapa === 3 && nome === "Livro do Fogo") return "3px solid #ec4899";
+  if (etapa >= 4 && index === indiceAtualizado) return "3px solid #22c55e";
   if (etapa === 5 && topo) return "3px solid #ec4899";
   if (topo) return "3px solid #ec4899";
 
@@ -467,7 +539,9 @@ function Conceito() {
   return (
     <div style={estilos.caixaConceito}>
       <h3>📚 Conceito da Pilha</h3>
-      <p><strong>LIFO</strong>: Last In, First Out.</p>
+      <p>
+        <strong>LIFO</strong>: Last In, First Out.
+      </p>
       <p>📥 Inserir: entra no topo.</p>
       <p>🔍 Buscar: começa pelo topo.</p>
       <p>✏️ Atualizar: altera o livro encontrado.</p>
@@ -494,6 +568,15 @@ const estilos = {
     padding: "clamp(20px, 4vw, 42px)",
     boxSizing: "border-box",
     position: "relative",
+  },
+
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
   },
 
   header: {
@@ -529,20 +612,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -587,13 +671,6 @@ const estilos = {
     fontWeight: "900",
     color: "#9333ea",
     marginBottom: "14px",
-  },
-
-  textoIntro: {
-    color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.7",
-    fontWeight: "700",
   },
 
   conteudoDesafio: {
@@ -757,6 +834,19 @@ const estilos = {
     fontWeight: "900",
   },
 
+  selecionado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "10px",
+    padding: "3px 8px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
   atualizado: {
     position: "absolute",
     bottom: "-12px",
@@ -806,6 +896,50 @@ const estilos = {
     fontWeight: "bold",
     cursor: "pointer",
     marginTop: "18px",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   fundoModal: {

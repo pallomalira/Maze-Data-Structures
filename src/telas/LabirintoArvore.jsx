@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 
 function LabirintoArvore({ voltar, concluir }) {
   const nosIniciais = [
-    { valor: 50, nome: "Mestre Raiz", icone: "👑" },
-    { valor: 30, nome: "Guard. Lua", icone: "🌙" },
-    { valor: 70, nome: "Guard. Sol", icone: "☀️" },
-    { valor: 20, nome: "Aprendiz", icone: "🧭" },
-    { valor: 40, nome: "Sentinela", icone: "🛡️" },
+    { id: 1, valor: 50, nome: "Mestre Raiz", icone: "👑" },
+    { id: 2, valor: 30, nome: "Guard. Lua", icone: "🌙" },
+    { id: 3, valor: 70, nome: "Guard. Sol", icone: "☀️" },
+    { id: 4, valor: 20, nome: "Aprendiz", icone: "🧭" },
+    { id: 5, valor: 40, nome: "Sentinela", icone: "🛡️" },
   ];
 
   const [etapa, setEtapa] = useState(0);
@@ -18,6 +18,11 @@ function LabirintoArvore({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [novoValor, setNovoValor] = useState("");
+  const [noSelecionadoId, setNoSelecionadoId] = useState(null);
+  const [noAtualizadoId, setNoAtualizadoId] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da árvore."
   );
@@ -25,33 +30,23 @@ function LabirintoArvore({ voltar, concluir }) {
   function iniciarFase() {
     setEtapa(1);
     setMensagem(
-      "📥 FORMAR ÁRVORE\n\nArraste os guardiões para plantar os nós da árvore.\n\nO primeiro nó escolhido vira a RAIZ.\nDepois, menores vão para a esquerda e maiores para a direita."
+      "📥 FORMAR ÁRVORE\n\nArraste os guardiões para plantar os nós.\n\nO primeiro nó vira a RAIZ.\nValores menores vão para a esquerda.\nValores maiores vão para a direita."
     );
   }
 
   function criarNo(item) {
-    return {
-      ...item,
-      esquerda: null,
-      direita: null,
-    };
+    return { ...item, esquerda: null, direita: null };
   }
 
   function inserirNo(noAtual, item) {
     if (!noAtual) return criarNo(item);
 
     if (item.valor < noAtual.valor) {
-      return {
-        ...noAtual,
-        esquerda: inserirNo(noAtual.esquerda, item),
-      };
+      return { ...noAtual, esquerda: inserirNo(noAtual.esquerda, item) };
     }
 
     if (item.valor > noAtual.valor) {
-      return {
-        ...noAtual,
-        direita: inserirNo(noAtual.direita, item),
-      };
+      return { ...noAtual, direita: inserirNo(noAtual.direita, item) };
     }
 
     return noAtual;
@@ -77,7 +72,7 @@ function LabirintoArvore({ voltar, concluir }) {
       setEtapa(2);
       setValorBusca(novaArvore.valor);
       setMensagem(
-        `🔍 BUSCAR GUARDIÃO\n\nPrecisamos encontrar o valor 70.\n\nA busca começa pela RAIZ atual da sua árvore: ${novaArvore.valor}.\n\nClique no nó marcado como VERIFICAR.`
+        `🔍 BUSCAR GUARDIÃO\n\nPrecisamos encontrar o valor 70.\n\nA busca começa pela RAIZ: ${novaArvore.valor}.\n\nClique no nó marcado como VERIFICAR.`
       );
     } else {
       setMensagem(
@@ -99,27 +94,17 @@ function LabirintoArvore({ voltar, concluir }) {
     if (no.valor === 70) {
       setEtapa(3);
       setMensagem(
-        "✅ Guardião Sol encontrado!\n\nVocê seguiu as comparações da árvore até chegar no valor 70.\n\nAgora clique nele para atualizar para Guardião Sol Supremo."
+        "✅ Guardião Sol encontrado!\n\nAgora clique nele, digite o novo nome e o novo valor, depois aperte ATUALIZAR."
       );
       return;
     }
 
     if (70 > no.valor) {
-      if (!no.direita) {
-        setMensagem("❌ O valor 70 não está à direita desse nó.");
-        return;
-      }
-
       setValorBusca(no.direita.valor);
       setMensagem(
         `🔍 Você verificou ${no.nome} (${no.valor}).\n\nComo 70 é MAIOR que ${no.valor}, siga para a DIREITA.`
       );
     } else {
-      if (!no.esquerda) {
-        setMensagem("❌ O valor 70 não está à esquerda desse nó.");
-        return;
-      }
-
       setValorBusca(no.esquerda.valor);
       setMensagem(
         `🔍 Você verificou ${no.nome} (${no.valor}).\n\nComo 70 é MENOR que ${no.valor}, siga para a ESQUERDA.`
@@ -127,101 +112,137 @@ function LabirintoArvore({ voltar, concluir }) {
     }
   }
 
-  function atualizarNoArvore(no) {
+  function selecionarNoParaAtualizar(no) {
+    if (etapa !== 3) return;
+
+    if (no.id !== 3) {
+      setMensagem("❌ Não é esse nó.\n\nSelecione o Guardião Sol, valor 70.");
+      return;
+    }
+
+    setNoSelecionadoId(no.id);
+    setMensagem(
+      "✅ Nó selecionado.\n\nDigite um novo nome e um novo valor.\n\nDica: use um valor maior que 50 para manter a lógica da árvore."
+    );
+  }
+
+  function atualizarNoArvore(no, id, nomeDigitado, valorDigitado) {
     if (!no) return null;
 
-    if (no.valor === 70) {
+    if (no.id === id) {
       return {
         ...no,
-        valor: 75,
-        nome: "Guard. Supremo",
+        nome: nomeDigitado,
+        valor: valorDigitado,
         icone: "🌞",
       };
     }
 
     return {
       ...no,
-      esquerda: atualizarNoArvore(no.esquerda),
-      direita: atualizarNoArvore(no.direita),
+      esquerda: atualizarNoArvore(no.esquerda, id, nomeDigitado, valorDigitado),
+      direita: atualizarNoArvore(no.direita, id, nomeDigitado, valorDigitado),
     };
   }
 
-  function atualizarNo(no) {
+  function confirmarAtualizacao() {
     if (etapa !== 3) return;
 
-    if (no.valor !== 70) {
-      setMensagem("❌ Não é esse nó.\n\nClique no Guardião Sol, valor 70.");
+    if (noSelecionadoId === null) {
+      setMensagem("❌ Primeiro selecione o Guardião Sol.");
       return;
     }
 
-    setArvore(atualizarNoArvore(arvore));
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite o novo nome do guardião.");
+      return;
+    }
+
+    const valorConvertido = Number(novoValor);
+
+    if (!novoValor || Number.isNaN(valorConvertido)) {
+      setMensagem("❌ Digite um valor numérico válido.");
+      return;
+    }
+
+    if (valorConvertido <= 50) {
+      setMensagem(
+        "❌ Esse valor quebraria a posição na árvore.\n\nO Guardião Sol está à direita da raiz 50, então o novo valor precisa ser maior que 50."
+      );
+      return;
+    }
+
+    setArvore(
+      atualizarNoArvore(
+        arvore,
+        noSelecionadoId,
+        novoNome.trim(),
+        valorConvertido
+      )
+    );
+
+    setNoAtualizadoId(noSelecionadoId);
+    setNovoNome("");
+    setNovoValor("");
+    setNoSelecionadoId(null);
     setEtapa(4);
+
     setMensagem(
-      "✏️ Guardião atualizado!\n\nO Guardião Sol virou Guardião Sol Supremo, valor 75.\n\nAgora arraste esse nó atualizado para o Portal de Remoção."
+      "✏️ Nó atualizado!\n\nAgora vamos aprender remoção em árvore.\n\nEsse nó está na ponta da árvore e não possui filhos.\n\nIsso significa que ele é um nó folha.\n\nNós folha podem ser removidos diretamente."
     );
   }
 
-  function removerNoArvore(no, valor) {
+  function removerFolhaPorId(no, id) {
     if (!no) return null;
 
-    if (valor < no.valor) {
-      return {
-        ...no,
-        esquerda: removerNoArvore(no.esquerda, valor),
-      };
+    if (no.id === id) {
+      if (!no.esquerda && !no.direita) return null;
+      return no;
     }
 
-    if (valor > no.valor) {
-      return {
-        ...no,
-        direita: removerNoArvore(no.direita, valor),
-      };
-    }
-
-    if (!no.esquerda && !no.direita) return null;
-    if (!no.esquerda) return no.direita;
-    if (!no.direita) return no.esquerda;
-
-    return no;
+    return {
+      ...no,
+      esquerda: removerFolhaPorId(no.esquerda, id),
+      direita: removerFolhaPorId(no.direita, id),
+    };
   }
 
-  function removerNo(valor) {
+  function removerNo(id) {
     if (etapa !== 4) return;
 
-    if (valor !== 75) {
+    if (id !== noAtualizadoId) {
       setMensagem(
-        "❌ Esse nó não deve ser removido agora.\n\nRemova o Guardião Sol Supremo, valor 75."
+        "❌ Esse não é o nó folha escolhido para este desafio.\n\nAqui estamos praticando a remoção de um nó sem filhos."
       );
       setDragged(null);
       return;
     }
 
-    setArvore(removerNoArvore(arvore, valor));
+    setArvore(removerFolhaPorId(arvore, id));
     setEtapa(5);
     setDragged(null);
+
     setMensagem(
-      "✅ Guardião Sol Supremo removido!\n\nAgora observe a árvore restante.\n\nQual nó está na RAIZ da árvore?"
+      "✅ Nó folha removido!\n\nComo ele não tinha filhos, bastou removê-lo da árvore.\n\nAgora observe a árvore restante.\n\nQual nó está na RAIZ?"
     );
   }
 
   function responderDesafio(no) {
     if (etapa !== 5) return;
 
-    if (arvore && no.valor === arvore.valor) {
+    if (arvore && no.id === arvore.id) {
       setMensagem(
-        `🏆 Perfeito!\n\nA raiz atual é ${no.nome}, valor ${no.valor}.\n\nVocê entendeu a Árvore:\n\n🌱 A raiz é o primeiro nó inserido.\n⬅️ Menores vão para a esquerda.\n➡️ Maiores vão para a direita.\n🔍 A busca segue comparações.`
+        `🏆 Perfeito!\n\nA raiz atual é ${no.nome}, valor ${no.valor}.\n\nVocê entendeu a Árvore:\n\n🌱 Raiz é o primeiro nó.\n⬅️ Menores vão para a esquerda.\n➡️ Maiores vão para a direita.\n🔍 A busca segue comparações.\n🗑️ Nó folha pode ser removido diretamente.`
       );
       setConcluido(true);
     } else {
-      setMensagem(
-        "❌ Ainda não.\n\nA raiz é o nó principal da árvore, o primeiro que foi inserido."
-      );
+      setMensagem("❌ Ainda não.\n\nA raiz é o nó principal da árvore.");
     }
   }
 
   function clicarNo(no) {
     if (etapa === 2) buscarNo(no);
-    if (etapa === 3) atualizarNo(no);
+    if (etapa === 3) selecionarNoParaAtualizar(no);
     if (etapa === 5) responderDesafio(no);
   }
 
@@ -232,7 +253,7 @@ function LabirintoArvore({ voltar, concluir }) {
 
   function soltarParaRemover() {
     if (!dragged || dragged.tipo !== "arvore") return;
-    removerNo(dragged.valor);
+    removerNo(dragged.id);
   }
 
   function resetar() {
@@ -243,6 +264,10 @@ function LabirintoArvore({ voltar, concluir }) {
     setValorBusca(null);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setNovoValor("");
+    setNoSelecionadoId(null);
+    setNoAtualizadoId(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio da árvore.");
   }
 
@@ -250,10 +275,11 @@ function LabirintoArvore({ voltar, concluir }) {
     if (!no) return null;
 
     const elementos = [];
-    const isRaiz = arvore && no.valor === arvore.valor;
+    const isRaiz = arvore && no.id === arvore.id;
     const verificar = etapa === 2 && no.valor === valorBusca;
-    const atualizar = etapa === 3 && no.valor === 70;
-    const atualizado = no.valor === 75;
+    const atualizar = etapa === 3 && no.id === 3;
+    const selecionado = etapa === 3 && noSelecionadoId === no.id;
+    const atualizado = noAtualizadoId === no.id;
 
     if (no.esquerda) {
       const xEsq = x - offset;
@@ -261,7 +287,7 @@ function LabirintoArvore({ voltar, concluir }) {
 
       elementos.push(
         <line
-          key={`linha-esq-${no.valor}`}
+          key={`linha-esq-${no.id}`}
           x1={x}
           y1={y + 24}
           x2={xEsq}
@@ -281,7 +307,7 @@ function LabirintoArvore({ voltar, concluir }) {
 
       elementos.push(
         <line
-          key={`linha-dir-${no.valor}`}
+          key={`linha-dir-${no.id}`}
           x1={x}
           y1={y + 24}
           x2={xDir}
@@ -296,30 +322,19 @@ function LabirintoArvore({ voltar, concluir }) {
     }
 
     elementos.push(
-      <foreignObject
-        key={`no-${no.valor}`}
-        x={x - 46}
-        y={y - 39}
-        width="92"
-        height="88"
-      >
+      <foreignObject key={`no-${no.id}`} x={x - 46} y={y - 39} width="92" height="92">
         <div
-          draggable={etapa === 4}
+          draggable={etapa === 4 && atualizado}
           onClick={() => clicarNo(no)}
-          onDragStart={() =>
-            setDragged({
-              tipo: "arvore",
-              valor: no.valor,
-            })
-          }
+          onDragStart={() => setDragged({ tipo: "arvore", id: no.id })}
           style={{
             ...estilos.noArvore,
             border:
-              verificar || atualizar || atualizado || isRaiz
+              verificar || atualizar || selecionado || atualizado || isRaiz
                 ? "3px solid #ec4899"
                 : "3px solid #818cf8",
             cursor:
-              etapa === 4
+              etapa === 4 && atualizado
                 ? "grab"
                 : etapa === 2 || etapa === 3 || etapa === 5
                 ? "pointer"
@@ -329,7 +344,8 @@ function LabirintoArvore({ voltar, concluir }) {
           {isRaiz && <span style={estilos.raiz}>RAIZ</span>}
           {verificar && <span style={estilos.busca}>VERIFICAR</span>}
           {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
-          {atualizado && <span style={estilos.atualizado}>ATUALIZADO</span>}
+          {selecionado && <span style={estilos.selecionado}>SELECIONADO</span>}
+          {atualizado && etapa === 4 && <span style={estilos.atualizado}>FOLHA</span>}
 
           <span style={estilos.avatarNo}>{no.icone}</span>
           <span style={estilos.nomeNo}>{no.nome}</span>
@@ -358,7 +374,7 @@ function LabirintoArvore({ voltar, concluir }) {
             <p>➡️ Direita: valores maiores.</p>
             <p>🔍 Buscar: começa na raiz e segue comparações.</p>
             <p>✏️ Atualizar: altera um nó encontrado.</p>
-            <p>🗑️ Remover: retira um nó da árvore.</p>
+            <p>🗑️ Remover folha: remove diretamente, pois não tem filhos.</p>
           </div>
 
           <button onClick={concluir} style={estilos.botaoPrincipal}>
@@ -372,38 +388,45 @@ function LabirintoArvore({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🌳</div>
-          <h1 style={estilos.titulo}>ÁRVORE ANCESTRAL</h1>
+
+          <h1 style={estilos.titulo}>  MUNDO DA ÁRVORE </h1>
           <p style={estilos.regra}>Menores à esquerda, maiores à direita.</p>
         </div>
 
         <div style={estilos.etapas}>
-          {["História", "Formar árvore", "Buscar", "Atualizar", "Remover", "Desafio"].map(
-            (nome, index) => (
-              <div
-                key={nome}
-                style={{
-                  ...estilos.etapaBox,
-                  background: etapa === index ? "#ec4899" : "#e2e8f0",
-                  color: etapa === index ? "white" : "#475569",
-                }}
-              >
-                {index}. {nome}
-              </div>
-            )
-          )}
+          {[
+            "História",
+            "Formar árvore",
+            "Buscar",
+            "Atualizar",
+            "Remover folha",
+            "Desafio",
+          ].map((nome, index) => (
+            <div
+              key={nome}
+              style={{
+                ...estilos.etapaBox,
+                background: etapa === index ? "#ec4899" : "#e2e8f0",
+                color: etapa === index ? "white" : "#475569",
+              }}
+            >
+              {index}. {nome}
+            </div>
+          ))}
         </div>
 
         <div style={estilos.mensagemEtapa}>{mensagem}</div>
@@ -413,8 +436,9 @@ function LabirintoArvore({ voltar, concluir }) {
             <div style={estilos.caixaTema}>🌳 Árvore do Conhecimento</div>
 
             <p style={estilos.textoIntro}>
-              Imagine uma árvore genealógica: existe um nó principal, chamado
-              raiz, e dele surgem filhos à esquerda e à direita.
+              Uma árvore binária de busca organiza valores por comparação.
+              O primeiro nó vira raiz. Menores vão para a esquerda. Maiores vão
+              para a direita.
             </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
@@ -431,7 +455,7 @@ function LabirintoArvore({ voltar, concluir }) {
               <div style={estilos.disponiveisContainer}>
                 {disponiveis.map((item, index) => (
                   <motion.div
-                    key={item.valor}
+                    key={item.id}
                     draggable
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
@@ -474,6 +498,42 @@ function LabirintoArvore({ voltar, concluir }) {
             <div style={estilos.colunaGrande}>
               <h2 style={estilos.tituloCaixa}>Árvore montada</h2>
 
+              {etapa === 3 && (
+                <div style={estilos.formAtualizacao}>
+                  <h3 style={estilos.tituloAtualizacao}>
+                    ✏️ Atualizar nó da árvore
+                  </h3>
+
+                  <p style={estilos.textoAtualizacao}>
+                    Clique no Guardião Sol, digite o novo nome e um novo valor.
+                    Use valor maior que 50.
+                  </p>
+
+                  <input
+                    type="text"
+                    value={novoNome}
+                    onChange={(e) => setNovoNome(e.target.value)}
+                    placeholder="Ex: Guardião Sol Supremo"
+                    style={estilos.inputAtualizacao}
+                  />
+
+                  <input
+                    type="number"
+                    value={novoValor}
+                    onChange={(e) => setNovoValor(e.target.value)}
+                    placeholder="Ex: 75"
+                    style={estilos.inputAtualizacao}
+                  />
+
+                  <button
+                    onClick={confirmarAtualizacao}
+                    style={estilos.botaoAtualizar}
+                  >
+                    ATUALIZAR
+                  </button>
+                </div>
+              )}
+
               <div style={estilos.arvoreGrande}>
                 <svg width="100%" height="360" viewBox="0 0 520 360">
                   {desenharArvore(arvore, 260, 55, 95)}
@@ -498,12 +558,20 @@ function LabirintoArvore({ voltar, concluir }) {
             <div style={estilos.coluna}>
               <h2 style={estilos.tituloCaixa}>Portal de remoção</h2>
 
+              <div style={estilos.explicacaoRemocao}>
+                <strong>Remoção de nó folha</strong>
+                <p>
+                  O nó folha não possui filhos. Por isso, ele pode ser removido
+                  diretamente da árvore.
+                </p>
+              </div>
+
               <div
                 style={estilos.zonaRemocao}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={soltarParaRemover}
               >
-                🌀 Arraste o nó atualizado para cá
+                🌀 Arraste o nó folha para cá
               </div>
             </div>
           </div>
@@ -511,12 +579,11 @@ function LabirintoArvore({ voltar, concluir }) {
 
         <div style={estilos.caixaConceito}>
           <h3>📚 Conceito da Árvore</h3>
-          <p>
-            <strong>Raiz:</strong> primeiro nó da árvore.
-          </p>
+          <p><strong>Raiz:</strong> primeiro nó inserido.</p>
           <p>⬅️ Valores menores ficam à esquerda.</p>
           <p>➡️ Valores maiores ficam à direita.</p>
-          <p>🔍 A busca começa pela raiz e segue comparações.</p>
+          <p>🔍 A busca compara valores e escolhe o caminho.</p>
+          <p>🗑️ Nó folha: nó sem filhos, pode ser removido diretamente.</p>
         </div>
 
         <button onClick={resetar} style={estilos.botaoResetar}>
@@ -531,13 +598,14 @@ function LabirintoArvore({ voltar, concluir }) {
               <p>Você chegou à Árvore Ancestral do Reino dos Dados.</p>
 
               <p>
-                Cada guardião ocupa um lugar na árvore. O primeiro guardião vira
-                a raiz.
+                Cada guardião ocupa um lugar na árvore. O primeiro vira a raiz.
               </p>
 
               <p>Aqui vale a regra da Árvore Binária de Busca:</p>
 
-              <strong>Menores vão para a esquerda, maiores vão para a direita.</strong>
+              <strong>
+                Menores vão para a esquerda, maiores vão para a direita.
+              </strong>
 
               <button
                 onClick={() => setMostrarHistoria(false)}
@@ -573,6 +641,15 @@ const estilos = {
     position: "relative",
   },
 
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+
   header: {
     textAlign: "center",
     marginBottom: "24px",
@@ -606,20 +683,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -819,6 +897,19 @@ const estilos = {
     fontWeight: "900",
   },
 
+  selecionado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "9px",
+    padding: "3px 7px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
   atualizado: {
     position: "absolute",
     bottom: "-12px",
@@ -832,11 +923,22 @@ const estilos = {
     fontWeight: "900",
   },
 
+  explicacaoRemocao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "16px",
+  },
+
   zonaRemocao: {
     border: "3px dashed #ec4899",
     borderRadius: "18px",
     padding: "24px",
-    minHeight: "260px",
+    minHeight: "220px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -845,6 +947,50 @@ const estilos = {
     fontSize: "20px",
     background: "rgba(236,72,153,0.08)",
     textAlign: "center",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   caixaConceito: {

@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 
 function LabirintoGrafo({ voltar, concluir }) {
   const locaisIniciais = [
-    { nome: "Praça Central", icone: "🏰" },
-    { nome: "Torre dos Magos", icone: "🧙" },
-    { nome: "Floresta Antiga", icone: "🌲" },
-    { nome: "Ponte Sombria", icone: "🌉" },
-    { nome: "Templo Final", icone: "🏛️" },
+    { nome: "Praça Central", icone: "🏰", posicao: "Praça Central" },
+    { nome: "Torre dos Magos", icone: "🧙", posicao: "Torre dos Magos" },
+    { nome: "Floresta Antiga", icone: "🌲", posicao: "Floresta Antiga" },
+    { nome: "Ponte Sombria", icone: "🌉", posicao: "Ponte Sombria" },
+    { nome: "Templo Final", icone: "🏛️", posicao: "Templo Final" },
   ];
 
   const conexoesIniciais = [
@@ -29,22 +29,35 @@ function LabirintoGrafo({ voltar, concluir }) {
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
+  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio do grafo."
   );
 
+  const posicoes = {
+    "Praça Central": { x: 120, y: 90 },
+    "Torre dos Magos": { x: 300, y: 70 },
+    "Floresta Antiga": { x: 160, y: 240 },
+    "Ponte Sombria": { x: 420, y: 200 },
+    "Templo Final": { x: 300, y: 340 },
+  };
+
   function iniciarFase() {
     setEtapa(1);
     setMensagem(
-      "📥 FORMAR GRAFO\n\nArraste os locais para montar a cidade.\n\nDepois que todos os locais forem colocados, os caminhos entre eles serão revelados."
+      "📥 FORMAR GRAFO\n\nArraste os locais para montar a cidade.\n\nCada local é um VÉRTICE.\nOs caminhos entre eles são as ARESTAS."
     );
   }
 
   function criarConexoes(verticesAtuais) {
-    const nomes = verticesAtuais.map((v) => v.nome);
+    const posicoesVertices = verticesAtuais.map((v) => v.posicao);
 
     return conexoesIniciais.filter(
-      ([origem, destino]) => nomes.includes(origem) && nomes.includes(destino)
+      ([origem, destino]) =>
+        posicoesVertices.includes(origem) && posicoesVertices.includes(destino)
     );
   }
 
@@ -64,7 +77,7 @@ function LabirintoGrafo({ voltar, concluir }) {
       setEtapa(2);
       setIndiceBusca(0);
       setMensagem(
-        "🔍 BUSCAR CAMINHO\n\nO Guardião precisa chegar até a Ponte Sombria.\n\nEm um grafo, você percorre os vértices usando as conexões.\n\nSiga o caminho correto:\n\nPraça Central → Torre dos Magos → Ponte Sombria\n\nClique no local marcado como VERIFICAR."
+        "🔍 BUSCAR CAMINHO\n\nO Guardião precisa chegar até a Ponte Sombria.\n\nEm um grafo, você precisa seguir as conexões.\n\nCaminho correto:\n\nPraça Central → Torre dos Magos → Ponte Sombria\n\nClique no local marcado como VERIFICAR."
       );
     } else {
       setMensagem(
@@ -79,71 +92,95 @@ function LabirintoGrafo({ voltar, concluir }) {
     const local = vertices[index];
     const esperado = caminhoBusca[indiceBusca];
 
-    if (local.nome !== esperado) {
+    if (local.posicao !== esperado) {
       setMensagem(
-        `❌ Caminho errado.\n\nNo grafo, você precisa seguir as conexões corretas.\n\nAgora clique em: ${esperado}.`
+        `❌ Caminho errado.\n\nVocê precisa seguir a conexão correta.\n\nAgora clique em: ${esperado}.`
       );
       return;
     }
 
-    if (local.nome === "Ponte Sombria") {
+    if (local.posicao === "Ponte Sombria") {
       setEtapa(3);
       setMensagem(
-        "✅ Ponte Sombria encontrada!\n\nVocê percorreu o grafo seguindo as conexões.\n\nAgora atualize esse local para Ponte Iluminada."
+        "✅ Ponte Sombria encontrada!\n\nVocê percorreu o grafo seguindo as conexões.\n\nAgora clique nela, digite um novo nome e aperte ATUALIZAR."
       );
       return;
     }
 
     setIndiceBusca(indiceBusca + 1);
     setMensagem(
-      `🔍 Você passou por ${local.nome}.\n\nContinue seguindo a conexão até o próximo local marcado.`
+      `🔍 Você passou por ${local.nome}.\n\nContinue seguindo a próxima conexão do caminho.`
     );
   }
 
-  function atualizarVertice(index) {
+  function selecionarVerticeParaAtualizar(index) {
     if (etapa !== 3) return;
 
-    if (vertices[index].nome !== "Ponte Sombria") {
-      setMensagem("❌ Não é esse local.\n\nClique na Ponte Sombria para atualizar.");
+    if (vertices[index].posicao !== "Ponte Sombria") {
+      setMensagem("❌ Não é esse local.\n\nSelecione a Ponte Sombria.");
       return;
     }
 
-    const novosVertices = vertices.map((v) =>
-      v.nome === "Ponte Sombria"
-        ? { ...v, nome: "Ponte Iluminada", icone: "🌁" }
+    setIndiceSelecionado(index);
+    setMensagem(
+      "✅ Ponte selecionada.\n\nDigite o novo nome no campo e clique em ATUALIZAR."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (indiceSelecionado === null) {
+      setMensagem("❌ Primeiro selecione a Ponte Sombria.");
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      return;
+    }
+
+    const nomeNovo = novoNome.trim();
+
+    const novosVertices = vertices.map((v, index) =>
+      index === indiceSelecionado
+        ? {
+            ...v,
+            nome: nomeNovo,
+            icone: "🌁",
+            posicao: "Ponte Sombria",
+          }
         : v
     );
 
-    const novasArestas = arestas.map(([origem, destino]) => [
-      origem === "Ponte Sombria" ? "Ponte Iluminada" : origem,
-      destino === "Ponte Sombria" ? "Ponte Iluminada" : destino,
-    ]);
-
     setVertices(novosVertices);
-    setArestas(novasArestas);
+    setIndiceAtualizado(indiceSelecionado);
+    setIndiceSelecionado(null);
+    setNovoNome("");
     setEtapa(4);
+
     setMensagem(
-      "✏️ Local atualizado!\n\nA Ponte Sombria virou Ponte Iluminada.\n\nAgora remova esse local do grafo.\n\nArraste a Ponte Iluminada para a zona de remoção."
+      "✏️ Vértice atualizado!\n\nEle continua no mesmo lugar do grafo, só mudou o nome.\n\nAgora vamos aprender remoção:\n\nquando um vértice é removido, todas as arestas ligadas a ele também somem."
     );
   }
 
   function removerVertice(index) {
     if (etapa !== 4) return;
 
-    const local = vertices[index];
-
-    if (local.nome !== "Ponte Iluminada") {
+    if (index !== indiceAtualizado) {
       setMensagem(
-        "❌ Esse local não deve ser removido agora.\n\nRemova a Ponte Iluminada."
+        "❌ Esse não é o vértice escolhido para esta demonstração.\n\nRemova a ponte atualizada para ver as conexões dela desaparecerem."
       );
       setDragged(null);
       return;
     }
 
+    const removido = vertices[index];
+
     const novosVertices = vertices.filter((_, i) => i !== index);
     const novasArestas = arestas.filter(
       ([origem, destino]) =>
-        origem !== "Ponte Iluminada" && destino !== "Ponte Iluminada"
+        origem !== removido.posicao && destino !== removido.posicao
     );
 
     setVertices(novosVertices);
@@ -152,26 +189,28 @@ function LabirintoGrafo({ voltar, concluir }) {
     setDragged(null);
 
     setMensagem(
-      "✅ Ponte Iluminada removida!\n\nQuando um vértice é removido, suas conexões também somem.\n\nAgora observe o grafo restante.\n\nQual local ainda está conectado ao Templo Final?"
+      `✅ ${removido.nome} foi removida!\n\nComo ela era um vértice do grafo, todas as conexões ligadas a ela também foram removidas.\n\nAgora observe o grafo restante.\n\nQual local ainda está conectado ao Templo Final?`
     );
   }
 
   function responderDesafio(index) {
     if (etapa !== 5) return;
 
-    if (vertices[index].nome === "Floresta Antiga") {
+    if (vertices[index].posicao === "Floresta Antiga") {
       setMensagem(
-        "🏆 Perfeito!\n\nVocê entendeu o Grafo:\n\n🔵 Vértices são pontos.\n➖ Arestas são conexões.\n🔍 Buscar é percorrer caminhos.\n✏️ Atualizar altera um vértice.\n🗑️ Remover um vértice também remove suas conexões."
+        "🏆 Perfeito!\n\nDepois da remoção da ponte, a conexão Ponte → Templo sumiu.\n\nA Floresta Antiga ainda continua ligada ao Templo Final.\n\nVocê entendeu o Grafo:\n\n🔵 Vértices são pontos.\n➖ Arestas são conexões.\n🔍 Buscar é seguir caminhos conectados.\n✏️ Atualizar altera um vértice.\n🗑️ Remover um vértice remove suas conexões."
       );
       setConcluido(true);
     } else {
-      setMensagem("❌ Ainda não.\n\nObserve qual local continua ligado ao Templo Final.");
+      setMensagem(
+        "❌ Ainda não.\n\nObserve as linhas do grafo.\n\nQual local ainda tem uma conexão direta com o Templo Final?"
+      );
     }
   }
 
   function clicarVertice(index) {
     if (etapa === 2) buscarVertice(index);
-    if (etapa === 3) atualizarVertice(index);
+    if (etapa === 3) selecionarVerticeParaAtualizar(index);
     if (etapa === 5) responderDesafio(index);
   }
 
@@ -194,17 +233,11 @@ function LabirintoGrafo({ voltar, concluir }) {
     setIndiceBusca(0);
     setConcluido(false);
     setMostrarHistoria(true);
+    setNovoNome("");
+    setIndiceSelecionado(null);
+    setIndiceAtualizado(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio do grafo.");
   }
-
-  const posicoes = {
-    "Praça Central": { x: 120, y: 90 },
-    "Torre dos Magos": { x: 300, y: 70 },
-    "Floresta Antiga": { x: 160, y: 240 },
-    "Ponte Sombria": { x: 420, y: 200 },
-    "Ponte Iluminada": { x: 420, y: 200 },
-    "Templo Final": { x: 300, y: 340 },
-  };
 
   function renderGrafo(interativo = true) {
     return (
@@ -230,16 +263,20 @@ function LabirintoGrafo({ voltar, concluir }) {
         })}
 
         {vertices.map((local, index) => {
-          const pos = posicoes[local.nome];
+          const pos = posicoes[local.posicao];
+
           if (!pos) return null;
 
           const esperado = caminhoBusca[indiceBusca];
-          const verificar = etapa === 2 && local.nome === esperado;
+
+          const verificar = etapa === 2 && local.posicao === esperado;
           const visto =
             etapa === 2 &&
-            caminhoBusca.slice(0, indiceBusca).includes(local.nome);
-          const atualizar = etapa === 3 && local.nome === "Ponte Sombria";
-          const atualizado = local.nome === "Ponte Iluminada";
+            caminhoBusca.slice(0, indiceBusca).includes(local.posicao);
+
+          const atualizar = etapa === 3 && local.posicao === "Ponte Sombria";
+          const selecionado = etapa === 3 && index === indiceSelecionado;
+          const atualizado = index === indiceAtualizado;
 
           return (
             <foreignObject
@@ -247,20 +284,20 @@ function LabirintoGrafo({ voltar, concluir }) {
               x={pos.x - 62}
               y={pos.y - 48}
               width="124"
-              height="105"
+              height="110"
             >
               <div
-                draggable={etapa === 4}
+                draggable={etapa === 4 && atualizado}
                 onClick={() => interativo && clicarVertice(index)}
                 onDragStart={() => setDragged({ tipo: "grafo", index })}
                 style={{
                   ...estilos.vertice,
                   border:
-                    verificar || atualizar || atualizado
+                    verificar || atualizar || selecionado || atualizado
                       ? "3px solid #ec4899"
                       : "3px solid #818cf8",
                   cursor:
-                    etapa === 4
+                    etapa === 4 && atualizado
                       ? "grab"
                       : etapa === 2 || etapa === 3 || etapa === 5
                       ? "pointer"
@@ -270,7 +307,12 @@ function LabirintoGrafo({ voltar, concluir }) {
                 {verificar && <span style={estilos.busca}>VERIFICAR</span>}
                 {visto && <span style={estilos.verificado}>VISTO</span>}
                 {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
-                {atualizado && <span style={estilos.atualizado}>ATUALIZADO</span>}
+                {selecionado && (
+                  <span style={estilos.selecionado}>SELECIONADO</span>
+                )}
+                {atualizado && (
+                  <span style={estilos.atualizado}>ATUALIZADO</span>
+                )}
 
                 <span style={estilos.avatarVertice}>{local.icone}</span>
                 <span style={estilos.nomeItem}>{local.nome}</span>
@@ -298,7 +340,7 @@ function LabirintoGrafo({ voltar, concluir }) {
             <p>➖ Arestas: conexões entre vértices.</p>
             <p>🔍 Buscar: percorre caminhos conectados.</p>
             <p>✏️ Atualizar: altera um vértice encontrado.</p>
-            <p>🗑️ Remover: remove vértice e suas conexões.</p>
+            <p>🗑️ Remover: remove o vértice e suas conexões.</p>
           </div>
 
           <button onClick={concluir} style={estilos.botaoPrincipal}>
@@ -312,38 +354,44 @@ function LabirintoGrafo({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🕸️</div>
-          <h1 style={estilos.titulo}>CIDADE DAS CONEXÕES</h1>
+          <h1 style={estilos.titulo}>MUNDO DO GRAFO</h1>
           <p style={estilos.regra}>Grafo: vértices conectados por arestas.</p>
         </div>
 
         <div style={estilos.etapas}>
-          {["História", "Formar grafo", "Buscar", "Atualizar", "Remover", "Desafio"].map(
-            (nome, index) => (
-              <div
-                key={nome}
-                style={{
-                  ...estilos.etapaBox,
-                  background: etapa === index ? "#ec4899" : "#e2e8f0",
-                  color: etapa === index ? "white" : "#475569",
-                }}
-              >
-                {index}. {nome}
-              </div>
-            )
-          )}
+          {[
+            "História",
+            "Formar grafo",
+            "Buscar",
+            "Atualizar",
+            "Remover",
+            "Desafio",
+          ].map((nome, index) => (
+            <div
+              key={nome}
+              style={{
+                ...estilos.etapaBox,
+                background: etapa === index ? "#ec4899" : "#e2e8f0",
+                color: etapa === index ? "white" : "#475569",
+              }}
+            >
+              {index}. {nome}
+            </div>
+          ))}
         </div>
 
         <div style={estilos.mensagemEtapa}>{mensagem}</div>
@@ -353,8 +401,8 @@ function LabirintoGrafo({ voltar, concluir }) {
             <div style={estilos.caixaTema}>🌐 Cidade das Conexões</div>
 
             <p style={estilos.textoIntro}>
-              Imagine um mapa de cidade. Cada lugar é um ponto. Cada caminho
-              entre lugares é uma conexão.
+              Um grafo é formado por vértices e arestas. Os vértices são os
+              locais. As arestas são os caminhos que ligam esses locais.
             </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
@@ -410,6 +458,34 @@ function LabirintoGrafo({ voltar, concluir }) {
           <div style={estilos.conteudoDesafio}>
             <div style={estilos.colunaGrande}>
               <h2 style={estilos.tituloCaixa}>Mapa do grafo</h2>
+
+              {etapa === 3 && (
+                <div style={estilos.formAtualizacao}>
+                  <h3 style={estilos.tituloAtualizacao}>
+                    ✏️ Atualizar vértice
+                  </h3>
+
+                  <p style={estilos.textoAtualizacao}>
+                    Clique na Ponte Sombria, digite o novo nome e confirme.
+                  </p>
+
+                  <input
+                    type="text"
+                    value={novoNome}
+                    onChange={(e) => setNovoNome(e.target.value)}
+                    placeholder="Ex: Ponte Iluminada"
+                    style={estilos.inputAtualizacao}
+                  />
+
+                  <button
+                    onClick={confirmarAtualizacao}
+                    style={estilos.botaoAtualizar}
+                  >
+                    ATUALIZAR
+                  </button>
+                </div>
+              )}
+
               <div style={estilos.grafoGrande}>{renderGrafo(true)}</div>
             </div>
           </div>
@@ -425,12 +501,20 @@ function LabirintoGrafo({ voltar, concluir }) {
             <div style={estilos.coluna}>
               <h2 style={estilos.tituloCaixa}>Zona de remoção</h2>
 
+              <div style={estilos.explicacaoRemocao}>
+                <strong>Remoção no grafo</strong>
+                <p>
+                  Ao remover um vértice, todas as arestas ligadas a ele também
+                  são removidas.
+                </p>
+              </div>
+
               <div
                 style={estilos.zonaRemocao}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={soltarParaRemover}
               >
-                🌀 Remova a Ponte Iluminada aqui
+                🌀 Arraste a ponte atualizada para cá
               </div>
             </div>
           </div>
@@ -438,8 +522,12 @@ function LabirintoGrafo({ voltar, concluir }) {
 
         <div style={estilos.caixaConceito}>
           <h3>📚 Conceito do Grafo</h3>
-          <p><strong>Vértices:</strong> pontos do grafo.</p>
-          <p><strong>Arestas:</strong> conexões entre os pontos.</p>
+          <p>
+            <strong>Vértices:</strong> pontos do grafo.
+          </p>
+          <p>
+            <strong>Arestas:</strong> conexões entre os pontos.
+          </p>
           <p>🔍 Buscar: percorrer caminhos conectados.</p>
           <p>✏️ Atualizar: alterar um vértice encontrado.</p>
           <p>🗑️ Remover: remove o vértice e suas conexões.</p>
@@ -457,8 +545,8 @@ function LabirintoGrafo({ voltar, concluir }) {
               <p>Você chegou à Cidade das Conexões do Reino dos Dados.</p>
 
               <p>
-                Aqui, os lugares são ligados por caminhos. Um lugar pode estar
-                conectado a vários outros.
+                Aqui, cada lugar é um vértice. Os caminhos entre os lugares são
+                as arestas.
               </p>
 
               <p>Aqui vale a lógica do Grafo:</p>
@@ -499,6 +587,15 @@ const estilos = {
     position: "relative",
   },
 
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+
   header: { textAlign: "center", marginBottom: "24px" },
   icone: { fontSize: "46px", marginBottom: "6px" },
 
@@ -525,20 +622,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -718,6 +816,19 @@ const estilos = {
     fontWeight: "900",
   },
 
+  selecionado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "9px",
+    padding: "3px 7px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
   verificado: {
     position: "absolute",
     bottom: "-12px",
@@ -744,11 +855,22 @@ const estilos = {
     fontWeight: "900",
   },
 
+  explicacaoRemocao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "16px",
+  },
+
   zonaRemocao: {
     border: "3px dashed #ec4899",
     borderRadius: "18px",
     padding: "24px",
-    minHeight: "260px",
+    minHeight: "220px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -757,6 +879,50 @@ const estilos = {
     fontSize: "20px",
     background: "rgba(236,72,153,0.08)",
     textAlign: "center",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   caixaConceito: {

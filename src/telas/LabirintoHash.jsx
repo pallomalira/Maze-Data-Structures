@@ -23,6 +23,10 @@ function LabirintoHash({ voltar, concluir }) {
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
   const [portaAberta, setPortaAberta] = useState(false);
 
+  const [novoNome, setNovoNome] = useState("");
+  const [gavetaSelecionada, setGavetaSelecionada] = useState(null);
+  const [gavetaAtualizada, setGavetaAtualizada] = useState(null);
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da Hash."
   );
@@ -92,7 +96,7 @@ function LabirintoHash({ voltar, concluir }) {
       setIndiceBuscaHash(1);
       setGavetaDestacada(1);
       setMensagem(
-        "🔍 ENCONTRAR A CHAVE\n\nA porta do labirinto precisa da Chave Solar.\n\nCódigo da Chave Solar: 15\n\nPrimeiro calculamos:\n\n15 % 7 = 1\n\nA busca começa na gaveta 1.\n\nClique na gaveta marcada como VERIFICAR."
+        "🔍 ENCONTRAR A CHAVE\n\nA porta precisa da Chave Solar.\n\nCódigo da Chave Solar: 15\n\nPrimeiro calculamos:\n\n15 % 7 = 1\n\nA busca começa na gaveta 1.\n\nSe não estiver ali, seguimos gaveta por gaveta por causa do probing.\n\nClique na gaveta marcada como VERIFICAR."
       );
     } else {
       setMensagem(
@@ -112,11 +116,11 @@ function LabirintoHash({ voltar, concluir }) {
 
       const item = gavetas[indice];
 
-      if (item && item.nome === "Chave Solar") {
+      if (item && item.codigo === 15) {
         setGavetaDestacada(indice);
         setEtapa(3);
         setMensagem(
-          "✅ Chave Solar encontrada!\n\nA busca começou na gaveta 1.\n\nComo algumas gavetas estavam ocupadas, seguimos o probing até encontrar a chave.\n\nAgora clique na Chave Solar."
+          "✅ Chave Solar encontrada!\n\nVocê começou na gaveta calculada: 15 % 7 = 1.\n\nAgora clique na Chave Solar, digite o novo nome e aperte ATUALIZAR."
         );
         return;
       }
@@ -126,7 +130,7 @@ function LabirintoHash({ voltar, concluir }) {
       setIndiceBuscaHash(proximo);
       setGavetaDestacada(proximo);
       setMensagem(
-        `🔍 Gaveta ${indice} verificada.\n\nEncontramos ${item?.nome || "nada"}, mas ainda não é a Chave Solar.\n\nComo houve colisão, seguimos para a próxima gaveta.\n\nClique na gaveta ${proximo}.`
+        `🔍 Gaveta ${indice} verificada.\n\nEncontramos ${item?.nome || "nada"}, mas ainda não é a Chave Solar.\n\nComo usamos probing, seguimos para a próxima gaveta.\n\nClique na gaveta ${proximo}.`
       );
 
       return;
@@ -135,7 +139,7 @@ function LabirintoHash({ voltar, concluir }) {
     if (etapa === 5) {
       if (indice === 2) {
         setMensagem(
-          "🏆 Perfeito!\n\n16 % 7 = 2.\n\nVocê entendeu a lógica da Hash:\n\nCódigo → cálculo → gaveta → chave encontrada."
+          "🏆 Perfeito!\n\n16 % 7 = 2.\n\nVocê entendeu a lógica da Hash:\n\nCódigo → cálculo → gaveta → busca por probing quando necessário."
         );
         setConcluido(true);
       } else {
@@ -146,21 +150,51 @@ function LabirintoHash({ voltar, concluir }) {
     }
   }
 
-  function escolherChave(indice) {
+  function escolherChaveParaAtualizar(indice) {
     if (etapa !== 3) return;
 
     const item = gavetas[indice];
 
-    if (!item || item.nome !== "Chave Solar") {
-      setMensagem(
-        "❌ Essa não é a chave certa.\n\nA porta precisa da Chave Solar."
-      );
+    if (!item || item.codigo !== 15) {
+      setMensagem("❌ Essa não é a chave certa.\n\nSelecione a Chave Solar.");
       return;
     }
 
-    setEtapa(4);
+    setGavetaSelecionada(indice);
     setMensagem(
-      "🔑 Chave Solar selecionada!\n\nAgora arraste a Chave Solar até a porta para liberar a energia."
+      "✅ Chave selecionada.\n\nDigite o novo nome da chave e clique em ATUALIZAR.\n\nO código continua o mesmo, então ela continua na mesma gaveta."
+    );
+  }
+
+  function confirmarAtualizacao() {
+    if (etapa !== 3) return;
+
+    if (gavetaSelecionada === null) {
+      setMensagem("❌ Primeiro selecione a Chave Solar.");
+      return;
+    }
+
+    if (novoNome.trim() === "") {
+      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      return;
+    }
+
+    const novaTabela = [...gavetas];
+
+    novaTabela[gavetaSelecionada] = {
+      ...novaTabela[gavetaSelecionada],
+      nome: novoNome.trim(),
+      icone: "🔆",
+    };
+
+    setGavetas(novaTabela);
+    setGavetaAtualizada(gavetaSelecionada);
+    setGavetaSelecionada(null);
+    setNovoNome("");
+    setEtapa(4);
+
+    setMensagem(
+      "✏️ Chave atualizada!\n\nNa Hash, atualizar altera o valor guardado na gaveta.\n\nO código continua 15, então a posição calculada continua sendo:\n\n15 % 7 = 1\n\nAgora arraste essa chave atualizada até a porta para liberar a energia."
     );
   }
 
@@ -171,8 +205,8 @@ function LabirintoHash({ voltar, concluir }) {
 
     const item = gavetas[dragged.indice];
 
-    if (!item || item.nome !== "Chave Solar") {
-      setMensagem("❌ Essa chave não abre a porta.");
+    if (!item || dragged.indice !== gavetaAtualizada || item.codigo !== 15) {
+      setMensagem("❌ Essa chave não abre a porta.\n\nArraste a chave atualizada.");
       setDragged(null);
       return;
     }
@@ -185,7 +219,7 @@ function LabirintoHash({ voltar, concluir }) {
     setPortaAberta(true);
     setEtapa(5);
     setMensagem(
-      "🔓 Porta aberta!\n\nA Chave Solar liberou energia para continuar no labirinto.\n\nDESAFIO FINAL:\n\nUma nova chave apareceu:\n\n🗝️ Chave Estelar\nCódigo: 16\n\nEm qual gaveta ela deve ficar?\n\nCalcule: 16 % 7 = ?"
+      "🔓 Porta aberta!\n\nAo usar a chave, removemos ela da gaveta.\n\nDESAFIO FINAL:\n\nUma nova chave apareceu:\n\n🗝️ Chave Estelar\nCódigo: 16\n\nEm qual gaveta ela deve ficar?\n\nCalcule: 16 % 7 = ?"
     );
   }
 
@@ -204,6 +238,9 @@ function LabirintoHash({ voltar, concluir }) {
     setConcluido(false);
     setMostrarHistoria(true);
     setPortaAberta(false);
+    setNovoNome("");
+    setGavetaSelecionada(null);
+    setGavetaAtualizada(null);
     setMensagem("Clique em COMEÇAR para iniciar o desafio da Hash.");
   }
 
@@ -214,37 +251,57 @@ function LabirintoHash({ voltar, concluir }) {
           const destacada =
             gavetaDestacada === indice || (etapa === 5 && indice === 2);
 
+          const selecionada = gavetaSelecionada === indice;
+          const atualizada = gavetaAtualizada === indice;
+
           return (
             <div key={indice} style={estilos.gavetaBox}>
               <div
                 onClick={() => clicarGaveta(indice)}
                 style={{
                   ...estilos.gaveta,
-                  border: destacada
-                    ? "3px solid #ec4899"
-                    : "2px solid #cbd5e1",
+                  border:
+                    destacada || selecionada || atualizada
+                      ? "3px solid #ec4899"
+                      : "2px solid #cbd5e1",
                   cursor: etapa === 2 || etapa === 5 ? "pointer" : "default",
                 }}
               >
-                {destacada && <span style={estilos.selo}>VERIFICAR</span>}
+                {destacada && etapa !== 3 && etapa !== 4 && (
+                  <span style={estilos.selo}>VERIFICAR</span>
+                )}
 
                 {item ? (
                   <motion.div
-                    draggable={etapa === 4 && item.nome === "Chave Solar"}
+                    draggable={etapa === 4 && atualizada}
                     whileHover={{ scale: 1.05 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      escolherChave(indice);
+                      escolherChaveParaAtualizar(indice);
                     }}
                     onDragStart={() => setDragged({ tipo: "gaveta", indice })}
                     style={{
                       ...estilos.itemNaGaveta,
                       background:
-                        item.nome === "Chave Solar" ? "#ec4899" : "#818cf8",
+                        item.codigo === 15 ? "#ec4899" : "#818cf8",
                       cursor:
-                        etapa === 3 || etapa === 4 ? "pointer" : "default",
+                        etapa === 3 || (etapa === 4 && atualizada)
+                          ? "pointer"
+                          : "default",
                     }}
                   >
+                    {etapa === 3 && item.codigo === 15 && (
+                      <span style={estilos.seloItem}>ATUALIZAR</span>
+                    )}
+
+                    {selecionada && (
+                      <span style={estilos.seloItemVerde}>SELECIONADA</span>
+                    )}
+
+                    {atualizada && (
+                      <span style={estilos.seloItemVerde}>ATUALIZADA</span>
+                    )}
+
                     <span style={estilos.iconeItem}>{item.icone}</span>
                     <span>{item.nome}</span>
                     <small>Código {item.codigo}</small>
@@ -293,20 +350,21 @@ function LabirintoHash({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+        <div style={estilos.barraTopo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            ← VOLTAR AO MAPA
+          </button>
 
-        <button
-          onClick={() => setMostrarHistoria(true)}
-          style={estilos.botaoHistoria}
-        >
-          📜 História
-        </button>
+          <button
+            onClick={() => setMostrarHistoria(true)}
+            style={estilos.botaoHistoria}
+          >
+            📜 História
+          </button>
+        </div>
 
         <div style={estilos.header}>
-          <div style={estilos.icone}>🔐</div>
-          <h1 style={estilos.titulo}>COFRE HASH</h1>
+          <h1 style={estilos.titulo}>MUNDO DO HASH</h1>
           <p style={estilos.regra}>Código → Código % 7 → Gaveta</p>
         </div>
 
@@ -315,7 +373,7 @@ function LabirintoHash({ voltar, concluir }) {
             "História",
             "Guardar",
             "Buscar",
-            "Escolher chave",
+            "Atualizar",
             "Abrir porta",
             "Desafio",
           ].map((nome, index) => (
@@ -337,11 +395,6 @@ function LabirintoHash({ voltar, concluir }) {
         {etapa === 0 && (
           <div style={estilos.introBox}>
             <div style={estilos.caixaTema}>🔑 Cofre das Chaves</div>
-
-            <p style={estilos.textoIntro}>
-              Para abrir a próxima porta, você precisa encontrar a chave correta.
-              Cada chave tem um código, e esse código indica a gaveta.
-            </p>
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
               COMEÇAR
@@ -393,6 +446,32 @@ function LabirintoHash({ voltar, concluir }) {
         {(etapa === 2 || etapa === 3 || etapa === 5) && (
           <div style={estilos.colunaGrande}>
             <h2 style={estilos.tituloCaixa}>Gavetas do cofre</h2>
+
+            {etapa === 3 && (
+              <div style={estilos.formAtualizacao}>
+                <h3 style={estilos.tituloAtualizacao}>✏️ Atualizar chave</h3>
+
+                <p style={estilos.textoAtualizacao}>
+                  Clique na Chave Solar, digite o novo nome e confirme.
+                </p>
+
+                <input
+                  type="text"
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  placeholder="Ex: Chave Solar Suprema"
+                  style={estilos.inputAtualizacao}
+                />
+
+                <button
+                  onClick={confirmarAtualizacao}
+                  style={estilos.botaoAtualizar}
+                >
+                  ATUALIZAR
+                </button>
+              </div>
+            )}
+
             {renderGavetas()}
           </div>
         )}
@@ -407,6 +486,14 @@ function LabirintoHash({ voltar, concluir }) {
             <div style={estilos.coluna}>
               <h2 style={estilos.tituloCaixa}>Porta de energia</h2>
 
+              <div style={estilos.explicacaoRemocao}>
+                <strong>Uso da chave</strong>
+                <p>
+                  A chave foi encontrada pela função hash. Agora ela será usada
+                  para abrir a porta, então sairá da gaveta.
+                </p>
+              </div>
+
               <div
                 style={estilos.porta}
                 onDragOver={(e) => e.preventDefault()}
@@ -418,7 +505,7 @@ function LabirintoHash({ voltar, concluir }) {
                 <span>
                   {portaAberta
                     ? "Porta aberta!"
-                    : "Arraste a Chave Solar para cá"}
+                    : "Arraste a chave atualizada para cá"}
                 </span>
               </div>
             </div>
@@ -498,6 +585,15 @@ const estilos = {
     position: "relative",
   },
 
+  barraTopo: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+
   header: { textAlign: "center", marginBottom: "24px" },
 
   icone: { fontSize: "46px", marginBottom: "6px" },
@@ -525,20 +621,21 @@ const estilos = {
     padding: "12px 18px",
     cursor: "pointer",
     fontSize: "14px",
+    flex: "1",
+    minWidth: "150px",
   },
 
   botaoHistoria: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
     background: "#9333ea",
     color: "white",
     border: "none",
-    borderRadius: "999px",
+    borderRadius: "18px",
     padding: "12px 18px",
     fontWeight: "900",
     cursor: "pointer",
-    zIndex: 50,
+    fontSize: "14px",
+    flex: "1",
+    minWidth: "130px",
   },
 
   etapas: {
@@ -583,13 +680,6 @@ const estilos = {
     fontWeight: "900",
     color: "#9333ea",
     marginBottom: "14px",
-  },
-
-  textoIntro: {
-    color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.7",
-    fontWeight: "700",
   },
 
   conteudoDesafio: {
@@ -718,6 +808,7 @@ const estilos = {
     flexDirection: "column",
     gap: "2px",
     width: "100%",
+    position: "relative",
   },
 
   iconeItem: { fontSize: "20px" },
@@ -736,6 +827,45 @@ const estilos = {
     zIndex: 2,
   },
 
+  seloItem: {
+    position: "absolute",
+    top: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#9333ea",
+    color: "white",
+    fontSize: "8px",
+    padding: "3px 6px",
+    borderRadius: "999px",
+    fontWeight: "900",
+    zIndex: 2,
+  },
+
+  seloItemVerde: {
+    position: "absolute",
+    top: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "8px",
+    padding: "3px 6px",
+    borderRadius: "999px",
+    fontWeight: "900",
+    zIndex: 2,
+  },
+
+  explicacaoRemocao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "16px",
+  },
+
   porta: {
     border: "3px dashed #ec4899",
     borderRadius: "22px",
@@ -750,6 +880,50 @@ const estilos = {
     textAlign: "center",
     gap: "14px",
     padding: "20px",
+  },
+
+  formAtualizacao: {
+    background: "white",
+    border: "2px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  tituloAtualizacao: {
+    margin: "0 0 6px",
+    color: "#475569",
+    fontWeight: "900",
+  },
+
+  textoAtualizacao: {
+    margin: "0 0 10px",
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
+  inputAtualizacao: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "2px solid #9333ea",
+    fontSize: "15px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+
+  botaoAtualizar: {
+    padding: "12px 20px",
+    background: "#9333ea",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 
   caixaConceito: {
