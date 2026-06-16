@@ -463,11 +463,7 @@ function LabirintoArvore({ voltar, concluir }) {
           <div style={estilos.introBox}>
             <div style={estilos.caixaTema}>🌳 Árvore do Conhecimento</div>
 
-            <p style={estilos.textoIntro}>
-              Uma árvore binária de busca organiza valores por comparação.
-              O primeiro nó vira raiz. Menores vão para a esquerda. Maiores vão
-              para a direita.
-            </p>
+
 
             <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
               COMEÇAR
