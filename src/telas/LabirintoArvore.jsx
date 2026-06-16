@@ -23,6 +23,8 @@ function LabirintoArvore({ voltar, concluir }) {
   const [noSelecionadoId, setNoSelecionadoId] = useState(null);
   const [noAtualizadoId, setNoAtualizadoId] = useState(null);
 
+  const ID_NO_PARA_ATUALIZAR = 3;
+
   const [mensagem, setMensagem] = useState(
     "Clique em COMEÇAR para iniciar o desafio da árvore."
   );
@@ -85,13 +87,11 @@ function LabirintoArvore({ voltar, concluir }) {
     if (etapa !== 2) return;
 
     if (no.valor !== valorBusca) {
-      setMensagem(
-        "❌ Caminho errado.\n\nNa árvore binária de busca, você precisa seguir as comparações.\n\nClique no nó marcado como VERIFICAR."
-      );
+      setMensagem("❌ Caminho errado.\n\nClique no nó marcado como VERIFICAR.");
       return;
     }
 
-    if (no.valor === 70) {
+    if (no.id === ID_NO_PARA_ATUALIZAR) {
       setEtapa(3);
       setMensagem(
         "✅ Guardião Sol encontrado!\n\nAgora clique nele, digite o novo nome e o novo valor, depois aperte ATUALIZAR."
@@ -99,15 +99,15 @@ function LabirintoArvore({ voltar, concluir }) {
       return;
     }
 
-    if (70 > no.valor) {
+    if (70 > no.valor && no.direita) {
       setValorBusca(no.direita.valor);
       setMensagem(
-        `🔍 Você verificou ${no.nome} (${no.valor}).\n\nComo 70 é MAIOR que ${no.valor}, siga para a DIREITA.`
+        `🔍 ${no.nome} verificado.\n\nComo 70 é MAIOR que ${no.valor}, siga para a DIREITA.`
       );
-    } else {
+    } else if (70 < no.valor && no.esquerda) {
       setValorBusca(no.esquerda.valor);
       setMensagem(
-        `🔍 Você verificou ${no.nome} (${no.valor}).\n\nComo 70 é MENOR que ${no.valor}, siga para a ESQUERDA.`
+        `🔍 ${no.nome} verificado.\n\nComo 70 é MENOR que ${no.valor}, siga para a ESQUERDA.`
       );
     }
   }
@@ -115,14 +115,14 @@ function LabirintoArvore({ voltar, concluir }) {
   function selecionarNoParaAtualizar(no) {
     if (etapa !== 3) return;
 
-    if (no.id !== 3) {
-      setMensagem("❌ Não é esse nó.\n\nSelecione o Guardião Sol, valor 70.");
+    if (no.id !== ID_NO_PARA_ATUALIZAR) {
+      setMensagem("❌ Não é esse nó.\n\nSelecione o Guardião Sol.");
       return;
     }
 
     setNoSelecionadoId(no.id);
     setMensagem(
-      "✅ Nó selecionado.\n\nDigite um novo nome e um novo valor.\n\nDica: use um valor maior que 50 para manter a lógica da árvore."
+      "✅ Nó selecionado.\n\nDigite um novo nome e um novo valor.\n\nUse um valor maior que 50 para manter a lógica da árvore."
     );
   }
 
@@ -154,7 +154,7 @@ function LabirintoArvore({ voltar, concluir }) {
     }
 
     if (novoNome.trim() === "") {
-      setMensagem("❌ Digite o novo nome do guardião.");
+      setMensagem("❌ Digite o novo nome.");
       return;
     }
 
@@ -167,7 +167,7 @@ function LabirintoArvore({ voltar, concluir }) {
 
     if (valorConvertido <= 50) {
       setMensagem(
-        "❌ Esse valor quebraria a posição na árvore.\n\nO Guardião Sol está à direita da raiz 50, então o novo valor precisa ser maior que 50."
+        "❌ Esse valor quebraria a posição na árvore.\n\nEsse nó está à direita da raiz 50, então precisa continuar maior que 50."
       );
       return;
     }
@@ -182,14 +182,21 @@ function LabirintoArvore({ voltar, concluir }) {
     );
 
     setNoAtualizadoId(noSelecionadoId);
+    setNoSelecionadoId(null);
     setNovoNome("");
     setNovoValor("");
-    setNoSelecionadoId(null);
     setEtapa(4);
 
     setMensagem(
-      "✏️ Nó atualizado!\n\nAgora vamos aprender remoção em árvore.\n\nEsse nó está na ponta da árvore e não possui filhos.\n\nIsso significa que ele é um nó folha.\n\nNós folha podem ser removidos diretamente."
+      "✏️ Nó atualizado!\n\nAgora vamos aprender remoção em árvore.\n\nEscolha qualquer nó folha para remover.\n\nNó folha é aquele que não possui filhos.\n\nExemplo: se um nó não tem esquerda nem direita, ele pode ser removido diretamente."
     );
+  }
+
+  function encontrarNoPorId(no, id) {
+    if (!no) return null;
+    if (no.id === id) return no;
+
+    return encontrarNoPorId(no.esquerda, id) || encontrarNoPorId(no.direita, id);
   }
 
   function removerFolhaPorId(no, id) {
@@ -210,20 +217,28 @@ function LabirintoArvore({ voltar, concluir }) {
   function removerNo(id) {
     if (etapa !== 4) return;
 
-    if (id !== noAtualizadoId) {
+    const noEscolhido = encontrarNoPorId(arvore, id);
+
+    if (!noEscolhido) {
+      setMensagem("❌ Esse nó não existe mais na árvore.");
+      setDragged(null);
+      return;
+    }
+
+    if (noEscolhido.esquerda || noEscolhido.direita) {
       setMensagem(
-        "❌ Esse não é o nó folha escolhido para este desafio.\n\nAqui estamos praticando a remoção de um nó sem filhos."
+        "❌ Esse nó não é folha.\n\nNó folha é aquele que não possui filhos.\n\nEscolha um nó sem filhos para remover."
       );
       setDragged(null);
       return;
     }
 
     setArvore(removerFolhaPorId(arvore, id));
-    setEtapa(5);
     setDragged(null);
+    setEtapa(5);
 
     setMensagem(
-      "✅ Nó folha removido!\n\nComo ele não tinha filhos, bastou removê-lo da árvore.\n\nAgora observe a árvore restante.\n\nQual nó está na RAIZ?"
+      `✅ Nó folha removido!\n\n${noEscolhido.nome} não tinha filhos, então pôde ser removido diretamente.\n\nAgora observe a árvore restante.\n\nQual nó está na RAIZ?`
     );
   }
 
@@ -232,7 +247,7 @@ function LabirintoArvore({ voltar, concluir }) {
 
     if (arvore && no.id === arvore.id) {
       setMensagem(
-        `🏆 Perfeito!\n\nA raiz atual é ${no.nome}, valor ${no.valor}.\n\nVocê entendeu a Árvore:\n\n🌱 Raiz é o primeiro nó.\n⬅️ Menores vão para a esquerda.\n➡️ Maiores vão para a direita.\n🔍 A busca segue comparações.\n🗑️ Nó folha pode ser removido diretamente.`
+        `🏆 Perfeito!\n\nA raiz atual é ${no.nome}, valor ${no.valor}.\n\nVocê entendeu a Árvore:\n\n🌱 Raiz é o primeiro nó.\n⬅️ Menores vão para a esquerda.\n➡️ Maiores vão para a direita.\n🔍 A busca segue comparações.\n✏️ Atualizar altera um nó.\n🗑️ Nó folha pode ser removido diretamente.`
       );
       setConcluido(true);
     } else {
@@ -277,9 +292,10 @@ function LabirintoArvore({ voltar, concluir }) {
     const elementos = [];
     const isRaiz = arvore && no.id === arvore.id;
     const verificar = etapa === 2 && no.valor === valorBusca;
-    const atualizar = etapa === 3 && no.id === 3;
+    const atualizar = etapa === 3 && no.id === ID_NO_PARA_ATUALIZAR;
     const selecionado = etapa === 3 && noSelecionadoId === no.id;
     const atualizado = noAtualizadoId === no.id;
+    const folhaParaRemover = etapa === 4 && !no.esquerda && !no.direita;
 
     if (no.esquerda) {
       const xEsq = x - offset;
@@ -322,19 +338,30 @@ function LabirintoArvore({ voltar, concluir }) {
     }
 
     elementos.push(
-      <foreignObject key={`no-${no.id}`} x={x - 46} y={y - 39} width="92" height="92">
+      <foreignObject
+        key={`no-${no.id}`}
+        x={x - 46}
+        y={y - 39}
+        width="92"
+        height="92"
+      >
         <div
-          draggable={etapa === 4 && atualizado}
+          draggable={etapa === 4 && folhaParaRemover}
           onClick={() => clicarNo(no)}
           onDragStart={() => setDragged({ tipo: "arvore", id: no.id })}
           style={{
             ...estilos.noArvore,
             border:
-              verificar || atualizar || selecionado || atualizado || isRaiz
+              verificar ||
+              atualizar ||
+              selecionado ||
+              atualizado ||
+              folhaParaRemover ||
+              isRaiz
                 ? "3px solid #ec4899"
                 : "3px solid #818cf8",
             cursor:
-              etapa === 4 && atualizado
+              etapa === 4 && folhaParaRemover
                 ? "grab"
                 : etapa === 2 || etapa === 3 || etapa === 5
                 ? "pointer"
@@ -345,7 +372,8 @@ function LabirintoArvore({ voltar, concluir }) {
           {verificar && <span style={estilos.busca}>VERIFICAR</span>}
           {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
           {selecionado && <span style={estilos.selecionado}>SELECIONADO</span>}
-          {atualizado && etapa === 4 && <span style={estilos.atualizado}>FOLHA</span>}
+          {atualizado && <span style={estilos.atualizado}>ATUALIZADO</span>}
+          {folhaParaRemover && <span style={estilos.folha}>FOLHA</span>}
 
           <span style={estilos.avatarNo}>{no.icone}</span>
           <span style={estilos.nomeNo}>{no.nome}</span>
@@ -402,8 +430,8 @@ function LabirintoArvore({ voltar, concluir }) {
         </div>
 
         <div style={estilos.header}>
-
-          <h1 style={estilos.titulo}>  MUNDO DA ÁRVORE </h1>
+          <div style={estilos.icone}>🌳</div>
+          <h1 style={estilos.titulo}>ÁRVORE ANCESTRAL</h1>
           <p style={estilos.regra}>Menores à esquerda, maiores à direita.</p>
         </div>
 
@@ -506,7 +534,6 @@ function LabirintoArvore({ voltar, concluir }) {
 
                   <p style={estilos.textoAtualizacao}>
                     Clique no Guardião Sol, digite o novo nome e um novo valor.
-                    Use valor maior que 50.
                   </p>
 
                   <input
@@ -521,7 +548,7 @@ function LabirintoArvore({ voltar, concluir }) {
                     type="number"
                     value={novoValor}
                     onChange={(e) => setNovoValor(e.target.value)}
-                    placeholder="Ex: 75"
+                    placeholder="Ex: 100"
                     style={estilos.inputAtualizacao}
                   />
 
@@ -561,8 +588,8 @@ function LabirintoArvore({ voltar, concluir }) {
               <div style={estilos.explicacaoRemocao}>
                 <strong>Remoção de nó folha</strong>
                 <p>
-                  O nó folha não possui filhos. Por isso, ele pode ser removido
-                  diretamente da árvore.
+                  Nó folha é um nó sem filhos. Escolha qualquer nó marcado como
+                  FOLHA e arraste para remover.
                 </p>
               </div>
 
@@ -571,7 +598,7 @@ function LabirintoArvore({ voltar, concluir }) {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={soltarParaRemover}
               >
-                🌀 Arraste o nó folha para cá
+                🌀 Arraste um nó folha para cá
               </div>
             </div>
           </div>
@@ -579,7 +606,9 @@ function LabirintoArvore({ voltar, concluir }) {
 
         <div style={estilos.caixaConceito}>
           <h3>📚 Conceito da Árvore</h3>
-          <p><strong>Raiz:</strong> primeiro nó inserido.</p>
+          <p>
+            <strong>Raiz:</strong> primeiro nó inserido.
+          </p>
           <p>⬅️ Valores menores ficam à esquerda.</p>
           <p>➡️ Valores maiores ficam à direita.</p>
           <p>🔍 A busca compara valores e escolhe o caminho.</p>
@@ -911,6 +940,19 @@ const estilos = {
   },
 
   atualizado: {
+    position: "absolute",
+    bottom: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "9px",
+    padding: "3px 7px",
+    borderRadius: "999px",
+    fontWeight: "900",
+  },
+
+  folha: {
     position: "absolute",
     bottom: "-12px",
     left: "50%",
