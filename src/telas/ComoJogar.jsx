@@ -1,35 +1,38 @@
+import Card from "../components/Card.jsx";
+
 function ComoJogar({ voltar }) {
   return (
     <div style={pagina}>
-      <div style={card}>
-        <span style={versao}>v1.0</span>
+      <Card>
 
-        <div style={icone}>📘</div>
+            <span style={versao}>v1.0</span>
 
-        <h1 style={titulo}>COMO JOGAR</h1>
+            <div style={icone}>📘</div>
 
-        <p style={subtitulo}>
-          Recupere os fragmentos do Núcleo do Conhecimento resolvendo desafios
-          de Estruturas de Dados.
-        </p>
+            <h1 style={titulo}>COMO JOGAR</h1>
 
-        <div style={caixa}>
-          <p>🎯 Escolha uma fase no mapa.</p>
-          <p>💡 Leia a regra de cada estrutura.</p>
-          <p>🧩 Resolva o desafio interativo.</p>
-          <p>🎒 Colete os fragmentos.</p>
-          <p>🌌 Complete tudo para liberar o Núcleo Final.</p>
-        </div>
+            <p style={subtitulo}>
+              Recupere os fragmentos do Núcleo do Conhecimento resolvendo desafios
+              de Estruturas de Dados.
+            </p>
 
-        <div style={caixaPequena}>
-          <strong>Estruturas:</strong>
-          <p>Fila • Pilha • Árvore • Lista • Grafos • Hash • Heap</p>
-        </div>
+            <div style={caixa}>
+              <p>🎯 Escolha uma fase no mapa.</p>
+              <p>💡 Leia a regra de cada estrutura.</p>
+              <p>🧩 Resolva o desafio interativo.</p>
+              <p>🎒 Colete os fragmentos.</p>
+              <p>🌌 Complete tudo para liberar o Núcleo Final.</p>
+            </div>
 
-        <button onClick={voltar} style={botao}>
-          ← VOLTAR AO MENU
-        </button>
-      </div>
+            <div style={caixaPequena}>
+              <strong>Estruturas:</strong>
+              <p>Fila • Pilha • Árvore • Lista • Grafos • Hash • Heap</p>
+            </div>
+
+            <button onClick={voltar} style={botao}>
+              ← VOLTAR AO MENU
+            </button>
+        </Card>
     </div>
   );
 }
