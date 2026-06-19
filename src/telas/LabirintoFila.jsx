@@ -1,9 +1,18 @@
+import TopoFase from "../components/fase/TopoFase";
+import Mensagem from "../components/fase/Mensagem";
+import Etapa from "../components/fase/Etapa";
+import ListaEtapas from "../components/fase/ListaEtapas";
+import Modal from "../components/fase/Modal";
+import Conceito from "../components/fase/Conceito";
+import BotoesRodape from "../components/fase/BotoesRodape";
+import FormAtualizacao from "../components/fase/FormAtualizacao";
+import ToastConfig from "../components/fase/ToastConfig";
+import TutorialJoyride from "../components/fase/TutorialJoyride";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
-import * as ReactJoyride from "react-joyride";
+import toast from "react-hot-toast";
 
-const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
+
 
 function LabirintoFila({ voltar, concluir }) {
   const personagensIniciais = [
@@ -12,6 +21,11 @@ function LabirintoFila({ voltar, concluir }) {
     { nome: "Ferreira Ana", icone: "🔨" },
     { nome: "Mago Pedro", icone: "✨" },
   ];
+
+  const viajanteDesafio = {
+    nome: "Curandeira Luna",
+    icone: "🌙",
+  };
 
   const etapas = [
     "Formar fila",
@@ -118,7 +132,7 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-fila",
         content:
-          "Agora observe quem ficou no início da fila. Esse será o próximo a ser atendido.",
+          "Uma nova viajante entrou no final da fila. Observe quem será atendido primeiro seguindo a regra FIFO.",
         placement: "top",
       },
     ],
@@ -286,13 +300,16 @@ function LabirintoFila({ voltar, concluir }) {
     }
 
     const atendido = fila[0];
+    const novaFila = [...fila.slice(1), viajanteDesafio];
 
     setAtendidos([...atendidos, atendido]);
-    setFila(fila.slice(1));
+    setFila(novaFila);
     setEtapa(5);
 
-    mostrarToast("success", `${atendido.nome} foi atendido.`);
-    setMensagem(`${atendido.nome} foi atendido. Agora responda: quem é o próximo?`);
+    mostrarToast("success", `${atendido.nome} foi atendido. Curandeira Luna entrou no final.`);
+    setMensagem(
+      "Curandeira Luna chegou agora e entrou no final da fila. Quem será atendido primeiro?"
+    );
   }
 
   function responderDesafio(index) {
@@ -301,11 +318,15 @@ function LabirintoFila({ voltar, concluir }) {
     if (index === 0) {
       setEtapa(6);
       setConcluido(true);
-      setMensagem("Parabéns! Você concluiu a fase da fila.");
+      setMensagem(
+        "Parabéns! Você percebeu que quem já estava na fila será atendido antes de quem acabou de chegar."
+      );
       mostrarToast("success", "Fase concluída!");
     } else {
-      mostrarToast("error", "O próximo é quem está no início da fila.");
-      setMensagem("Observe o início da fila. O próximo é o primeiro.");
+      mostrarToast("error", "Esse personagem ainda precisa esperar a vez.");
+      setMensagem(
+        "Na fila, quem chegou agora entra no final. Observe quem está no início."
+      );
     }
   }
 
@@ -335,184 +356,65 @@ function LabirintoFila({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <Joyride
-          steps={steps}
-          run={runTour}
-          continuous
-          showSkipButton
-          showProgress
-          disableOverlayClose
-          locale={{
-            back: "Voltar",
-            close: "Fechar",
-            last: "Concluir",
-            next: "Próximo",
-            skip: "Pular",
-          }}
-          styles={{
-            options: {
-              zIndex: 3000,
-              primaryColor: "#7c3aed",
-              textColor: "#334155",
-              overlayColor: "rgba(15, 23, 42, 0.65)",
-              backgroundColor: "#ffffff",
-              arrowColor: "#ffffff",
-            },
-            tooltip: {
-              borderRadius: "22px",
-              padding: "18px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
-              border: "1px solid #e2e8f0",
-            },
-            tooltipContent: {
-              padding: "10px 6px",
-              fontSize: "14px",
-              lineHeight: "1.6",
-              fontWeight: "700",
-            },
-            spotlight: {
-              borderRadius: "18px",
-              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
-            },
-            buttonNext: {
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-              borderRadius: "999px",
-              padding: "10px 18px",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonBack: {
-              color: "#64748b",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonSkip: {
-              color: "#ec4899",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonClose: {
-              color: "#94a3b8",
-            },
-          }}
-          callback={(data) => {
-            if (data.status === "finished" || data.status === "skipped") {
-              setRunTour(false);
-            }
-          }}
-        />
 
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          gutter={8}
-          containerStyle={{ top: 70 }}
-          toastOptions={{
-            duration: 1800,
-            style: {
-              borderRadius: "14px",
-              background: "#1e293b",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "13px",
-              maxWidth: "320px",
-              textAlign: "center",
-            },
-          }}
-        />
+        <TutorialJoyride
+      steps={steps}
+      runTour={runTour}
+      setRunTour={setRunTour}
+    />
 
-        <header style={estilos.topo} className="tour-topo">
-          <button onClick={voltar} style={estilos.botaoMapa}>
-            <span style={estilos.setaVoltar}>←</span>
-            <span>Mapa</span>
-          </button>
+        <ToastConfig />
 
-          <h1 style={estilos.tituloTopo}>Fila do Mercado</h1>
+        <div className="tour-topo">
+          <TopoFase
+              titulo="Fila do Mercado"
+              voltar={voltar}
+              abrirHistoria={() => setMostrarHistoria(true)}
+              abrirDica={() => setMostrarDica(true)}
+          />
+        </div>
 
-          <div style={estilos.iconesTopo}>
-            <button
-              onClick={() => setMostrarHistoria(true)}
-              style={estilos.botaoLivro}
-            >
-              📖
-            </button>
-
-            <button
-              onClick={() => setMostrarDica(true)}
-              style={estilos.botaoLuz}
-            >
-              💡
-            </button>
-          </div>
-        </header>
-
-        <section
-          style={estilos.etapaCard}
-          className="tour-etapa"
-          onClick={() => setMostrarEtapas(!mostrarEtapas)}
-        >
-          <div>
-            <span style={estilos.etapaNumero}>Etapa {etapa} de 6</span>
-            <h2 style={estilos.etapaNome}>{etapas[etapa - 1]}</h2>
-          </div>
-
-          <span style={estilos.setaBaixo}>⌄</span>
-        </section>
+          <Etapa
+    etapa={etapa}
+    totalEtapas={etapas.length}
+    nomeEtapa={etapas[etapa - 1]}
+    mostrarEtapas={mostrarEtapas}
+    setMostrarEtapas={setMostrarEtapas}
+  />
 
         {mostrarEtapas && (
-          <div style={estilos.listaEtapas}>
-            {etapas.map((nome, index) => (
-              <div
-                key={nome}
-                style={
-                  etapa === index + 1
-                    ? estilos.etapaListaAtiva
-                    : estilos.etapaListaItem
-                }
-              >
-                {index + 1}. {nome}
-              </div>
-            ))}
-          </div>
-        )}
+  <ListaEtapas etapas={etapas} etapaAtual={etapa} />
+)}
 
-        <p style={estilos.mensagem} className="tour-mensagem">
-          {mensagem}
-        </p>
+        <Mensagem texto={mensagem} />
 
         {etapa === 3 && (
-          <div style={estilos.formAtualizacao} className="tour-atualizar">
-            <input
-              value={novoNome}
-              onChange={(e) => setNovoNome(e.target.value)}
-              placeholder="Novo nome"
-              style={estilos.input}
-            />
-
-            <button onClick={confirmarAtualizacao} style={estilos.botaoAtualizar}>
-              Atualizar
-            </button>
-          </div>
-        )}
+  <FormAtualizacao
+    valor={novoNome}
+    setValor={setNovoNome}
+    confirmar={confirmarAtualizacao}
+    placeholder="Novo nome"
+  />
+)}
 
         {disponiveis.length > 0 && (
-          <section className="tour-personagens">
-            <h2 style={estilos.subtitulo}>Personagens disponíveis</h2>
+            <section className="tour-personagens">
+              <h2 style={estilos.subtitulo}>Personagens disponíveis</h2>
 
-            <div style={estilos.personagensGrid}>
-              {disponiveis.map((p, index) => (
-                <motion.button
-                  key={p.nome}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => adicionarPersonagem(index)}
-                  style={estilos.cardPersonagem}
-                >
-                  <span style={estilos.iconePersonagem}>{p.icone}</span>
-                  <span>{p.nome}</span>
-                </motion.button>
-              ))}
-            </div>
-          </section>
+              <div style={estilos.personagensGrid}>
+                {disponiveis.map((p, index) => (
+                    <motion.button
+                        key={p.nome}
+                        whileTap={{scale: 0.95}}
+                        onClick={() => adicionarPersonagem(index)}
+                        style={estilos.cardPersonagem}
+                    >
+                      <span style={estilos.iconePersonagem}>{p.icone}</span>
+                      <span>{p.nome}</span>
+                    </motion.button>
+                ))}
+              </div>
+            </section>
         )}
 
         <section style={estilos.filaArea} className="tour-fila">
@@ -530,110 +432,98 @@ function LabirintoFila({ voltar, concluir }) {
               const personagem = fila[posicao];
 
               return (
-                <motion.button
-                  key={posicao}
-                  whileTap={{ scale: personagem ? 0.95 : 1 }}
-                  onClick={() => clicarNaFila(posicao)}
-                  style={{
-                    ...estilos.slotFila,
-                    border:
-                      personagem && posicao === 0
-                        ? "2px solid #ec4899"
-                        : "2px dashed #cbd5e1",
-                  }}
-                >
-                  {personagem ? (
-                    <>
-                      <span style={estilos.iconeFila}>{personagem.icone}</span>
-                      <strong style={estilos.nomeFila}>{personagem.nome}</strong>
+                  <motion.button
+                      key={posicao}
+                      whileTap={{scale: personagem ? 0.95 : 1}}
+                      onClick={() => clicarNaFila(posicao)}
+                      style={{
+                        ...estilos.slotFila,
+                        border:
+                            personagem && posicao === 0
+                                ? "2px solid #ec4899"
+                                : "2px dashed #cbd5e1",
+                      }}
+                  >
+                    {personagem ? (
+                        <>
+                          <span style={estilos.iconeFila}>{personagem.icone}</span>
+                          <strong style={estilos.nomeFila}>{personagem.nome}</strong>
 
-                      {etapa === 2 && posicao === indiceBusca && (
-                        <em style={estilos.tagRoxa}>Verificar</em>
-                      )}
+                          {etapa === 2 && posicao === indiceBusca && (
+                              <em style={estilos.tagRoxa}>Verificar</em>
+                          )}
 
-                      {etapa === 3 && posicao === indiceSelecionado && (
-                        <em style={estilos.tagVerde}>Selecionado</em>
-                      )}
+                          {etapa === 3 && posicao === indiceSelecionado && (
+                              <em style={estilos.tagVerde}>Selecionado</em>
+                          )}
 
-                      {etapa >= 4 && posicao === indiceAtualizado && (
-                        <em style={estilos.tagVerde}>Atualizado</em>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <span style={estilos.numeroSlot}>{posicao + 1}</span>
-                      <span style={estilos.textoSlot}>Posição {posicao + 1}</span>
-                    </>
-                  )}
-                </motion.button>
+                          {etapa >= 4 && posicao === indiceAtualizado && (
+                              <em style={estilos.tagVerde}>Atualizado</em>
+                          )}
+                        </>
+                    ) : (
+                        <>
+                          <span style={estilos.numeroSlot}>{posicao + 1}</span>
+                          <span style={estilos.textoSlot}>Posição {posicao + 1}</span>
+                        </>
+                    )}
+                  </motion.button>
               );
             })}
           </div>
         </section>
 
         {etapa >= 4 && (
-          <section style={estilos.areaAtendimento} className="tour-atendimento">
-            <div>
-              <h2 style={estilos.subtituloAtendido}>Atendimento</h2>
-              <p style={estilos.textoAtendimento}>
-                Clique no primeiro da fila para atender.
-              </p>
-            </div>
+            <section style={estilos.areaAtendimento} className="tour-atendimento">
+              <div>
+                <h2 style={estilos.subtituloAtendido}>Atendimento</h2>
+                <p style={estilos.textoAtendimento}>
+                  Clique no primeiro da fila para atender.
+                </p>
+              </div>
 
-            <div style={estilos.caixaAtendido}>
-              {atendidos.length === 0 ? (
-                <span style={estilos.vazioAtendido}>Aguardando atendimento</span>
-              ) : (
-                atendidos.map((p, index) => (
-                  <div key={`${p.nome}-${index}`} style={estilos.cardAtendido}>
-                    <span>{p.icone}</span>
-                    <strong>{p.nome}</strong>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
+              <div style={estilos.caixaAtendido}>
+                {atendidos.length === 0 ? (
+                    <span style={estilos.vazioAtendido}>Aguardando atendimento</span>
+                ) : (
+                    atendidos.map((p, index) => (
+                        <div key={`${p.nome}-${index}`} style={estilos.cardAtendido}>
+                          <span>{p.icone}</span>
+                          <strong>{p.nome}</strong>
+                        </div>
+                    ))
+                )}
+              </div>
+            </section>
         )}
 
-        <section style={estilos.conceito} className="tour-conceito">
-          <span style={estilos.iconeInfo}>i</span>
+            <Conceito
+              texto="Na fila, quem entra primeiro é o primeiro a sair."
+              conceito="FIFO: First In, First Out"
+            />
 
-          <div>
-            <p>Na fila, quem entra primeiro é o primeiro a sair.</p>
-            <strong>FIFO: First In, First Out</strong>
-          </div>
-        </section>
+             <BotoesRodape
+              resetar={resetar}
+              iniciarTutorial={iniciarTutorial}
+            />
 
-        <div style={estilos.rodape} className="tour-resetar">
-          <button onClick={resetar} style={estilos.botaoResetar}>
-            ↻ Resetar
-          </button>
+{concluido && (
+  <Modal
+    titulo="🏆 Fila concluída!"
+    fechar={concluir}
+    textoBotao="Próxima fase"
+  >
+    <p>Você entendeu que novos personagens entram no final e aguardam a vez.</p>
+  </Modal>
+)}
 
-          <button onClick={iniciarTutorial} style={estilos.botaoTutorial}>
-            Ver tutorial
-          </button>
-        </div>
-
-        {concluido && (
-          <div style={estilos.fundoModal}>
-            <div style={estilos.modal}>
-              <h2 style={estilos.tituloConcluido}>🏆 Fila concluída!</h2>
-              <p>Você entendeu a regra FIFO.</p>
-
-              <button onClick={concluir} style={estilos.botaoFechar}>
-                Próxima fase
-              </button>
-            </div>
-          </div>
-        )}
-
-        {mostrarHistoria && (
-          <Modal fechar={fecharHistoria} titulo="📖 História">
-            <p>Você chegou ao Mercado do Reino dos Dados.</p>
-            <p>Os viajantes precisam formar uma fila para serem atendidos.</p>
-            <strong>Quem chega primeiro, sai primeiro.</strong>
-          </Modal>
-        )}
+{mostrarHistoria && (
+  <Modal fechar={fecharHistoria} titulo="📖 História">
+    <p>Você chegou ao Mercado do Reino dos Dados.</p>
+    <p>Os viajantes precisam formar uma fila para serem atendidos.</p>
+    <strong>Quem chega primeiro, sai primeiro.</strong>
+  </Modal>
+)}
 
         {mostrarDica && (
           <Modal fechar={() => setMostrarDica(false)} titulo="💡 Dica">
@@ -649,20 +539,6 @@ function LabirintoFila({ voltar, concluir }) {
   );
 }
 
-function Modal({ titulo, children, fechar }) {
-  return (
-    <div style={estilos.fundoModal}>
-      <div style={estilos.modal}>
-        <h2 style={estilos.tituloModal}>{titulo}</h2>
-        <div style={estilos.modalTexto}>{children}</div>
-
-        <button onClick={fechar} style={estilos.botaoFechar}>
-          Entendi
-        </button>
-      </div>
-    </div>
-  );
-}
 
 const estilos = {
   pagina: {
@@ -685,163 +561,6 @@ const estilos = {
     overflow: "hidden",
   },
 
-  topo: {
-    height: "64px",
-    display: "grid",
-    gridTemplateColumns: "1fr auto 1fr",
-    alignItems: "center",
-    borderBottom: "1px solid #e2e8f0",
-    margin: "0 -14px 14px",
-    padding: "0 18px",
-    boxSizing: "border-box",
-  },
-
-  botaoMapa: {
-    border: "none",
-    background: "transparent",
-    color: "#1e293b",
-    fontSize: "20px",
-    fontWeight: "800",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: 0,
-    cursor: "pointer",
-  },
-
-  setaVoltar: {
-    fontSize: "28px",
-    lineHeight: 1,
-    fontWeight: "400",
-  },
-
-  tituloTopo: {
-    margin: 0,
-    color: "#1e293b",
-    fontSize: "22px",
-    fontWeight: "900",
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  },
-
-  iconesTopo: {
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "18px",
-  },
-
-  botaoLivro: {
-    border: "none",
-    background: "transparent",
-    color: "#7c3aed",
-    fontSize: "25px",
-    cursor: "pointer",
-    padding: 0,
-  },
-
-  botaoLuz: {
-    border: "none",
-    background: "transparent",
-    color: "#ec4899",
-    fontSize: "25px",
-    cursor: "pointer",
-    padding: 0,
-    filter: "drop-shadow(0 0 5px rgba(236,72,153,0.35))",
-  },
-
-  etapaCard: {
-    minHeight: "64px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "12px 18px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "10px",
-    boxSizing: "border-box",
-    boxShadow: "0 6px 14px rgba(15,23,42,0.04)",
-    cursor: "pointer",
-  },
-
-  etapaNumero: {
-    color: "#64748b",
-    fontSize: "13px",
-    fontWeight: "700",
-  },
-
-  etapaNome: {
-    margin: "2px 0 0",
-    color: "#1e293b",
-    fontSize: "22px",
-    fontWeight: "900",
-  },
-
-  setaBaixo: {
-    fontSize: "24px",
-    color: "#1e293b",
-    fontWeight: "900",
-  },
-
-  listaEtapas: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "6px",
-    marginBottom: "8px",
-    background: "white",
-  },
-
-  etapaListaItem: {
-    padding: "6px 10px",
-    fontSize: "12px",
-    color: "#64748b",
-    fontWeight: "700",
-  },
-
-  etapaListaAtiva: {
-    padding: "6px 10px",
-    fontSize: "12px",
-    color: "#7c3aed",
-    fontWeight: "900",
-    background: "#ede9fe",
-    borderRadius: "10px",
-  },
-
-  mensagem: {
-    margin: "0 0 10px",
-    padding: "12px",
-    borderRadius: "18px",
-    background: "#f1f5f9",
-    color: "#475569",
-    textAlign: "center",
-    fontSize: "13px",
-    fontWeight: "700",
-  },
-
-  formAtualizacao: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "10px",
-  },
-
-  input: {
-    flex: 1,
-    height: "38px",
-    borderRadius: "12px",
-    border: "1px solid #cbd5e1",
-    padding: "0 10px",
-    fontSize: "13px",
-  },
-
-  botaoAtualizar: {
-    border: "none",
-    borderRadius: "12px",
-    background: "#7c3aed",
-    color: "white",
-    fontWeight: "900",
-    padding: "0 12px",
-    cursor: "pointer",
-  },
 
   subtitulo: {
     margin: "0 0 8px",
@@ -1032,117 +751,8 @@ const estilos = {
     textAlign: "center",
   },
 
-  conceito: {
-    marginTop: "10px",
-    background: "#f8fafc",
-    borderRadius: "18px",
-    padding: "10px",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    color: "#475569",
-    fontSize: "12px",
-    fontWeight: "700",
-  },
 
-  iconeInfo: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    background: "#ede9fe",
-    color: "#7c3aed",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "900",
-    fontSize: "18px",
-    flexShrink: 0,
-  },
-
-  rodape: {
-    marginTop: "10px",
-    paddingTop: "8px",
-    borderTop: "1px solid #e2e8f0",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "8px",
-  },
-
-  botaoResetar: {
-    width: "100%",
-    height: "40px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "999px",
-    background: "white",
-    color: "#7c3aed",
-    fontSize: "14px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  botaoTutorial: {
-    width: "100%",
-    height: "40px",
-    border: "none",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-    color: "white",
-    fontSize: "14px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  fundoModal: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15,23,42,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 50,
-  },
-
-  modal: {
-    width: "86%",
-    maxWidth: "340px",
-    background: "white",
-    borderRadius: "22px",
-    padding: "22px",
-    textAlign: "center",
-    color: "#475569",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
-  },
-
-  tituloModal: {
-    color: "#7c3aed",
-    fontSize: "24px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  tituloConcluido: {
-    color: "#7c3aed",
-    fontSize: "26px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  modalTexto: {
-    fontSize: "14px",
-    lineHeight: "1.6",
-  },
-
-  botaoFechar: {
-    width: "100%",
-    height: "42px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#7c3aed",
-    color: "white",
-    fontWeight: "900",
-    marginTop: "14px",
-    cursor: "pointer",
-  },
 };
+
 
 export default LabirintoFila;

@@ -2,151 +2,233 @@ function SobreJogo({ voltar }) {
   return (
     <div style={pagina}>
       <div style={card}>
-        <span style={versao}>v1.0</span>
 
-        <div style={icone}>🧩</div>
+        <header style={topo}>
+          <button onClick={voltar} style={botaoVoltar}>
+            <span style={setaVoltar}>←</span>
+            <span>Menu</span>
+          </button>
 
-        <h1 style={titulo}>SOBRE O JOGO</h1>
+          <h1 style={tituloTopo}>Sobre o jogo</h1>
 
-        <p style={subtitulo}>
-          Aprenda Estruturas de Dados enquanto explora o Reino do Conhecimento.
-        </p>
+          <div style={espacoTopo} />
+        </header>
 
-        <div style={caixaTexto}>
-          <p>
-            <strong>Maze Data Structures</strong> é um jogo educativo de
-            aventura criado para auxiliar no aprendizado de Estruturas de Dados.
+        <section style={conteudo}>
+          <div style={icone}>🧩</div>
+
+          <h2 style={titulo}>Maze Data Structures</h2>
+
+          <p style={subtitulo}>
+            Um jogo educativo que transforma Estruturas de Dados em desafios
+            interativos dentro de uma jornada.
           </p>
 
-          <p>
-            Durante a jornada, o jogador deverá recuperar os fragmentos do
-            Núcleo do Conhecimento enfrentando desafios inspirados em conceitos
-            fundamentais da computação.
-          </p>
+          <div style={caixaTexto}>
+            <p>
+              Durante a aventura, o jogador recupera fragmentos do Núcleo do
+              Conhecimento passando por fases inspiradas em conceitos
+              fundamentais da computação.
+            </p>
 
-          <h3 style={tituloSecao}>Estruturas exploradas</h3>
+            <p>
+              Cada fase apresenta uma estrutura diferente com história, dica,
+              tutorial e desafios práticos.
+            </p>
+          </div>
 
-          <p>🛡️ Fila (FIFO)</p>
-          <p>📚 Pilha (LIFO)</p>
-          <p>🌳 Árvore Binária</p>
-          <p>🔗 Lista Encadeada</p>
-          <p>🕸️ Grafos</p>
-          <p>🧮 Tabela Hash</p>
-          <p>🏔️ Heap</p>
+          <div style={caixaEstruturas}>
+            <strong style={tituloEstruturas}>Estruturas exploradas</strong>
 
-          <p style={objetivo}>
-            🎯 Objetivo: recuperar todos os fragmentos e restaurar o Núcleo do
-            Conhecimento.
-          </p>
-        </div>
+            <div style={tags}>
+              <span style={tag}>Fila</span>
+              <span style={tag}>Pilha</span>
+              <span style={tag}>Lista</span>
+              <span style={tag}>Árvore</span>
+              <span style={tag}>Grafo</span>
+            </div>
+          </div>
 
-        <button onClick={voltar} style={botao}>
-          ← VOLTAR AO MENU
-        </button>
+          <div style={objetivo}>
+            🎯 Recupere os fragmentos e restaure o Núcleo do Conhecimento.
+          </div>
+        </section>
       </div>
     </div>
   );
 }
 
 const pagina = {
-  minHeight: "100vh",
-  background:
-    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  width: "100vw",
+  minHeight: "100svh",
+  background: "#f8fafc",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "20px",
+  padding: "8px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
+  overflow: "hidden",
 };
 
 const card = {
   width: "100%",
-  maxWidth: "760px",
-  background: "rgba(255,255,255,0.88)",
-  backdropFilter: "blur(15px)",
-  borderRadius: "28px",
-  padding: "clamp(24px, 4vw, 50px)",
-  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
-  position: "relative",
+  maxWidth: "430px",
+  height: "calc(100svh - 16px)",
+  background: "white",
+  borderRadius: "24px",
+  boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
   display: "flex",
   flexDirection: "column",
-  alignItems: "center",
-  textAlign: "center",
+  overflow: "hidden",
+  boxSizing: "border-box",
+  position: "relative",
 };
 
 const versao = {
   position: "absolute",
-  top: "24px",
-  right: "32px",
-  fontSize: "12px",
-  fontWeight: "bold",
+  top: "18px",
+  right: "20px",
+  fontSize: "11px",
+  fontWeight: "900",
   color: "#94a3b8",
-  letterSpacing: "1px",
+};
+
+const topo = {
+  height: "54px",
+  display: "grid",
+  gridTemplateColumns: "1fr auto 1fr",
+  alignItems: "center",
+  borderBottom: "1px solid #e2e8f0",
+  padding: "0 14px",
+  boxSizing: "border-box",
+  flexShrink: 0,
+};
+
+const botaoVoltar = {
+  border: "none",
+  background: "transparent",
+  color: "#1e293b",
+  fontSize: "18px",
+  fontWeight: "900",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: 0,
+  cursor: "pointer",
+};
+
+const setaVoltar = {
+  fontSize: "25px",
+  lineHeight: 1,
+  fontWeight: "400",
+};
+
+const tituloTopo = {
+  margin: 0,
+  color: "#1e293b",
+  fontSize: "19px",
+  fontWeight: "900",
+  whiteSpace: "nowrap",
+};
+
+const espacoTopo = {
+  width: "50px",
+};
+
+const conteudo = {
+  flex: 1,
+  padding: "14px 14px 16px",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  textAlign: "center",
 };
 
 const icone = {
-  fontSize: "clamp(60px, 10vw, 100px)",
-  marginTop: "30px",
-  marginBottom: "10px",
+  width: "54px",
+  height: "54px",
+  borderRadius: "50%",
+  margin: "0 auto 10px",
+  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "27px",
+  boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
 };
 
 const titulo = {
-  fontSize: "clamp(34px, 7vw, 62px)",
+  fontSize: "23px",
   fontWeight: "900",
   color: "#1e293b",
-  margin: 0,
-  letterSpacing: "3px",
-  lineHeight: "1",
+  margin: "0 0 8px",
 };
 
 const subtitulo = {
-  maxWidth: "560px",
-  fontSize: "clamp(14px, 2vw, 17px)",
+  fontSize: "12px",
   color: "#64748b",
-  lineHeight: "1.7",
-  margin: "24px 0",
+  lineHeight: "1.45",
+  fontWeight: "700",
+  margin: "0 auto 12px",
+  maxWidth: "340px",
 };
 
 const caixaTexto = {
   width: "100%",
-  maxWidth: "580px",
   background: "#f8fafc",
-  border: "2px solid #e2e8f0",
+  border: "1px solid #e2e8f0",
   borderRadius: "18px",
-  padding: "20px 24px",
-  textAlign: "left",
-  fontSize: "clamp(14px, 2vw, 16px)",
+  padding: "12px",
+  textAlign: "center",
+  fontSize: "11px",
   color: "#475569",
-  lineHeight: "1.7",
+  lineHeight: "1.45",
+  fontWeight: "700",
   boxSizing: "border-box",
 };
 
-const tituloSecao = {
+const caixaEstruturas = {
+  marginTop: "10px",
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "18px",
+  padding: "11px",
+};
+
+const tituloEstruturas = {
+  display: "block",
   color: "#1e293b",
-  marginTop: "20px",
+  fontSize: "12px",
+  fontWeight: "900",
+  marginBottom: "8px",
+};
+
+const tags = {
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: "6px",
+};
+
+const tag = {
+  padding: "6px 10px",
+  borderRadius: "999px",
+  background: "#ede9fe",
+  color: "#7c3aed",
+  fontSize: "10px",
+  fontWeight: "900",
 };
 
 const objetivo = {
-  marginTop: "20px",
-  color: "#9333ea",
-  fontWeight: "bold",
-};
-
-const botao = {
-  width: "100%",
-  maxWidth: "420px",
-  padding: "17px",
-  background: "#9333ea",
-  border: "none",
-  borderRadius: "18px",
-  color: "white",
+  marginTop: "10px",
+  background: "#f8fafc",
+  borderRadius: "16px",
+  padding: "10px",
+  color: "#7c3aed",
+  fontSize: "11px",
   fontWeight: "900",
-  fontSize: "15px",
-  cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(147, 51, 234, 0.3)",
-  letterSpacing: "1px",
-  marginTop: "28px",
+  lineHeight: "1.4",
 };
 
 export default SobreJogo;

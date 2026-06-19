@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import * as ReactJoyride from "react-joyride";
+
+const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
 
 function LabirintoLista({ voltar, concluir }) {
   const portaisIniciais = [
@@ -9,50 +13,196 @@ function LabirintoLista({ voltar, concluir }) {
     { nome: "Portal Raio", icone: "⚡" },
   ];
 
-  const [etapa, setEtapa] = useState(0);
+  const etapas = [
+    "Montar lista",
+    "Buscar",
+    "Atualizar",
+    "Remover",
+    "Desafio",
+    "Conclusão",
+  ];
+
+  const [etapa, setEtapa] = useState(1);
   const [lista, setLista] = useState([]);
   const [disponiveis, setDisponiveis] = useState(portaisIniciais);
-  const [dragged, setDragged] = useState(null);
-  const [indiceBusca, setIndiceBusca] = useState(0);
-  const [concluido, setConcluido] = useState(false);
-  const [mostrarHistoria, setMostrarHistoria] = useState(true);
+  const [removidos, setRemovidos] = useState([]);
 
+  const [indiceBusca, setIndiceBusca] = useState(0);
   const [novoNome, setNovoNome] = useState("");
   const [indiceSelecionado, setIndiceSelecionado] = useState(null);
   const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+  const [indiceRespostaDesafio, setIndiceRespostaDesafio] = useState(null);
+
+  const [mostrarHistoria, setMostrarHistoria] = useState(true);
+  const [mostrarDica, setMostrarDica] = useState(false);
+  const [mostrarEtapas, setMostrarEtapas] = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [runTour, setRunTour] = useState(false);
 
   const [mensagem, setMensagem] = useState(
-    "Clique em COMEÇAR para iniciar o desafio da lista encadeada."
+    "Clique em um portal para adicioná-lo ao final da lista."
   );
 
-  function iniciarFase() {
-    setEtapa(1);
-    setMensagem(
-      "📥 MONTAR LISTA\n\nArraste os portais para formar uma lista encadeada.\n\nCada portal aponta para o próximo."
-    );
+  const stepsBase = [
+    {
+      target: ".tour-topo",
+      content:
+        "Aqui você pode voltar ao mapa, abrir a história ou ver a dica da fase.",
+      placement: "bottom",
+      disableBeacon: true,
+    },
+    {
+      target: ".tour-etapa",
+      content:
+        "Aqui aparece a etapa atual. Toque para visualizar todas as etapas.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-mensagem",
+      content: "Essa mensagem mostra o que você precisa fazer agora.",
+      placement: "bottom",
+    },
+  ];
+
+  const stepsPorEtapa = {
+    1: [
+      {
+        target: ".tour-portais",
+        content:
+          "Clique nos portais disponíveis para adicioná-los ao final da lista.",
+        placement: "bottom",
+      },
+      {
+        target: ".tour-lista",
+        content:
+          "Cada portal vira um nó. Um nó aponta para o próximo, formando a lista encadeada.",
+        placement: "top",
+      },
+    ],
+    2: [
+      {
+        target: ".tour-lista",
+        content:
+          "A busca na lista começa no primeiro nó e segue de um em um até encontrar o portal desejado.",
+        placement: "top",
+      },
+    ],
+    3: [
+      {
+        target: ".tour-lista",
+        content:
+          "Clique no Portal Água para selecionar o nó que será atualizado.",
+        placement: "top",
+      },
+      {
+        target: ".tour-atualizar",
+        content:
+          "Depois de selecionar o portal, digite o novo nome e clique em Atualizar.",
+        placement: "bottom",
+      },
+    ],
+    4: [
+      {
+        target: ".tour-lista",
+        content:
+          "Agora remova o portal atualizado. Em uma lista, remover um nó exige ajustar a ligação entre os nós vizinhos.",
+        placement: "top",
+      },
+      {
+        target: ".tour-remocao",
+        content:
+          "Quando um nó é removido, ele aparece aqui. A lista precisa continuar ligada.",
+        placement: "top",
+      },
+    ],
+    5: [
+      {
+        target: ".tour-lista",
+        content:
+          "Observe a lista restante e descubra qual portal precisou atualizar sua ligação.",
+        placement: "top",
+      },
+    ],
+    6: [
+      {
+        target: ".tour-conceito",
+        content:
+          "Parabéns! Você concluiu a fase e entendeu a lista encadeada.",
+        placement: "top",
+      },
+    ],
+  };
+
+  const steps = [
+    ...stepsBase,
+    ...(stepsPorEtapa[etapa] || []),
+    {
+      target: ".tour-conceito",
+      content:
+        "Na lista encadeada, cada nó guarda um valor e aponta para o próximo nó.",
+      placement: "top",
+    },
+    {
+      target: ".tour-resetar",
+      content: "Aqui você pode resetar a fase ou ver o tutorial novamente.",
+      placement: "top",
+    },
+  ];
+
+  function mostrarToast(tipo, texto) {
+    toast.dismiss();
+
+    setTimeout(() => {
+      if (tipo === "success") toast.success(texto);
+      else if (tipo === "error") toast.error(texto);
+      else toast(texto);
+    }, 150);
+  }
+
+  function iniciarTutorial() {
+    setMostrarEtapas(false);
+    setRunTour(false);
+
+    setTimeout(() => {
+      setRunTour(true);
+    }, 100);
+  }
+
+  function fecharHistoria() {
+    setMostrarHistoria(false);
+
+    setTimeout(() => {
+      iniciarTutorial();
+    }, 400);
   }
 
   function adicionarPortal(index) {
-    if (etapa !== 1) return;
+    if (etapa !== 1) {
+      mostrarToast("error", "Agora não é o momento de montar a lista.");
+      return;
+    }
 
     const portal = disponiveis[index];
     const novaLista = [...lista, portal];
-    const novosDisponiveis = disponiveis.filter((_, i) => i !== index);
 
     setLista(novaLista);
-    setDisponiveis(novosDisponiveis);
-    setDragged(null);
+    setDisponiveis(disponiveis.filter((_, i) => i !== index));
+
+    mostrarToast("success", `${portal.nome} entrou no final da lista.`);
 
     if (novaLista.length === 4) {
       setEtapa(2);
       setIndiceBusca(0);
-      setMensagem(
-        "🔍 BUSCAR PORTAL\n\nPrecisamos encontrar o Portal Água.\n\nNa lista encadeada, você começa no primeiro nó e segue de um em um.\n\nClique no portal marcado como VERIFICAR."
-      );
+      setMensagem("Agora busque o Portal Água começando pelo primeiro nó.");
+
+      setTimeout(() => {
+        mostrarToast(
+          "info",
+          "🔍 Busque o Portal Água seguindo nó por nó."
+        );
+      }, 1900);
     } else {
-      setMensagem(
-        "✅ Portal adicionado!\n\nContinue conectando os próximos portais."
-      );
+      setMensagem("Portal adicionado. O próximo entrará no final da lista.");
     }
   }
 
@@ -60,9 +210,8 @@ function LabirintoLista({ voltar, concluir }) {
     if (etapa !== 2) return;
 
     if (index !== indiceBusca) {
-      setMensagem(
-        "❌ Caminho errado.\n\nNa lista encadeada, você precisa seguir nó por nó.\n\nClique no portal marcado como VERIFICAR."
-      );
+      mostrarToast("error", "A busca precisa seguir nó por nó.");
+      setMensagem("Na lista encadeada, você precisa seguir a ordem dos nós.");
       return;
     }
 
@@ -70,42 +219,42 @@ function LabirintoLista({ voltar, concluir }) {
 
     if (atual.nome === "Portal Água") {
       setEtapa(3);
-      setMensagem(
-        "✅ Portal Água encontrado!\n\nAgora clique nele, digite o novo nome e aperte ATUALIZAR."
-      );
+      setMensagem("Portal Água encontrado. Agora atualize esse portal.");
+      mostrarToast("success", "Portal Água encontrado! Clique nele para selecionar.");
       return;
     }
 
+    mostrarToast("success", `${atual.nome} foi verificado.`);
     setIndiceBusca(indiceBusca + 1);
-    setMensagem(
-      `🔍 Você passou por ${atual.nome}.\n\nAinda não é o Portal Água.\n\nSiga para o próximo nó.`
-    );
+    setMensagem(`${atual.nome} foi verificado. Continue para o próximo nó.`);
   }
 
   function selecionarPortalParaAtualizar(index) {
     if (etapa !== 3) return;
 
     if (lista[index].nome !== "Portal Água") {
-      setMensagem("❌ Não é esse portal.\n\nSelecione o Portal Água.");
+      mostrarToast("error", "Selecione o Portal Água para atualizar.");
+      setMensagem("Selecione o Portal Água para atualizar.");
       return;
     }
 
     setIndiceSelecionado(index);
-    setMensagem(
-      "✅ Portal selecionado.\n\nDigite o novo nome no campo e clique em ATUALIZAR."
-    );
+    setMensagem("Digite o novo nome e clique em Atualizar.");
+    mostrarToast("success", "Portal selecionado. Agora digite o novo nome.");
   }
 
   function confirmarAtualizacao() {
     if (etapa !== 3) return;
 
     if (indiceSelecionado === null) {
-      setMensagem("❌ Primeiro selecione o Portal Água.");
+      mostrarToast("error", "Primeiro clique no Portal Água para selecionar.");
+      setMensagem("Primeiro selecione o Portal Água.");
       return;
     }
 
     if (novoNome.trim() === "") {
-      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      mostrarToast("error", "Digite um novo nome antes de atualizar.");
+      setMensagem("Digite um novo nome.");
       return;
     }
 
@@ -121,398 +270,405 @@ function LabirintoLista({ voltar, concluir }) {
     setIndiceSelecionado(null);
     setEtapa(4);
 
+    mostrarToast("success", "Portal atualizado com sucesso.");
     setMensagem(
-      "✏️ Portal atualizado!\n\nAgora vamos remover o primeiro nó da lista.\n\nAo remover um nó, a ligação precisa ser reorganizada para o próximo nó."
+      "O portal atualizado ficou instável. Agora clique nele para removê-lo da rota."
     );
   }
 
   function removerPortal(index) {
     if (etapa !== 4) return;
 
-    if (index !== 0) {
-      setMensagem(
-        "❌ Esse portal não pode ser removido agora.\n\nNesta missão, remova o primeiro nó da lista."
-      );
-      setDragged(null);
+    if (index !== indiceAtualizado) {
+      mostrarToast("error", "Remova o portal que foi atualizado.");
+      setMensagem("Clique no portal atualizado para removê-lo da rota.");
       return;
     }
 
-    const removido = lista[0];
-    setLista(lista.slice(1));
-    setDragged(null);
+    const removido = lista[index];
+    const novaLista = lista.filter((_, i) => i !== index);
+    const resposta = index === 0 ? 0 : index - 1;
+
+    setRemovidos([...removidos, removido]);
+    setLista(novaLista);
+    setIndiceRespostaDesafio(resposta);
     setEtapa(5);
 
+    mostrarToast("success", `${removido.nome} foi removido.`);
     setMensagem(
-      `✅ ${removido.nome} foi removido.\n\nA lista foi reorganizada.\n\nAgora observe a lista restante.\n\nQual portal virou o primeiro nó?`
+      "O portal foi removido. Qual portal precisou atualizar sua ligação para a rota continuar funcionando?"
     );
   }
 
   function responderDesafio(index) {
     if (etapa !== 5) return;
 
-    if (index === 0) {
-      setMensagem(
-        "🏆 Perfeito!\n\nVocê entendeu a Lista Encadeada:\n\n🔗 Cada nó aponta para o próximo\n🔍 A busca percorre de um em um\n✏️ Podemos atualizar um nó encontrado\n🗑️ Podemos remover um nó e reorganizar a ligação"
-      );
+    if (index === indiceRespostaDesafio) {
+      setEtapa(6);
       setConcluido(true);
-    } else {
       setMensagem(
-        "❌ Ainda não.\n\nObserve qual portal está no início da lista agora."
+        "Parabéns! Você entendeu que, ao remover um nó, o nó anterior precisa apontar para o próximo."
+      );
+      mostrarToast("success", "Fase concluída!");
+    } else {
+      mostrarToast("error", "Esse não é o portal que ajustou a ligação.");
+      setMensagem(
+        "Pense na lista como uma corrente: quem estava antes do portal removido precisa apontar para quem veio depois."
       );
     }
   }
 
   function clicarPortal(index) {
+    if (!lista[index]) return;
+
     if (etapa === 2) buscarPortal(index);
     if (etapa === 3) selecionarPortalParaAtualizar(index);
+    if (etapa === 4) removerPortal(index);
     if (etapa === 5) responderDesafio(index);
   }
 
-  function soltarParaAdicionar() {
-    if (!dragged || dragged.tipo !== "disponivel") return;
-    adicionarPortal(dragged.index);
-  }
-
-  function soltarParaRemover() {
-    if (!dragged || dragged.tipo !== "lista") return;
-    removerPortal(dragged.index);
-  }
-
   function resetar() {
-    setEtapa(0);
+    setEtapa(1);
     setLista([]);
     setDisponiveis(portaisIniciais);
-    setDragged(null);
+    setRemovidos([]);
     setIndiceBusca(0);
     setConcluido(false);
-    setMostrarHistoria(true);
     setNovoNome("");
     setIndiceSelecionado(null);
     setIndiceAtualizado(null);
-    setMensagem("Clique em COMEÇAR para iniciar o desafio da lista encadeada.");
-  }
-
-  if (concluido) {
-    return (
-      <div style={estilos.pagina}>
-        <div style={estilos.cardConclusao}>
-          <button onClick={voltar} style={estilos.botaoVoltar}>
-            ← VOLTAR
-          </button>
-
-          <div style={estilos.icone}>🏆</div>
-          <h1 style={estilos.titulo}>LISTA CONCLUÍDA!</h1>
-
-          <div style={estilos.resumoBox}>
-            <p>🔗 Cada nó aponta para o próximo.</p>
-            <p>🔍 Buscar: percorre de um em um.</p>
-            <p>✏️ Atualizar: altera um nó encontrado.</p>
-            <p>🗑️ Remover: tira um nó e reorganiza a ligação.</p>
-          </div>
-
-          <button onClick={concluir} style={estilos.botaoPrincipal}>
-            ➜ PRÓXIMA FASE
-          </button>
-        </div>
-      </div>
-    );
+    setIndiceRespostaDesafio(null);
+    setMensagem("Clique em um portal para adicioná-lo ao final da lista.");
+    mostrarToast("info", "🔄 Fase reiniciada.");
   }
 
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <div style={estilos.barraTopo}>
-          <button onClick={voltar} style={estilos.botaoVoltar}>
-            ← VOLTAR AO MAPA
+        <Joyride
+          steps={steps}
+          run={runTour}
+          continuous
+          showSkipButton
+          showProgress
+          disableOverlayClose
+          locale={{
+            back: "Voltar",
+            close: "Fechar",
+            last: "Concluir",
+            next: "Próximo",
+            skip: "Pular",
+          }}
+          styles={{
+            options: {
+              zIndex: 3000,
+              primaryColor: "#7c3aed",
+              textColor: "#334155",
+              overlayColor: "rgba(15, 23, 42, 0.65)",
+              backgroundColor: "#ffffff",
+              arrowColor: "#ffffff",
+            },
+            tooltip: {
+              borderRadius: "22px",
+              padding: "18px",
+              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
+              border: "1px solid #e2e8f0",
+            },
+            tooltipContent: {
+              padding: "10px 6px",
+              fontSize: "14px",
+              lineHeight: "1.6",
+              fontWeight: "700",
+            },
+            spotlight: {
+              borderRadius: "18px",
+              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
+            },
+            buttonNext: {
+              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+              borderRadius: "999px",
+              padding: "10px 18px",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonBack: {
+              color: "#64748b",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonSkip: {
+              color: "#ec4899",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonClose: {
+              color: "#94a3b8",
+            },
+          }}
+          callback={(data) => {
+            if (data.status === "finished" || data.status === "skipped") {
+              setRunTour(false);
+            }
+          }}
+        />
+
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          gutter={8}
+          containerStyle={{ top: 70 }}
+          toastOptions={{
+            duration: 1800,
+            style: {
+              borderRadius: "14px",
+              background: "#1e293b",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "13px",
+              maxWidth: "320px",
+              textAlign: "center",
+            },
+          }}
+        />
+
+        <header style={estilos.topo} className="tour-topo">
+          <button onClick={voltar} style={estilos.botaoMapa}>
+            <span style={estilos.setaVoltar}>←</span>
+            <span>Mapa</span>
           </button>
 
-          <button
-            onClick={() => setMostrarHistoria(true)}
-            style={estilos.botaoHistoria}
-          >
-            📜 História
-          </button>
-        </div>
+          <h1 style={estilos.tituloTopo}>Corredor dos Portais</h1>
 
-        <div style={estilos.header}>
-          <h1 style={estilos.titulo}>MUNDO DA LISTA</h1>
-          <p style={estilos.regra}>Lista: cada nó aponta para o próximo.</p>
-        </div>
+          <div style={estilos.iconesTopo}>
+            <button onClick={() => setMostrarHistoria(true)} style={estilos.botaoLivro}>
+              📖
+            </button>
 
-        <div style={estilos.etapas}>
-          {[
-            "História",
-            "Montar lista",
-            "Buscar",
-            "Atualizar",
-            "Remover",
-            "Desafio",
-          ].map((nome, index) => (
-            <div
-              key={nome}
-              style={{
-                ...estilos.etapaBox,
-                background: etapa === index ? "#ec4899" : "#e2e8f0",
-                color: etapa === index ? "white" : "#475569",
-              }}
-            >
-              {index}. {nome}
-            </div>
-          ))}
-        </div>
+            <button onClick={() => setMostrarDica(true)} style={estilos.botaoLuz}>
+              💡
+            </button>
+          </div>
+        </header>
 
-        <div style={estilos.mensagemEtapa}>{mensagem}</div>
+        <section
+          style={estilos.etapaCard}
+          className="tour-etapa"
+          onClick={() => setMostrarEtapas(!mostrarEtapas)}
+        >
+          <div>
+            <span style={estilos.etapaNumero}>Etapa {etapa} de 6</span>
+            <h2 style={estilos.etapaNome}>{etapas[etapa - 1]}</h2>
+          </div>
 
-        {etapa === 0 && (
-          <div style={estilos.introBox}>
-            <div style={estilos.caixaTema}>🔗 Corredor dos Portais</div>
+          <span style={estilos.setaBaixo}>⌄</span>
+        </section>
 
-            <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
-              COMEÇAR
+        {mostrarEtapas && (
+          <div style={estilos.listaEtapas}>
+            {etapas.map((nome, index) => (
+              <div
+                key={nome}
+                style={
+                  etapa === index + 1
+                    ? estilos.etapaListaAtiva
+                    : estilos.etapaListaItem
+                }
+              >
+                {index + 1}. {nome}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p style={estilos.mensagem} className="tour-mensagem">
+          {mensagem}
+        </p>
+
+        {etapa === 3 && (
+          <div style={estilos.formAtualizacao} className="tour-atualizar">
+            <input
+              value={novoNome}
+              onChange={(e) => setNovoNome(e.target.value)}
+              placeholder="Novo nome"
+              style={estilos.input}
+            />
+
+            <button onClick={confirmarAtualizacao} style={estilos.botaoAtualizar}>
+              Atualizar
             </button>
           </div>
         )}
 
-        {etapa === 1 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Portais disponíveis</h2>
+        {disponiveis.length > 0 && (
+          <section className="tour-portais">
+            <h2 style={estilos.subtitulo}>Portais disponíveis</h2>
 
-              <div style={estilos.disponiveisContainer}>
-                {disponiveis.map((portal, index) => (
-                  <motion.div
-                    key={portal.nome}
-                    draggable
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => adicionarPortal(index)}
-                    onDragStart={() =>
-                      setDragged({ tipo: "disponivel", index })
-                    }
-                    style={estilos.itemDraggable}
-                  >
-                    <span style={estilos.avatar}>{portal.icone}</span>
-                    <span>{portal.nome}</span>
-                  </motion.div>
-                ))}
-              </div>
+            <div style={estilos.portaisGrid}>
+              {disponiveis.map((portal, index) => (
+                <motion.button
+                  key={portal.nome}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => adicionarPortal(index)}
+                  style={estilos.cardPortal}
+                >
+                  <span style={estilos.iconePortal}>{portal.icone}</span>
+                  <span>{portal.nome}</span>
+                </motion.button>
+              ))}
             </div>
-
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Lista encadeada</h2>
-
-              <div
-                style={estilos.zonaDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaAdicionar}
-              >
-                {lista.length === 0 ? (
-                  <span style={estilos.vazio}>Solte os portais aqui</span>
-                ) : (
-                  <ListaVisual lista={lista} />
-                )}
-              </div>
-            </div>
-          </div>
+          </section>
         )}
 
-        {(etapa === 2 || etapa === 3 || etapa === 5) && (
-          <div style={estilos.colunaGrande}>
-            <h2 style={estilos.tituloCaixa}>Lista encadeada</h2>
+        <section style={estilos.listaArea} className="tour-lista">
+          <h2 style={estilos.subtitulo}>Lista encadeada</h2>
 
-            {etapa === 3 && (
-              <div style={estilos.formAtualizacao}>
-                <h3 style={estilos.tituloAtualizacao}>✏️ Atualizar portal</h3>
+          <div style={estilos.inicioFim}>
+            <span>Início</span>
+            <span>Final</span>
+          </div>
 
-                <p style={estilos.textoAtualizacao}>
-                  Clique no Portal Água, digite o novo nome e confirme.
-                </p>
+          <div style={estilos.linhaColorida}></div>
 
-                <input
-                  type="text"
-                  value={novoNome}
-                  onChange={(e) => setNovoNome(e.target.value)}
-                  placeholder="Ex: Portal Água Cristalina"
-                  style={estilos.inputAtualizacao}
-                />
+          <div style={estilos.listaSlots}>
+            {[0, 1, 2, 3].map((posicao) => {
+              const portal = lista[posicao];
 
-                <button
-                  onClick={confirmarAtualizacao}
-                  style={estilos.botaoAtualizar}
-                >
-                  ATUALIZAR
-                </button>
-              </div>
-            )}
-
-            <div style={estilos.listaVisualGrande}>
-              {lista.map((portal, index) => (
-                <div
-                  key={`${portal.nome}-${index}`}
-                  style={estilos.itemComSeta}
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => clicarPortal(index)}
+              return (
+                <div key={posicao} style={estilos.itemComSeta}>
+                  <motion.button
+                    whileTap={{ scale: portal ? 0.95 : 1 }}
+                    onClick={() => clicarPortal(posicao)}
                     style={{
-                      ...estilos.itemLista,
+                      ...estilos.slotLista,
                       border: definirBordaLista(
-                        portal.nome,
-                        index,
+                        portal?.nome,
+                        posicao,
                         etapa,
                         indiceBusca,
                         indiceSelecionado,
-                        indiceAtualizado
+                        indiceAtualizado,
+                        lista.length
                       ),
-                      cursor: "pointer",
                     }}
                   >
-                    {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
+                    {portal ? (
+                      <>
+                        {posicao === 0 && <span style={estilos.inicio}>INÍCIO</span>}
 
-                    {etapa === 2 && index === indiceBusca && (
-                      <span style={estilos.busca}>VERIFICAR</span>
+                        {etapa === 2 && posicao === indiceBusca && (
+                          <span style={estilos.busca}>VERIFICAR</span>
+                        )}
+
+                        {etapa === 2 && posicao < indiceBusca && (
+                          <span style={estilos.verificado}>VISTO</span>
+                        )}
+
+                        {etapa === 3 && portal.nome === "Portal Água" && (
+                          <span style={estilos.busca}>ATUALIZAR</span>
+                        )}
+
+                        {etapa === 3 && posicao === indiceSelecionado && (
+                          <span style={estilos.selecionado}>SELECIONADO</span>
+                        )}
+
+                        {etapa >= 4 && posicao === indiceAtualizado && (
+                          <span style={estilos.atualizado}>ATUALIZADO</span>
+                        )}
+
+                        <span style={estilos.iconeLista}>{portal.icone}</span>
+                        <strong style={estilos.nomeLista}>{portal.nome}</strong>
+                        <span style={estilos.indice}>Nó {posicao + 1}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={estilos.numeroSlot}>{posicao + 1}</span>
+                        <span style={estilos.textoSlot}>Nó {posicao + 1}</span>
+                      </>
                     )}
+                  </motion.button>
 
-                    {etapa === 2 && index < indiceBusca && (
-                      <span style={estilos.verificado}>VISTO</span>
-                    )}
-
-                    {etapa === 3 && portal.nome === "Portal Água" && (
-                      <span style={estilos.busca}>ATUALIZAR</span>
-                    )}
-
-                    {etapa === 3 && index === indiceSelecionado && (
-                      <span style={estilos.selecionado}>SELECIONADO</span>
-                    )}
-
-                    {etapa >= 4 && index === indiceAtualizado && (
-                      <span style={estilos.atualizado}>ATUALIZADO</span>
-                    )}
-
-                    <span style={estilos.avatarLista}>{portal.icone}</span>
-                    <span style={estilos.nomeItem}>{portal.nome}</span>
-                    <span style={estilos.indice}>Nó {index + 1}</span>
-                  </motion.div>
-
-                  {index < lista.length - 1 && (
-                    <span style={estilos.setaLista}>➜</span>
-                  )}
+                  {posicao < 3 && <span style={estilos.setaLista}>→</span>}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </section>
 
-        {etapa === 4 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Lista encadeada</h2>
+        {etapa >= 4 && (
+          <section style={estilos.areaRemocao} className="tour-remocao">
+            <div>
+              <h2 style={estilos.subtituloRemovido}>Remoção</h2>
+              <p style={estilos.textoRemocao}>
+                Remova o portal atualizado.
+              </p>
+            </div>
 
-              <div style={estilos.listaVisualGrande}>
-                {lista.map((portal, index) => (
-                  <div
-                    key={`${portal.nome}-${index}`}
-                    style={estilos.itemComSeta}
-                  >
-                    <motion.div
-                      draggable
-                      whileHover={{ scale: 1.05 }}
-                      onDragStart={() => setDragged({ tipo: "lista", index })}
-                      style={{
-                        ...estilos.itemLista,
-                        border:
-                          index === 0
-                            ? "3px solid #ec4899"
-                            : index === indiceAtualizado
-                            ? "3px solid #22c55e"
-                            : "3px solid #818cf8",
-                        cursor: "grab",
-                      }}
-                    >
-                      {index === 0 && (
-                        <span style={estilos.inicio}>INÍCIO</span>
-                      )}
-
-                      {index === indiceAtualizado && (
-                        <span style={estilos.atualizado}>ATUALIZADO</span>
-                      )}
-
-                      <span style={estilos.avatarLista}>{portal.icone}</span>
-                      <span style={estilos.nomeItem}>{portal.nome}</span>
-                      <span style={estilos.indice}>Nó {index + 1}</span>
-                    </motion.div>
-
-                    {index < lista.length - 1 && (
-                      <span style={estilos.setaLista}>➜</span>
-                    )}
+            <div style={estilos.caixaRemovido}>
+              {removidos.length === 0 ? (
+                <span style={estilos.vazioRemovido}>Aguardando remoção</span>
+              ) : (
+                removidos.map((portal, index) => (
+                  <div key={`${portal.nome}-${index}`} style={estilos.cardRemovido}>
+                    <span>{portal.icone}</span>
+                    <strong>{portal.nome}</strong>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Zona de remoção</h2>
-
-              <div style={estilos.explicacaoRemocao}>
-                <strong>Remoção na lista</strong>
-                <p>
-                  Ao remover o primeiro nó, o próximo nó passa a ser o novo
-                  início da lista.
-                </p>
-              </div>
-
-              <div
-                style={estilos.zonaRemocao}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaRemover}
-              >
-                🌀 Arraste o primeiro nó para cá
-              </div>
-            </div>
-          </div>
+          </section>
         )}
 
-        <div style={estilos.caixaConceito}>
-          <h3>📚 Conceito da Lista Encadeada</h3>
-          <p>
-            <strong>Nó:</strong> cada elemento da lista.
-          </p>
-          <p>
-            <strong>Ponteiro:</strong> ligação para o próximo nó.
-          </p>
-          <p>🔍 Buscar: percorre de nó em nó.</p>
-          <p>✏️ Atualizar: altera um nó encontrado.</p>
-          <p>🗑️ Remover: tira um nó e reorganiza a sequência.</p>
+        <section style={estilos.conceito} className="tour-conceito">
+          <span style={estilos.iconeInfo}>i</span>
+
+          <div>
+            <p>Na lista, cada nó aponta para o próximo nó.</p>
+            <strong>Lista Encadeada</strong>
+          </div>
+        </section>
+
+        <div style={estilos.rodape} className="tour-resetar">
+          <button onClick={resetar} style={estilos.botaoResetar}>
+            ↻ Resetar
+          </button>
+
+          <button onClick={iniciarTutorial} style={estilos.botaoTutorial}>
+            Ver tutorial
+          </button>
         </div>
 
-        <button onClick={resetar} style={estilos.botaoResetar}>
-          ↻ RESETAR FASE
-        </button>
-
-        {mostrarHistoria && (
+        {concluido && (
           <div style={estilos.fundoModal}>
-            <div style={estilos.modalHistoria}>
-              <h2>📜 HISTÓRIA</h2>
+            <div style={estilos.modal}>
+              <h2 style={estilos.tituloConcluido}>🏆 Lista concluída!</h2>
+              <p>Você entendeu que remover um nó exige ajustar a ligação da lista.</p>
 
-              <p>Você chegou ao Corredor dos Portais do Reino dos Dados.</p>
-
-              <p>
-                Cada portal aponta para o próximo. Para chegar ao último, você
-                precisa seguir a sequência.
-              </p>
-
-              <p>Aqui vale a regra da Lista Encadeada:</p>
-
-              <strong>Um nó leva ao próximo nó.</strong>
-
-              <button
-                onClick={() => setMostrarHistoria(false)}
-                style={estilos.botaoEntendi}
-              >
-                ENTENDI
+              <button onClick={concluir} style={estilos.botaoFechar}>
+                Próxima fase
               </button>
             </div>
           </div>
+        )}
+
+        {mostrarHistoria && (
+          <Modal fechar={fecharHistoria} titulo="📖 História">
+            <p>Você chegou ao Corredor dos Portais do Reino dos Dados.</p>
+            <p>
+              Cada portal aponta para o próximo. Para atravessar o corredor, é
+              preciso seguir a sequência.
+            </p>
+            <strong>Um nó leva ao próximo nó.</strong>
+          </Modal>
+        )}
+
+        {mostrarDica && (
+          <Modal fechar={() => setMostrarDica(false)} titulo="💡 Dica">
+            <p>
+              A lista encadeada é formada por <strong>nós conectados</strong>.
+            </p>
+            <p>A busca começa no primeiro nó e segue um por um.</p>
+            <p>Ao remover o início, o próximo nó vira o novo início.</p>
+          </Modal>
         )}
       </div>
     </div>
@@ -525,534 +681,578 @@ function definirBordaLista(
   etapa,
   indiceBusca,
   indiceSelecionado,
-  indiceAtualizado
+  indiceAtualizado,
+  tamanhoLista
 ) {
-  if (etapa === 2 && index === indiceBusca) return "3px solid #ec4899";
-  if (etapa === 3 && index === indiceSelecionado) return "3px solid #22c55e";
-  if (etapa === 3 && nome === "Portal Água") return "3px solid #ec4899";
-  if (etapa >= 4 && index === indiceAtualizado) return "3px solid #22c55e";
-  if (etapa === 5 && index === 0) return "3px solid #ec4899";
-  if (index === 0) return "3px solid #ec4899";
-  return "3px solid #818cf8";
+  if (etapa === 2 && index === indiceBusca) return "2px solid #ec4899";
+  if (etapa === 3 && index === indiceSelecionado) return "2px solid #22c55e";
+  if (etapa === 3 && nome === "Portal Água") return "2px solid #ec4899";
+  if (etapa >= 4 && index === indiceAtualizado) return "2px solid #22c55e";
+  if (etapa === 5 && index === 0 && tamanhoLista > 0) return "2px solid #ec4899";
+  if (index === 0 && tamanhoLista > 0) return "2px solid #ec4899";
+  return "2px dashed #cbd5e1";
 }
 
-function ListaVisual({ lista }) {
+function Modal({ titulo, children, fechar }) {
   return (
-    <div style={estilos.listaVisualGrande}>
-      {lista.map((portal, index) => (
-        <div key={`${portal.nome}-${index}`} style={estilos.itemComSeta}>
-          <div
-            style={{
-              ...estilos.itemLista,
-              border: index === 0 ? "3px solid #ec4899" : "3px solid #818cf8",
-            }}
-          >
-            {index === 0 && <span style={estilos.inicio}>INÍCIO</span>}
-            <span style={estilos.avatarLista}>{portal.icone}</span>
-            <span style={estilos.nomeItem}>{portal.nome}</span>
-            <span style={estilos.indice}>Nó {index + 1}</span>
-          </div>
+    <div style={estilos.fundoModal}>
+      <div style={estilos.modal}>
+        <h2 style={estilos.tituloModal}>{titulo}</h2>
+        <div style={estilos.modalTexto}>{children}</div>
 
-          {index < lista.length - 1 && (
-            <span style={estilos.setaLista}>➜</span>
-          )}
-        </div>
-      ))}
+        <button onClick={fechar} style={estilos.botaoFechar}>
+          Entendi
+        </button>
+      </div>
     </div>
   );
 }
 
 const estilos = {
   pagina: {
+    width: "100vw",
     minHeight: "100vh",
-    background: "#f3efff",
-    padding: "20px",
-    boxSizing: "border-box",
+    background: "#f8fafc",
+    display: "flex",
+    justifyContent: "center",
     fontFamily: "'Inter', sans-serif",
+    overflow: "hidden",
   },
 
   container: {
     width: "100%",
-    maxWidth: "1100px",
-    margin: "0 auto",
-    background: "rgba(255,255,255,0.72)",
-    borderRadius: "28px",
-    padding: "clamp(20px, 4vw, 42px)",
+    maxWidth: "430px",
+    height: "100dvh",
+    background: "white",
+    padding: "0 10px 24px",
     boxSizing: "border-box",
-    position: "relative",
+    overflowY: "auto",
+    overflowX: "hidden",
   },
 
-  barraTopo: {
+  topo: {
+    height: "54px",
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    borderBottom: "1px solid #e2e8f0",
+    margin: "0 -10px 8px",
+    padding: "0 14px",
+    boxSizing: "border-box",
+  },
+
+  botaoMapa: {
+    border: "none",
+    background: "transparent",
+    color: "#1e293b",
+    fontSize: "18px",
+    fontWeight: "800",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: 0,
+    cursor: "pointer",
+  },
+
+  setaVoltar: {
+    fontSize: "26px",
+    lineHeight: 1,
+    fontWeight: "400",
+  },
+
+  tituloTopo: {
+    margin: 0,
+    color: "#1e293b",
+    fontSize: "18px",
+    fontWeight: "900",
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  },
+
+  iconesTopo: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: "14px",
+  },
+
+  botaoLivro: {
+    border: "none",
+    background: "transparent",
+    fontSize: "23px",
+    cursor: "pointer",
+    padding: 0,
+  },
+
+  botaoLuz: {
+    border: "none",
+    background: "transparent",
+    fontSize: "23px",
+    cursor: "pointer",
+    padding: 0,
+    filter: "drop-shadow(0 0 5px rgba(236,72,153,0.35))",
+  },
+
+  etapaCard: {
+    height: "48px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "6px 12px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "10px",
-    marginBottom: "20px",
-    flexWrap: "wrap",
-  },
-
-  header: { textAlign: "center", marginBottom: "24px" },
-
-  icone: { fontSize: "46px", marginBottom: "6px" },
-
-  titulo: {
-    fontSize: "clamp(38px, 6vw, 58px)",
-    fontWeight: "900",
-    color: "#1e293b",
-    margin: 0,
-  },
-
-  regra: {
-    color: "#9333ea",
-    fontWeight: "900",
-    fontSize: "20px",
-    margin: "10px 0",
-  },
-
-  botaoVoltar: {
-    background: "#9333ea",
-    border: "none",
-    borderRadius: "18px",
-    color: "white",
-    fontWeight: "900",
-    padding: "12px 18px",
+    marginBottom: "6px",
+    boxShadow: "0 4px 10px rgba(15,23,42,0.04)",
     cursor: "pointer",
-    fontSize: "14px",
-    flex: "1",
-    minWidth: "150px",
   },
 
-  botaoHistoria: {
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "18px",
-    padding: "12px 18px",
-    fontWeight: "900",
-    cursor: "pointer",
-    fontSize: "14px",
-    flex: "1",
-    minWidth: "130px",
-  },
-
-  etapas: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-    gap: "10px",
-    margin: "24px 0",
-  },
-
-  etapaBox: {
-    padding: "12px",
-    borderRadius: "16px",
-    textAlign: "center",
-    fontWeight: "900",
-    fontSize: "13px",
-  },
-
-  mensagemEtapa: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    color: "#475569",
-    fontSize: "14px",
-    lineHeight: "1.7",
-    whiteSpace: "pre-wrap",
+  etapaNumero: {
+    color: "#64748b",
+    fontSize: "11px",
     fontWeight: "700",
-    marginBottom: "20px",
   },
 
-  introBox: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "28px",
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-
-  caixaTema: {
-    fontSize: "34px",
+  etapaNome: {
+    margin: "1px 0 0",
+    color: "#1e293b",
+    fontSize: "18px",
     fontWeight: "900",
-    color: "#9333ea",
-    marginBottom: "14px",
   },
 
-  conteudoDesafio: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "20px",
-    marginBottom: "20px",
-  },
-
-  coluna: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "24px",
-    color: "#475569",
-    minHeight: "260px",
-    boxSizing: "border-box",
-  },
-
-  colunaGrande: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "24px",
-    color: "#475569",
-    minHeight: "260px",
-    boxSizing: "border-box",
-    marginBottom: "20px",
-  },
-
-  tituloCaixa: {
-    color: "#475569",
-    marginTop: 0,
-    fontSize: "24px",
+  setaBaixo: {
+    fontSize: "22px",
+    color: "#1e293b",
     fontWeight: "900",
-    textAlign: "center",
   },
 
-  disponiveisContainer: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-    padding: "16px",
+  listaEtapas: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "14px",
+    padding: "5px",
+    marginBottom: "6px",
     background: "white",
-    borderRadius: "16px",
-    minHeight: "120px",
-    border: "2px solid #e2e8f0",
-    justifyContent: "center",
+  },
+
+  etapaListaItem: {
+    padding: "5px 8px",
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "700",
+  },
+
+  etapaListaAtiva: {
+    padding: "5px 8px",
+    fontSize: "11px",
+    color: "#7c3aed",
+    fontWeight: "900",
+    background: "#ede9fe",
+    borderRadius: "10px",
+  },
+
+  mensagem: {
+    margin: "0 0 6px",
+    padding: "8px",
+    borderRadius: "14px",
+    background: "#f1f5f9",
+    color: "#475569",
+    textAlign: "center",
+    fontSize: "11px",
+    fontWeight: "700",
+  },
+
+  formAtualizacao: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "8px",
     alignItems: "center",
   },
 
-  itemDraggable: {
-    padding: "14px 20px",
-    background: "#9333ea",
+  input: {
+    flex: 1,
+    height: "36px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    padding: "0 10px",
+    fontSize: "12px",
+    minWidth: 0,
+  },
+
+  botaoAtualizar: {
+    width: "110px",
+    height: "36px",
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
     color: "white",
-    borderRadius: "14px",
-    cursor: "grab",
     fontWeight: "900",
-    fontSize: "14px",
+    fontSize: "12px",
+    cursor: "pointer",
+  },
+
+  subtitulo: {
+    margin: "0 0 5px",
+    color: "#1e293b",
+    fontSize: "15px",
+    fontWeight: "900",
+  },
+
+  portaisGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "6px",
+    marginBottom: "8px",
+  },
+
+  cardPortal: {
+    height: "60px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+    color: "white",
+    fontSize: "9px",
+    fontWeight: "900",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "4px",
-    textAlign: "center",
-  },
-
-  avatar: { fontSize: "28px" },
-
-  zonaDrop: {
-    border: "2px dashed #9333ea",
-    borderRadius: "18px",
-    padding: "16px",
-    minHeight: "230px",
-    background: "white",
-    display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    overflowX: "auto",
+    gap: "2px",
+    textAlign: "center",
+    cursor: "pointer",
+    padding: "3px",
   },
 
-  listaVisualGrande: {
-    minHeight: "170px",
-    display: "flex",
-    flexDirection: "row",
-    gap: "12px",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    background: "white",
-    borderRadius: "18px",
-    padding: "18px",
-    flexWrap: "nowrap",
-    overflowX: "auto",
-    width: "100%",
-    boxSizing: "border-box",
+  iconePortal: {
+    fontSize: "20px",
   },
+
+  listaArea: {
+    marginTop: "4px",
+  },
+
+  inicioFim: {
+    display: "flex",
+    justifyContent: "space-between",
+    color: "#7c3aed",
+    fontSize: "13px",
+    fontWeight: "900",
+  },
+
+  linhaColorida: {
+    height: "3px",
+    background: "linear-gradient(90deg, #7c3aed, #ec4899)",
+    margin: "4px 0 8px",
+    borderRadius: "999px",
+  },
+
+  listaSlots: {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: "6px",
+  padding: "4px 0 8px",
+},
 
   itemComSeta: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  gap: "4px",
+  minWidth: 0,
+},
+
+  slotLista: {
+  width: "100%",
+  height: "88px",
+  borderRadius: "14px",
+  background: "white",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  position: "relative",
+  color: "#475569",
+  padding: "4px",
+  boxSizing: "border-box",
+  cursor: "pointer",
+},
+
+  iconeLista: {
+    fontSize: "22px",
   },
 
-  itemLista: {
-    width: "clamp(110px, 26vw, 145px)",
-    minWidth: "105px",
-    minHeight: "105px",
-    background: "rgba(129,140,248,0.12)",
-    borderRadius: "18px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    padding: "10px",
-    boxSizing: "border-box",
-  },
-
-  avatarLista: { fontSize: "26px", marginBottom: "4px" },
-
-  nomeItem: {
-    fontSize: "clamp(11px, 2.8vw, 14px)",
-    fontWeight: "900",
-    color: "#475569",
-    marginBottom: "4px",
-    textAlign: "center",
-    lineHeight: "1.1",
+  nomeLista: {
+    fontSize: "8.5px",
+    color: "#334155",
+    lineHeight: "1",
   },
 
   indice: {
-    fontSize: "11px",
+    fontSize: "8px",
     fontWeight: "bold",
+    color: "#64748b",
+    marginTop: "2px",
+  },
+
+  numeroSlot: {
+    width: "28px",
+    height: "28px",
+    borderRadius: "50%",
+    background: "#e2e8f0",
+    color: "#64748b",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "15px",
+    fontWeight: "900",
+    marginBottom: "5px",
+  },
+
+  textoSlot: {
+    fontSize: "10px",
+    fontWeight: "700",
     color: "#64748b",
   },
 
   inicio: {
     position: "absolute",
-    top: "-12px",
+    top: "-10px",
     left: "50%",
     transform: "translateX(-50%)",
     background: "#ec4899",
     color: "white",
-    fontSize: "10px",
-    padding: "3px 8px",
+    fontSize: "7px",
+    padding: "2px 6px",
     borderRadius: "999px",
     fontWeight: "900",
   },
 
   busca: {
     position: "absolute",
-    bottom: "-12px",
+    bottom: "-10px",
     left: "50%",
     transform: "translateX(-50%)",
-    background: "#9333ea",
+    background: "#7c3aed",
     color: "white",
-    fontSize: "10px",
-    padding: "3px 8px",
+    fontSize: "7px",
+    padding: "2px 6px",
     borderRadius: "999px",
     fontWeight: "900",
   },
 
   selecionado: {
     position: "absolute",
-    bottom: "-12px",
+    bottom: "-10px",
     left: "50%",
     transform: "translateX(-50%)",
     background: "#22c55e",
     color: "white",
-    fontSize: "10px",
-    padding: "3px 8px",
+    fontSize: "7px",
+    padding: "2px 6px",
     borderRadius: "999px",
     fontWeight: "900",
   },
 
   verificado: {
     position: "absolute",
-    bottom: "-12px",
+    bottom: "-10px",
     left: "50%",
     transform: "translateX(-50%)",
     background: "#22c55e",
     color: "white",
-    fontSize: "10px",
-    padding: "3px 8px",
+    fontSize: "7px",
+    padding: "2px 6px",
     borderRadius: "999px",
     fontWeight: "900",
   },
 
   atualizado: {
     position: "absolute",
-    bottom: "-12px",
+    bottom: "-10px",
     left: "50%",
     transform: "translateX(-50%)",
     background: "#22c55e",
     color: "white",
-    fontSize: "10px",
-    padding: "3px 8px",
+    fontSize: "7px",
+    padding: "2px 6px",
     borderRadius: "999px",
     fontWeight: "900",
   },
 
   setaLista: {
-    fontSize: "28px",
-    fontWeight: "900",
-    color: "#9333ea",
-    display: "flex",
+  fontSize: "13px",
+  fontWeight: "900",
+  color: "#7c3aed",
+  flexShrink: 0,
+},
+
+  areaRemocao: {
+    marginTop: "6px",
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "7px",
+    display: "grid",
+    gridTemplateColumns: "1fr 1.2fr",
+    gap: "6px",
     alignItems: "center",
-    justifyContent: "center",
-    minWidth: "28px",
   },
 
-  explicacaoRemocao: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "14px",
+  subtituloRemovido: {
+    margin: "0 0 2px",
+    color: "#1e293b",
+    fontSize: "13px",
+    fontWeight: "900",
+  },
+
+  textoRemocao: {
+    margin: 0,
     color: "#64748b",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    marginBottom: "16px",
+    fontSize: "10px",
+    fontWeight: "700",
   },
 
-  zonaRemocao: {
-    border: "3px dashed #ec4899",
-    borderRadius: "18px",
-    padding: "24px",
-    minHeight: "190px",
+  caixaRemovido: {
+    minHeight: "46px",
+    border: "2px dashed #ec4899",
+    borderRadius: "12px",
+    background: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#ec4899",
-    fontWeight: "900",
-    fontSize: "20px",
-    background: "rgba(236,72,153,0.08)",
+    gap: "5px",
+    padding: "5px",
+  },
+
+  vazioRemovido: {
+    color: "#cbd5e1",
+    fontSize: "10px",
+    fontWeight: "800",
     textAlign: "center",
   },
 
-  caixaConceito: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    fontSize: "14px",
-    color: "#64748b",
-    lineHeight: "1.6",
-    marginTop: "20px",
+  cardRemovido: {
+    background: "#fdf2f8",
+    color: "#be185d",
+    borderRadius: "10px",
+    padding: "5px",
+    fontSize: "9px",
+    fontWeight: "900",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+  },
+
+  conceito: {
+  marginTop: "6px",
+  background: "#f8fafc",
+  borderRadius: "14px",
+  padding: "10px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  gap: "6px",
+  color: "#475569",
+  fontSize: "10px",
+  fontWeight: "700",
+},
+
+  iconeInfo: {
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  background: "#ede9fe",
+  color: "#7c3aed",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "900",
+  fontSize: "15px",
+},
+
+  rodape: {
+    marginTop: "6px",
+    paddingTop: "6px",
+    borderTop: "1px solid #e2e8f0",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "6px",
   },
 
   botaoResetar: {
     width: "100%",
-    padding: "13px",
-    background: "#f43f5e",
-    border: "none",
-    borderRadius: "16px",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginTop: "18px",
-  },
-
-  formAtualizacao: {
+    height: "34px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "999px",
     background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    marginBottom: "20px",
-    textAlign: "center",
-  },
-
-  tituloAtualizacao: {
-    margin: "0 0 6px",
-    color: "#475569",
+    color: "#7c3aed",
+    fontSize: "12px",
     fontWeight: "900",
+    cursor: "pointer",
   },
 
-  textoAtualizacao: {
-    margin: "0 0 10px",
-    color: "#64748b",
-    fontSize: "13px",
-    fontWeight: "700",
-  },
-
-  inputAtualizacao: {
+  botaoTutorial: {
     width: "100%",
-    maxWidth: "400px",
-    padding: "12px",
-    borderRadius: "12px",
-    border: "2px solid #9333ea",
-    fontSize: "15px",
-    marginTop: "10px",
-    marginBottom: "10px",
-    boxSizing: "border-box",
-  },
-
-  botaoAtualizar: {
-    padding: "12px 20px",
-    background: "#9333ea",
-    color: "white",
+    height: "34px",
     border: "none",
-    borderRadius: "12px",
-    fontWeight: "bold",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+    color: "white",
+    fontSize: "12px",
+    fontWeight: "900",
     cursor: "pointer",
   },
 
   fundoModal: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.45)",
-    backdropFilter: "blur(5px)",
+    background: "rgba(15,23,42,0.45)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 200,
+    zIndex: 50,
   },
 
-  modalHistoria: {
-    width: "min(90%, 620px)",
+  modal: {
+    width: "86%",
+    maxWidth: "340px",
     background: "white",
-    borderRadius: "24px",
-    padding: "32px",
+    borderRadius: "22px",
+    padding: "22px",
     textAlign: "center",
     color: "#475569",
-    fontWeight: "700",
-    lineHeight: "1.8",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
   },
 
-  botaoEntendi: {
-    marginTop: "24px",
-    width: "100%",
-    padding: "14px",
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "16px",
+  tituloModal: {
+    color: "#7c3aed",
+    fontSize: "24px",
     fontWeight: "900",
-    cursor: "pointer",
+    marginBottom: "12px",
   },
 
-  cardConclusao: {
+  tituloConcluido: {
+    color: "#7c3aed",
+    fontSize: "26px",
+    fontWeight: "900",
+    marginBottom: "12px",
+  },
+
+  modalTexto: {
+    fontSize: "14px",
+    lineHeight: "1.6",
+  },
+
+  botaoFechar: {
     width: "100%",
-    maxWidth: "700px",
-    margin: "0 auto",
-    background: "rgba(255,255,255,0.88)",
-    borderRadius: "28px",
-    padding: "clamp(24px, 4vw, 50px)",
-    textAlign: "center",
-    boxSizing: "border-box",
-  },
-
-  resumoBox: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    padding: "20px",
-    borderRadius: "18px",
-    margin: "24px 0",
-    textAlign: "left",
-    color: "#475569",
-    lineHeight: "1.7",
-  },
-
-  botaoPrincipal: {
-    width: "100%",
-    padding: "16px",
-    background: "#9333ea",
+    height: "42px",
     border: "none",
-    borderRadius: "18px",
+    borderRadius: "14px",
+    background: "#7c3aed",
     color: "white",
     fontWeight: "900",
-    fontSize: "15px",
+    marginTop: "14px",
     cursor: "pointer",
-    marginTop: "10px",
-  },
-
-  vazio: {
-    color: "#94a3b8",
-    fontWeight: "bold",
   },
 };
 

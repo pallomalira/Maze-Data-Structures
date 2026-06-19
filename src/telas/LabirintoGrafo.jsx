@@ -1,247 +1,465 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import * as ReactJoyride from "react-joyride";
+
+const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
 
 function LabirintoGrafo({ voltar, concluir }) {
-  const locaisIniciais = [
-    { nome: "Praça Central", icone: "🏰", posicao: "Praça Central" },
-    { nome: "Torre dos Magos", icone: "🧙", posicao: "Torre dos Magos" },
-    { nome: "Floresta Antiga", icone: "🌲", posicao: "Floresta Antiga" },
-    { nome: "Ponte Sombria", icone: "🌉", posicao: "Ponte Sombria" },
-    { nome: "Templo Final", icone: "🏛️", posicao: "Templo Final" },
+  const personagensIniciais = [
+    { id: "arthur", nome: "Arthur", icone: "🛡️", papel: "Líder" },
+    { id: "maria", nome: "Maria", icone: "🏹", papel: "Ponte do grupo" },
+    { id: "lucas", nome: "Lucas", icone: "🧙", papel: "Mago" },
+    { id: "sofia", nome: "Sofia", icone: "🌙", papel: "Curandeira" },
+    { id: "beth", nome: "Beth", icone: "🕵️", papel: "Viajante" },
   ];
 
   const conexoesIniciais = [
-    ["Praça Central", "Torre dos Magos"],
-    ["Praça Central", "Floresta Antiga"],
-    ["Torre dos Magos", "Ponte Sombria"],
-    ["Floresta Antiga", "Templo Final"],
-    ["Ponte Sombria", "Templo Final"],
+    ["arthur", "maria"],
+    ["maria", "beth"],
+    ["lucas", "beth"],
+    ["beth", "sofia"],
+    ["lucas", "sofia"],
   ];
 
-  const caminhoBusca = ["Praça Central", "Torre dos Magos", "Ponte Sombria"];
-
-  const [etapa, setEtapa] = useState(0);
-  const [vertices, setVertices] = useState([]);
-  const [disponiveis, setDisponiveis] = useState(locaisIniciais);
-  const [arestas, setArestas] = useState([]);
-  const [dragged, setDragged] = useState(null);
-  const [indiceBusca, setIndiceBusca] = useState(0);
-  const [concluido, setConcluido] = useState(false);
-  const [mostrarHistoria, setMostrarHistoria] = useState(true);
-
-  const [novoNome, setNovoNome] = useState("");
-  const [indiceSelecionado, setIndiceSelecionado] = useState(null);
-  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
-
-  const [mensagem, setMensagem] = useState(
-    "Clique em COMEÇAR para iniciar o desafio do grafo."
-  );
+  const caminhoBusca = ["arthur", "maria", "beth"];
 
   const posicoes = {
-    "Praça Central": { x: 120, y: 90 },
-    "Torre dos Magos": { x: 300, y: 70 },
-    "Floresta Antiga": { x: 160, y: 240 },
-    "Ponte Sombria": { x: 420, y: 200 },
-    "Templo Final": { x: 300, y: 340 },
+    arthur: { x: 210, y: 42 },
+    maria: { x: 90, y: 135 },
+    lucas: { x: 330, y: 135 },
+    beth: { x: 210, y: 225 },
+    sofia: { x: 210, y: 325 },
   };
 
-  function iniciarFase() {
-    setEtapa(1);
-    setMensagem(
-      "📥 FORMAR GRAFO\n\nArraste os locais para montar a cidade.\n\nCada local é um VÉRTICE.\nOs caminhos entre eles são as ARESTAS."
-    );
+  const etapas = [
+    "Formar rede",
+    "Buscar",
+    "Marcar infiltrado",
+    "Remover infiltrado",
+    "Remover conexão infectada",
+    "Quem ficou isolado?",
+    "Conclusão",
+  ];
+
+  const [etapa, setEtapa] = useState(1);
+  const [vertices, setVertices] = useState([]);
+  const [disponiveis, setDisponiveis] = useState(personagensIniciais);
+  const [arestas, setArestas] = useState([]);
+  const [removidos, setRemovidos] = useState([]);
+  const [indiceBusca, setIndiceBusca] = useState(0);
+  const [novoNome, setNovoNome] = useState("");
+  const [idSelecionado, setIdSelecionado] = useState(null);
+  const [idAtualizado, setIdAtualizado] = useState(null);
+  const [idInfectado, setIdInfectado] = useState(null);
+  const [concluido, setConcluido] = useState(false);
+  const [mostrarHistoria, setMostrarHistoria] = useState(true);
+  const [mostrarDica, setMostrarDica] = useState(false);
+  const [mostrarEtapas, setMostrarEtapas] = useState(false);
+  const [runTour, setRunTour] = useState(false);
+
+  const [mensagem, setMensagem] = useState(
+    "Clique nos aventureiros para formar a rede de comunicação dos aliados."
+  );
+
+  function mostrarToast(tipo, texto) {
+    toast.dismiss();
+
+    setTimeout(() => {
+      if (tipo === "success") toast.success(texto);
+      else if (tipo === "error") toast.error(texto);
+      else toast(texto);
+    }, 150);
   }
 
-  function criarConexoes(verticesAtuais) {
-    const posicoesVertices = verticesAtuais.map((v) => v.posicao);
+  function iniciarTutorial() {
+    setMostrarEtapas(false);
+    setRunTour(false);
+
+    setTimeout(() => {
+      setRunTour(true);
+    }, 100);
+  }
+
+  function fecharHistoria() {
+    setMostrarHistoria(false);
+
+    setTimeout(() => {
+      iniciarTutorial();
+    }, 400);
+  }
+
+  function criarArestas(verticesAtuais) {
+    const ids = verticesAtuais.map((v) => v.id);
 
     return conexoesIniciais.filter(
-      ([origem, destino]) =>
-        posicoesVertices.includes(origem) && posicoesVertices.includes(destino)
+      ([origem, destino]) => ids.includes(origem) && ids.includes(destino)
     );
   }
 
-  function adicionarVertice(index) {
-    if (etapa !== 1) return;
+  function estaConectado(id, listaArestas = arestas) {
+    return listaArestas.some(
+      ([origem, destino]) => origem === id || destino === id
+    );
+  }
 
-    const local = disponiveis[index];
-    const novosVertices = [...vertices, local];
-    const novosDisponiveis = disponiveis.filter((_, i) => i !== index);
+  function obterVerticesIsolados(
+    listaVertices = vertices,
+    listaArestas = arestas
+  ) {
+    return listaVertices.filter((vertice) => {
+      return !estaConectado(vertice.id, listaArestas);
+    });
+  }
+
+  function adicionarPersonagem(index) {
+    if (etapa !== 1) {
+      mostrarToast("error", "Agora não é o momento de formar a rede.");
+      return;
+    }
+
+    const personagem = disponiveis[index];
+    const novosVertices = [...vertices, personagem];
 
     setVertices(novosVertices);
-    setDisponiveis(novosDisponiveis);
-    setArestas(criarConexoes(novosVertices));
-    setDragged(null);
+    setDisponiveis(disponiveis.filter((_, i) => i !== index));
+    setArestas(criarArestas(novosVertices));
 
-    if (novosVertices.length === 5) {
+    mostrarToast("success", `${personagem.nome} entrou na rede.`);
+
+    if (novosVertices.length === personagensIniciais.length) {
       setEtapa(2);
       setIndiceBusca(0);
       setMensagem(
-        "🔍 BUSCAR CAMINHO\n\nO Guardião precisa chegar até a Ponte Sombria.\n\nEm um grafo, você precisa seguir as conexões.\n\nCaminho correto:\n\nPraça Central → Torre dos Magos → Ponte Sombria\n\nClique no local marcado como VERIFICAR."
+        "Há um infiltrado na rede. Siga as conexões para encontrá-lo: comece por Arthur."
       );
+
+      setTimeout(() => {
+        mostrarToast("info", "🔍 Siga o caminho Arthur → Maria → Beth.");
+      }, 1800);
     } else {
       setMensagem(
-        "✅ Local adicionado ao grafo.\n\nContinue adicionando os outros pontos da cidade."
+        "Aliado adicionado. Conforme a rede cresce, novas conexões aparecem."
       );
     }
   }
 
-  function buscarVertice(index) {
+  function buscarInfiltrado(index) {
     if (etapa !== 2) return;
 
-    const local = vertices[index];
+    const vertice = vertices[index];
     const esperado = caminhoBusca[indiceBusca];
 
-    if (local.posicao !== esperado) {
+    if (vertice.id !== esperado) {
+      const esperadoNome =
+        personagensIniciais.find((p) => p.id === esperado)?.nome ||
+        "o próximo vértice";
+
+      mostrarToast("error", `Caminho errado. Clique em ${esperadoNome}.`);
       setMensagem(
-        `❌ Caminho errado.\n\nVocê precisa seguir a conexão correta.\n\nAgora clique em: ${esperado}.`
+        `Na busca em grafo, você precisa seguir as conexões. Agora clique em ${esperadoNome}.`
       );
       return;
     }
 
-    if (local.posicao === "Ponte Sombria") {
+    if (vertice.id === "beth") {
       setEtapa(3);
       setMensagem(
-        "✅ Ponte Sombria encontrada!\n\nVocê percorreu o grafo seguindo as conexões.\n\nAgora clique nela, digite um novo nome e aperte ATUALIZAR."
+        "Beth foi encontrada. O grupo descobriu que ela é a infiltrada. Agora atualize o nome dela para Infiltrado."
       );
+      mostrarToast("success", "Beth encontrada! Clique nela para marcar.");
       return;
     }
 
     setIndiceBusca(indiceBusca + 1);
-    setMensagem(
-      `🔍 Você passou por ${local.nome}.\n\nContinue seguindo a próxima conexão do caminho.`
-    );
+    setMensagem(`${vertice.nome} foi verificado. Continue seguindo a conexão.`);
+    mostrarToast("success", `${vertice.nome} verificado.`);
   }
 
-  function selecionarVerticeParaAtualizar(index) {
+  function selecionarParaAtualizar(index) {
     if (etapa !== 3) return;
 
-    if (vertices[index].posicao !== "Ponte Sombria") {
-      setMensagem("❌ Não é esse local.\n\nSelecione a Ponte Sombria.");
+    const vertice = vertices[index];
+
+    if (vertice.id !== "beth") {
+      mostrarToast("error", "Selecione Beth para marcar como infiltrada.");
+      setMensagem("Clique em Beth para atualizar as informações dela.");
       return;
     }
 
-    setIndiceSelecionado(index);
-    setMensagem(
-      "✅ Ponte selecionada.\n\nDigite o novo nome no campo e clique em ATUALIZAR."
-    );
+    setIdSelecionado(vertice.id);
+    setNovoNome("Infiltrado");
+    setMensagem('Digite ou mantenha o nome "Infiltrado" e clique em Atualizar.');
+    mostrarToast("success", "Beth selecionada.");
   }
 
   function confirmarAtualizacao() {
     if (etapa !== 3) return;
 
-    if (indiceSelecionado === null) {
-      setMensagem("❌ Primeiro selecione a Ponte Sombria.");
+    if (idSelecionado !== "beth") {
+      mostrarToast("error", "Primeiro selecione Beth.");
+      setMensagem("Primeiro clique em Beth para selecionar o vértice.");
       return;
     }
 
     if (novoNome.trim() === "") {
-      setMensagem("❌ Digite um novo nome antes de atualizar.");
+      mostrarToast("error", "Digite o novo nome.");
+      setMensagem("Digite o novo nome para atualizar o vértice.");
       return;
     }
 
-    const nomeNovo = novoNome.trim();
-
-    const novosVertices = vertices.map((v, index) =>
-      index === indiceSelecionado
-        ? {
-            ...v,
-            nome: nomeNovo,
-            icone: "🌁",
-            posicao: "Ponte Sombria",
-          }
+    const novosVertices = vertices.map((v) =>
+      v.id === "beth"
+        ? { ...v, nome: novoNome.trim(), icone: "🕵️", papel: "Infiltrado" }
         : v
     );
 
     setVertices(novosVertices);
-    setIndiceAtualizado(indiceSelecionado);
-    setIndiceSelecionado(null);
+    setIdAtualizado("beth");
+    setIdSelecionado(null);
     setNovoNome("");
     setEtapa(4);
 
+    mostrarToast("success", "Beth foi marcada como infiltrada.");
     setMensagem(
-      "✏️ Vértice atualizado!\n\nEle continua no mesmo lugar do grafo, só mudou o nome.\n\nAgora vamos aprender remoção:\n\nquando um vértice é removido, todas as arestas ligadas a ele também somem."
+      "Agora remova o Infiltrado da rede. Ao remover um vértice, todas as conexões ligadas a ele desaparecem."
     );
   }
 
-  function removerVertice(index) {
-    if (etapa !== 4) return;
+  function removerVertice(id) {
+    const removido = vertices.find((v) => v.id === id);
+    if (!removido) return null;
 
-    if (index !== indiceAtualizado) {
-      setMensagem(
-        "❌ Esse não é o vértice escolhido para esta demonstração.\n\nRemova a ponte atualizada para ver as conexões dela desaparecerem."
-      );
-      setDragged(null);
-      return;
-    }
+    const novosVertices = vertices.filter((v) => v.id !== id);
 
-    const removido = vertices[index];
-
-    const novosVertices = vertices.filter((_, i) => i !== index);
     const novasArestas = arestas.filter(
-      ([origem, destino]) =>
-        origem !== removido.posicao && destino !== removido.posicao
+      ([origem, destino]) => origem !== id && destino !== id
     );
 
     setVertices(novosVertices);
     setArestas(novasArestas);
-    setEtapa(5);
-    setDragged(null);
+    setRemovidos((anteriores) => [...anteriores, removido]);
 
+    return {
+      removido,
+      novosVertices,
+      novasArestas,
+    };
+  }
+
+  function removerInfiltrado(index) {
+    if (etapa !== 4) return;
+
+    const vertice = vertices[index];
+
+    if (vertice.id !== "beth") {
+      mostrarToast("error", "Remova o vértice marcado como Infiltrado.");
+      setMensagem("Clique no Infiltrado para removê-lo da rede.");
+      return;
+    }
+
+    removerVertice("beth");
+    setIdAtualizado(null);
+    setIdInfectado("maria");
+    setEtapa(5);
+
+    mostrarToast("success", "Infiltrado removido. As conexões dele desapareceram.");
     setMensagem(
-      `✅ ${removido.nome} foi removida!\n\nComo ela era um vértice do grafo, todas as conexões ligadas a ela também foram removidas.\n\nAgora observe o grafo restante.\n\nQual local ainda está conectado ao Templo Final?`
+      "O infiltrado foi removido, mas afetou Maria, que era uma ponte importante da rede. Clique em Maria para removê-la e observe o que acontece."
     );
   }
 
-  function responderDesafio(index) {
+  function removerMaria(index) {
     if (etapa !== 5) return;
 
-    if (vertices[index].posicao === "Floresta Antiga") {
+    const vertice = vertices[index];
+
+    if (vertice.id !== "maria") {
+      mostrarToast("error", "Maria foi afetada. Clique nela para removê-la.");
       setMensagem(
-        "🏆 Perfeito!\n\nDepois da remoção da ponte, a conexão Ponte → Templo sumiu.\n\nA Floresta Antiga ainda continua ligada ao Templo Final.\n\nVocê entendeu o Grafo:\n\n🔵 Vértices são pontos.\n➖ Arestas são conexões.\n🔍 Buscar é seguir caminhos conectados.\n✏️ Atualizar altera um vértice.\n🗑️ Remover um vértice remove suas conexões."
+        "Maria precisa sair da rede. Ao remover Maria, todas as conexões ligadas a ela desaparecem."
       );
-      setConcluido(true);
+      return;
+    }
+
+    const resultado = removerVertice("maria");
+    setIdInfectado(null);
+    setEtapa(6);
+
+    const novosVertices = resultado?.novosVertices || [];
+    const novasArestas = resultado?.novasArestas || [];
+
+    const isolados = obterVerticesIsolados(novosVertices, novasArestas);
+
+    if (isolados.length > 0) {
+      const nomes = isolados.map((v) => v.nome).join(", ");
+
+      setMensagem(
+        `Maria saiu da rede. Agora descubra quem ficou isolado, ou seja, sem nenhuma conexão.`
+      );
     } else {
       setMensagem(
-        "❌ Ainda não.\n\nObserve as linhas do grafo.\n\nQual local ainda tem uma conexão direta com o Templo Final?"
+        "Maria saiu da rede. Ninguém ficou isolado, porque todos os vértices restantes ainda possuem pelo menos uma conexão."
       );
     }
+
+    mostrarToast("success", "Maria foi removida. Veja quem ficou isolado.");
+  }
+
+  function responderObservacao(index) {
+    if (etapa !== 6) return;
+
+    const vertice = vertices[index];
+    const isolados = obterVerticesIsolados();
+    const idsIsolados = isolados.map((v) => v.id);
+
+    if (idsIsolados.includes(vertice.id)) {
+      setEtapa(7);
+      setConcluido(true);
+      setMensagem(
+        `${vertice.nome} ficou isolado porque não possui nenhuma aresta ligada a ele.`
+      );
+      mostrarToast("success", "Correto! Esse vértice ficou isolado.");
+      return;
+    }
+
+    mostrarToast("error", `${vertice.nome} ainda possui conexão.`);
+    setMensagem(
+      `${vertice.nome} não está isolado. Procure quem não possui nenhuma linha ligada.`
+    );
   }
 
   function clicarVertice(index) {
-    if (etapa === 2) buscarVertice(index);
-    if (etapa === 3) selecionarVerticeParaAtualizar(index);
-    if (etapa === 5) responderDesafio(index);
-  }
+    if (!vertices[index]) return;
 
-  function soltarParaAdicionar() {
-    if (!dragged || dragged.tipo !== "disponivel") return;
-    adicionarVertice(dragged.index);
-  }
-
-  function soltarParaRemover() {
-    if (!dragged || dragged.tipo !== "grafo") return;
-    removerVertice(dragged.index);
+    if (etapa === 2) buscarInfiltrado(index);
+    if (etapa === 3) selecionarParaAtualizar(index);
+    if (etapa === 4) removerInfiltrado(index);
+    if (etapa === 5) removerMaria(index);
+    if (etapa === 6) responderObservacao(index);
   }
 
   function resetar() {
-    setEtapa(0);
+    setEtapa(1);
     setVertices([]);
-    setDisponiveis(locaisIniciais);
+    setDisponiveis(personagensIniciais);
     setArestas([]);
-    setDragged(null);
+    setRemovidos([]);
     setIndiceBusca(0);
+    setNovoNome("");
+    setIdSelecionado(null);
+    setIdAtualizado(null);
+    setIdInfectado(null);
     setConcluido(false);
     setMostrarHistoria(true);
-    setNovoNome("");
-    setIndiceSelecionado(null);
-    setIndiceAtualizado(null);
-    setMensagem("Clique em COMEÇAR para iniciar o desafio do grafo.");
+    setMensagem(
+      "Clique nos aventureiros para formar a rede de comunicação dos aliados."
+    );
+    mostrarToast("info", "🔄 Fase reiniciada.");
   }
 
-  function renderGrafo(interativo = true) {
+  const stepsBase = [
+    {
+      target: ".tour-topo",
+      content:
+        "Aqui você volta ao mapa, abre a história ou vê uma dica sobre grafos.",
+      placement: "bottom",
+      disableBeacon: true,
+    },
+    {
+      target: ".tour-etapa",
+      content:
+        "Aqui aparece a etapa atual. Toque para visualizar todas as etapas.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-mensagem",
+      content:
+        "Essa mensagem mostra a missão atual e explica o que você precisa fazer.",
+      placement: "bottom",
+    },
+  ];
+
+  const stepsPorEtapa = {
+    1: [
+      {
+        target: ".tour-personagens",
+        content:
+          "Clique nos aventureiros para adicioná-los à rede. Cada pessoa será um vértice.",
+        placement: "bottom",
+      },
+      {
+        target: ".tour-grafo",
+        content:
+          "As linhas representam conexões. Essas linhas são as arestas do grafo.",
+        placement: "top",
+      },
+    ],
+    2: [
+      {
+        target: ".tour-grafo",
+        content:
+          "Para encontrar o infiltrado, siga o caminho de conexões indicado pela rede.",
+        placement: "top",
+      },
+    ],
+    3: [
+      {
+        target: ".tour-atualizar",
+        content:
+          "Atualizar um vértice muda sua informação, mas mantém suas conexões.",
+        placement: "bottom",
+      },
+    ],
+    4: [
+      {
+        target: ".tour-grafo",
+        content:
+          "Remover um vértice também remove todas as arestas ligadas a ele.",
+        placement: "top",
+      },
+    ],
+    5: [
+      {
+        target: ".tour-grafo",
+        content:
+          "Maria era uma ponte importante da rede. Clique nela para removê-la e observe quem perde conexão.",
+        placement: "top",
+      },
+    ],
+    6: [
+      {
+        target: ".tour-grafo",
+        content:
+          "Agora clique no vértice isolado. Um vértice isolado não possui nenhuma aresta ligada a ele.",
+        placement: "top",
+      },
+    ],
+  };
+
+  const steps = [
+    ...stepsBase,
+    ...(stepsPorEtapa[etapa] || []),
+    {
+      target: ".tour-conceito",
+      content:
+        "Grafo é uma estrutura formada por vértices e arestas. Vértices são pontos da rede. Arestas são conexões entre eles.",
+      placement: "top",
+    },
+    {
+      target: ".tour-resetar",
+      content: "Aqui você pode resetar a fase ou ver o tutorial novamente.",
+      placement: "top",
+    },
+  ];
+
+  function renderGrafo() {
+    const altura = vertices.length <= 3 ? 260 : 390;
+    const isolados = obterVerticesIsolados();
+    const idsIsolados = isolados.map((v) => v.id);
+
     return (
-      <svg width="100%" height="430" viewBox="0 0 540 430">
+      <svg width="100%" height={altura} viewBox="0 0 420 390">
         {arestas.map(([origem, destino], index) => {
           const p1 = posicoes[origem];
           const p2 = posicoes[destino];
@@ -256,67 +474,73 @@ function LabirintoGrafo({ voltar, concluir }) {
               x2={p2.x}
               y2={p2.y}
               stroke="#818cf8"
-              strokeWidth="5"
+              strokeWidth="4"
               strokeLinecap="round"
             />
           );
         })}
 
         {vertices.map((local, index) => {
-          const pos = posicoes[local.posicao];
-
+          const pos = posicoes[local.id];
           if (!pos) return null;
 
           const esperado = caminhoBusca[indiceBusca];
 
-          const verificar = etapa === 2 && local.posicao === esperado;
+          const verificar = etapa === 2 && local.id === esperado;
           const visto =
-            etapa === 2 &&
-            caminhoBusca.slice(0, indiceBusca).includes(local.posicao);
-
-          const atualizar = etapa === 3 && local.posicao === "Ponte Sombria";
-          const selecionado = etapa === 3 && index === indiceSelecionado;
-          const atualizado = index === indiceAtualizado;
+            etapa === 2 && caminhoBusca.slice(0, indiceBusca).includes(local.id);
+          const atualizar = etapa === 3 && local.id === "beth";
+          const selecionado = etapa === 3 && idSelecionado === local.id;
+          const atualizado = idAtualizado === local.id;
+          const infectado = idInfectado === local.id;
+          const isolado = etapa === 6 && idsIsolados.includes(local.id);
+          const conectado = etapa === 6 && !idsIsolados.includes(local.id);
 
           return (
             <foreignObject
-              key={`${local.nome}-${index}`}
-              x={pos.x - 62}
-              y={pos.y - 48}
-              width="124"
-              height="110"
+              key={local.id}
+              x={pos.x - 38}
+              y={pos.y - 31}
+              width="76"
+              height="78"
             >
-              <div
-                draggable={etapa === 4 && atualizado}
-                onClick={() => interativo && clicarVertice(index)}
-                onDragStart={() => setDragged({ tipo: "grafo", index })}
+              <motion.div
+                whileTap={{ scale: 0.95 }}
+                onClick={() => clicarVertice(index)}
                 style={{
                   ...estilos.vertice,
                   border:
-                    verificar || atualizar || selecionado || atualizado
-                      ? "3px solid #ec4899"
-                      : "3px solid #818cf8",
+                    verificar ||
+                    atualizar ||
+                    selecionado ||
+                    atualizado ||
+                    infectado ||
+                    isolado
+                      ? "2px solid #ec4899"
+                      : "2px solid #818cf8",
                   cursor:
-                    etapa === 4 && atualizado
-                      ? "grab"
-                      : etapa === 2 || etapa === 3 || etapa === 5
+                    etapa === 2 ||
+                    etapa === 3 ||
+                    etapa === 4 ||
+                    etapa === 5 ||
+                    etapa === 6
                       ? "pointer"
                       : "default",
                 }}
               >
                 {verificar && <span style={estilos.busca}>VERIFICAR</span>}
                 {visto && <span style={estilos.verificado}>VISTO</span>}
-                {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
-                {selecionado && (
-                  <span style={estilos.selecionado}>SELECIONADO</span>
-                )}
-                {atualizado && (
-                  <span style={estilos.atualizado}>ATUALIZADO</span>
-                )}
+                {atualizar && <span style={estilos.busca}>MARCAR</span>}
+                {selecionado && <span style={estilos.selecionado}>SELEC.</span>}
+                {atualizado && <span style={estilos.atualizado}>INFILTRADO</span>}
+                {infectado && <span style={estilos.infectado}>AFETADA</span>}
+                {isolado && <span style={estilos.infectado}>ISOLADO</span>}
+                {conectado && <span style={estilos.verificado}>CONECTADO</span>}
 
                 <span style={estilos.avatarVertice}>{local.icone}</span>
-                <span style={estilos.nomeItem}>{local.nome}</span>
-              </div>
+                <span style={estilos.nomeVertice}>{local.nome}</span>
+                <span style={estilos.papelVertice}>{local.papel}</span>
+              </motion.div>
             </foreignObject>
           );
         })}
@@ -324,703 +548,801 @@ function LabirintoGrafo({ voltar, concluir }) {
     );
   }
 
-  if (concluido) {
-    return (
-      <div style={estilos.pagina}>
-        <div style={estilos.cardConclusao}>
-          <button onClick={voltar} style={estilos.botaoVoltar}>
-            ← VOLTAR
-          </button>
-
-          <div style={estilos.icone}>🏆</div>
-          <h1 style={estilos.titulo}>GRAFO CONCLUÍDO!</h1>
-
-          <div style={estilos.resumoBox}>
-            <p>🔵 Vértices: pontos do grafo.</p>
-            <p>➖ Arestas: conexões entre vértices.</p>
-            <p>🔍 Buscar: percorre caminhos conectados.</p>
-            <p>✏️ Atualizar: altera um vértice encontrado.</p>
-            <p>🗑️ Remover: remove o vértice e suas conexões.</p>
-          </div>
-
-          <button onClick={concluir} style={estilos.botaoPrincipal}>
-            ➜ PRÓXIMA FASE
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <div style={estilos.barraTopo}>
-          <button onClick={voltar} style={estilos.botaoVoltar}>
-            ← VOLTAR AO MAPA
+        <Joyride
+          steps={steps}
+          run={runTour}
+          continuous
+          showSkipButton
+          showProgress
+          disableOverlayClose
+          locale={{
+            back: "Voltar",
+            close: "Fechar",
+            last: "Concluir",
+            next: "Próximo",
+            skip: "Pular",
+          }}
+          styles={{
+            options: {
+              zIndex: 3000,
+              primaryColor: "#7c3aed",
+              textColor: "#334155",
+              overlayColor: "rgba(15, 23, 42, 0.65)",
+              backgroundColor: "#ffffff",
+              arrowColor: "#ffffff",
+            },
+            tooltip: {
+              borderRadius: "22px",
+              padding: "18px",
+              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
+              border: "1px solid #e2e8f0",
+            },
+            tooltipContent: {
+              padding: "10px 6px",
+              fontSize: "14px",
+              lineHeight: "1.6",
+              fontWeight: "700",
+            },
+            spotlight: {
+              borderRadius: "18px",
+              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
+            },
+            buttonNext: {
+              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+              borderRadius: "999px",
+              padding: "10px 18px",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonBack: {
+              color: "#64748b",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonSkip: {
+              color: "#ec4899",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonClose: {
+              color: "#94a3b8",
+            },
+          }}
+          callback={(data) => {
+            if (data.status === "finished" || data.status === "skipped") {
+              setRunTour(false);
+            }
+          }}
+        />
+
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          gutter={8}
+          containerStyle={{ top: 70 }}
+          toastOptions={{
+            duration: 1800,
+            style: {
+              borderRadius: "14px",
+              background: "#1e293b",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "13px",
+              maxWidth: "320px",
+              textAlign: "center",
+            },
+          }}
+        />
+
+        <header style={estilos.topo} className="tour-topo">
+          <button onClick={voltar} style={estilos.botaoMapa}>
+            <span style={estilos.setaVoltar}>←</span>
+            <span>Mapa</span>
           </button>
 
-          <button
-            onClick={() => setMostrarHistoria(true)}
-            style={estilos.botaoHistoria}
-          >
-            📜 História
-          </button>
-        </div>
+          <h1 style={estilos.tituloTopo}>Rede dos Aliados</h1>
 
-        <div style={estilos.header}>
-          <h1 style={estilos.titulo}>MUNDO DO GRAFO</h1>
-          <p style={estilos.regra}>Grafo: vértices conectados por arestas.</p>
-        </div>
-
-        <div style={estilos.etapas}>
-          {[
-            "História",
-            "Formar grafo",
-            "Buscar",
-            "Atualizar",
-            "Remover",
-            "Desafio",
-          ].map((nome, index) => (
-            <div
-              key={nome}
-              style={{
-                ...estilos.etapaBox,
-                background: etapa === index ? "#ec4899" : "#e2e8f0",
-                color: etapa === index ? "white" : "#475569",
-              }}
+          <div style={estilos.iconesTopo}>
+            <button
+              onClick={() => setMostrarHistoria(true)}
+              style={estilos.botaoLivro}
             >
-              {index}. {nome}
-            </div>
-          ))}
-        </div>
+              📖
+            </button>
 
-        <div style={estilos.mensagemEtapa}>{mensagem}</div>
+            <button onClick={() => setMostrarDica(true)} style={estilos.botaoLuz}>
+              💡
+            </button>
+          </div>
+        </header>
 
-        {etapa === 0 && (
-          <div style={estilos.introBox}>
-            <div style={estilos.caixaTema}>🌐 Cidade das Conexões</div>
+        <section
+          style={estilos.etapaCard}
+          className="tour-etapa"
+          onClick={() => setMostrarEtapas(!mostrarEtapas)}
+        >
+          <div>
+            <span style={estilos.etapaNumero}>Etapa {etapa} de 7</span>
+            <h2 style={estilos.etapaNome}>{etapas[etapa - 1]}</h2>
+          </div>
 
-            <p style={estilos.textoIntro}>
-              Um grafo é formado por vértices e arestas. Os vértices são os
-              locais. As arestas são os caminhos que ligam esses locais.
-            </p>
+          <span style={estilos.setaBaixo}>⌄</span>
+        </section>
 
-            <button onClick={iniciarFase} style={estilos.botaoPrincipal}>
-              COMEÇAR
+        {mostrarEtapas && (
+          <div style={estilos.listaEtapas}>
+            {etapas.map((nome, index) => (
+              <div
+                key={nome}
+                style={
+                  etapa === index + 1
+                    ? estilos.etapaListaAtiva
+                    : estilos.etapaListaItem
+                }
+              >
+                {index + 1}. {nome}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p style={estilos.mensagem} className="tour-mensagem">
+          {mensagem}
+        </p>
+
+        {etapa === 3 && (
+          <div style={estilos.formAtualizacao} className="tour-atualizar">
+            <input
+              value={novoNome}
+              onChange={(e) => setNovoNome(e.target.value)}
+              placeholder="Novo nome"
+              style={estilos.input}
+            />
+
+            <button onClick={confirmarAtualizacao} style={estilos.botaoAtualizar}>
+              Atualizar
             </button>
           </div>
         )}
 
-        {etapa === 1 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Locais disponíveis</h2>
+        {disponiveis.length > 0 && (
+          <section className="tour-personagens">
+            <h2 style={estilos.subtitulo}>Aliados disponíveis</h2>
 
-              <div style={estilos.disponiveisContainer}>
-                {disponiveis.map((local, index) => (
-                  <motion.div
-                    key={local.nome}
-                    draggable
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => adicionarVertice(index)}
-                    onDragStart={() =>
-                      setDragged({ tipo: "disponivel", index })
-                    }
-                    style={estilos.itemDraggable}
-                  >
-                    <span style={estilos.avatar}>{local.icone}</span>
-                    <span>{local.nome}</span>
-                  </motion.div>
-                ))}
-              </div>
+            <div style={estilos.personagensGrid}>
+              {disponiveis.map((personagem, index) => (
+                <motion.button
+                  key={personagem.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => adicionarPersonagem(index)}
+                  style={estilos.cardPersonagem}
+                >
+                  <span style={estilos.iconePersonagem}>{personagem.icone}</span>
+                  <span>{personagem.nome}</span>
+                </motion.button>
+              ))}
             </div>
-
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Mapa do grafo</h2>
-
-              <div
-                style={estilos.zonaDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaAdicionar}
-              >
-                {vertices.length === 0 ? (
-                  <span style={estilos.vazio}>Solte os locais aqui</span>
-                ) : (
-                  renderGrafo(false)
-                )}
-              </div>
-            </div>
-          </div>
+          </section>
         )}
 
-        {(etapa === 2 || etapa === 3 || etapa === 5) && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.colunaGrande}>
-              <h2 style={estilos.tituloCaixa}>Mapa do grafo</h2>
+        <section style={estilos.grafoArea} className="tour-grafo">
+          <h2 style={estilos.subtitulo}>Rede de comunicação</h2>
 
-              {etapa === 3 && (
-                <div style={estilos.formAtualizacao}>
-                  <h3 style={estilos.tituloAtualizacao}>
-                    ✏️ Atualizar vértice
-                  </h3>
+          <div style={estilos.grafoBox}>
+            {vertices.length === 0 ? (
+              <span style={estilos.vazio}>A rede aparecerá aqui</span>
+            ) : (
+              renderGrafo()
+            )}
+          </div>
+        </section>
 
-                  <p style={estilos.textoAtualizacao}>
-                    Clique na Ponte Sombria, digite o novo nome e confirme.
-                  </p>
+        {etapa >= 4 && (
+          <section style={estilos.areaRemocao} className="tour-remocao">
+            <div>
+              <h2 style={estilos.subtituloRemovido}>Remoções</h2>
+              <p style={estilos.textoRemocao}>
+                Remover um vértice apaga suas conexões.
+              </p>
+            </div>
 
-                  <input
-                    type="text"
-                    value={novoNome}
-                    onChange={(e) => setNovoNome(e.target.value)}
-                    placeholder="Ex: Ponte Iluminada"
-                    style={estilos.inputAtualizacao}
-                  />
-
-                  <button
-                    onClick={confirmarAtualizacao}
-                    style={estilos.botaoAtualizar}
-                  >
-                    ATUALIZAR
-                  </button>
-                </div>
+            <div style={estilos.caixaRemovido}>
+              {removidos.length === 0 ? (
+                <span style={estilos.vazioRemovido}>Nenhum removido</span>
+              ) : (
+                removidos.map((p) => (
+                  <div key={p.id} style={estilos.cardRemovido}>
+                    <span>{p.icone}</span>
+                    <strong>{p.nome}</strong>
+                  </div>
+                ))
               )}
-
-              <div style={estilos.grafoGrande}>{renderGrafo(true)}</div>
             </div>
-          </div>
+          </section>
         )}
 
-        {etapa === 4 && (
-          <div style={estilos.conteudoDesafio}>
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Mapa do grafo</h2>
-              <div style={estilos.grafoGrande}>{renderGrafo(true)}</div>
-            </div>
+        <section style={estilos.conceito} className="tour-conceito">
+          <span style={estilos.iconeInfo}>i</span>
 
-            <div style={estilos.coluna}>
-              <h2 style={estilos.tituloCaixa}>Zona de remoção</h2>
-
-              <div style={estilos.explicacaoRemocao}>
-                <strong>Remoção no grafo</strong>
-                <p>
-                  Ao remover um vértice, todas as arestas ligadas a ele também
-                  são removidas.
-                </p>
-              </div>
-
-              <div
-                style={estilos.zonaRemocao}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={soltarParaRemover}
-              >
-                🌀 Arraste a ponte atualizada para cá
-              </div>
-            </div>
+          <div>
+            <p>Em um grafo, pessoas são vértices e conexões são arestas.</p>
+            <strong>Vértice isolado: existe, mas não possui conexão.</strong>
           </div>
-        )}
+        </section>
 
-        <div style={estilos.caixaConceito}>
-          <h3>📚 Conceito do Grafo</h3>
-          <p>
-            <strong>Vértices:</strong> pontos do grafo.
-          </p>
-          <p>
-            <strong>Arestas:</strong> conexões entre os pontos.
-          </p>
-          <p>🔍 Buscar: percorrer caminhos conectados.</p>
-          <p>✏️ Atualizar: alterar um vértice encontrado.</p>
-          <p>🗑️ Remover: remove o vértice e suas conexões.</p>
+        <div style={estilos.rodape} className="tour-resetar">
+          <button onClick={resetar} style={estilos.botaoResetar}>
+            ↻ Resetar
+          </button>
+
+          <button onClick={iniciarTutorial} style={estilos.botaoTutorial}>
+            Ver tutorial
+          </button>
         </div>
 
-        <button onClick={resetar} style={estilos.botaoResetar}>
-          ↻ RESETAR FASE
-        </button>
-
-        {mostrarHistoria && (
+        {concluido && (
           <div style={estilos.fundoModal}>
-            <div style={estilos.modalHistoria}>
-              <h2>📜 HISTÓRIA</h2>
-
-              <p>Você chegou à Cidade das Conexões do Reino dos Dados.</p>
-
+            <div style={estilos.modal}>
+              <h2 style={estilos.tituloConcluido}>🏆 Grafo concluído!</h2>
               <p>
-                Aqui, cada lugar é um vértice. Os caminhos entre os lugares são
-                as arestas.
+                Você entendeu que um vértice pode continuar existindo no grafo,
+                mesmo sem nenhuma conexão.
               </p>
 
-              <p>Aqui vale a lógica do Grafo:</p>
-
-              <strong>Vértices são pontos, arestas são conexões.</strong>
-
-              <button
-                onClick={() => setMostrarHistoria(false)}
-                style={estilos.botaoEntendi}
-              >
-                ENTENDI
+              <button onClick={concluir} style={estilos.botaoFechar}>
+                Próxima fase
               </button>
             </div>
           </div>
+        )}
+
+        {mostrarHistoria && (
+          <Modal fechar={fecharHistoria} titulo="📖 História">
+            <p>O Reino MazeData usa uma rede para manter os aliados conectados.</p>
+            <p>
+              Cada aliado é um vértice, e cada ligação de comunicação é uma
+              aresta.
+            </p>
+            <p>
+              Existe um infiltrado na rede. Para proteger o grupo, será preciso
+              removê-lo e observar como a rede muda.
+            </p>
+            <strong>
+              Se um aliado perde todas as conexões, ele vira um vértice isolado.
+            </strong>
+          </Modal>
+        )}
+
+        {mostrarDica && (
+          <Modal fechar={() => setMostrarDica(false)} titulo="💡 Dica">
+            <p>
+              Um <strong>vértice</strong> é uma pessoa, ponto ou elemento da
+              rede.
+            </p>
+            <p>
+              Uma <strong>aresta</strong> é uma conexão entre dois vértices.
+            </p>
+            <p>
+              Ao remover um vértice, todas as arestas ligadas a ele desaparecem.
+            </p>
+            <p>
+              Um <strong>vértice isolado</strong> continua existindo, mas não
+              possui nenhuma conexão.
+            </p>
+          </Modal>
         )}
       </div>
     </div>
   );
 }
 
+function Modal({ titulo, children, fechar }) {
+  return (
+    <div style={estilos.fundoModal}>
+      <div style={estilos.modal}>
+        <h2 style={estilos.tituloModal}>{titulo}</h2>
+        <div style={estilos.modalTexto}>{children}</div>
+
+        <button onClick={fechar} style={estilos.botaoFechar}>
+          Entendi
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const etiquetaBase = {
+  position: "absolute",
+  bottom: "-11px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  color: "white",
+  fontSize: "6.5px",
+  padding: "2px 5px",
+  borderRadius: "999px",
+  fontWeight: "900",
+};
+
 const estilos = {
   pagina: {
+    width: "100vw",
     minHeight: "100vh",
-    background: "#f3efff",
-    padding: "20px",
-    boxSizing: "border-box",
+    background: "#f8fafc",
+    display: "flex",
+    justifyContent: "center",
     fontFamily: "'Inter', sans-serif",
+    overflow: "hidden",
   },
 
   container: {
     width: "100%",
-    maxWidth: "1100px",
-    margin: "0 auto",
-    background: "rgba(255,255,255,0.72)",
-    borderRadius: "28px",
-    padding: "clamp(20px, 4vw, 42px)",
+    maxWidth: "430px",
+    height: "100dvh",
+    background: "white",
+    padding: "0 10px 90px",
     boxSizing: "border-box",
-    position: "relative",
+    overflowY: "auto",
+    overflowX: "hidden",
   },
 
-  barraTopo: {
+  topo: {
+    height: "54px",
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    borderBottom: "1px solid #e2e8f0",
+    margin: "0 -10px 8px",
+    padding: "0 14px",
+    boxSizing: "border-box",
+  },
+
+  botaoMapa: {
+    border: "none",
+    background: "transparent",
+    color: "#1e293b",
+    fontSize: "18px",
+    fontWeight: "800",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: 0,
+    cursor: "pointer",
+  },
+
+  setaVoltar: {
+    fontSize: "26px",
+    lineHeight: 1,
+    fontWeight: "400",
+  },
+
+  tituloTopo: {
+    margin: 0,
+    color: "#1e293b",
+    fontSize: "18px",
+    fontWeight: "900",
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  },
+
+  iconesTopo: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: "14px",
+  },
+
+  botaoLivro: {
+    border: "none",
+    background: "transparent",
+    fontSize: "23px",
+    cursor: "pointer",
+    padding: 0,
+  },
+
+  botaoLuz: {
+    border: "none",
+    background: "transparent",
+    fontSize: "23px",
+    cursor: "pointer",
+    padding: 0,
+    filter: "drop-shadow(0 0 5px rgba(236,72,153,0.35))",
+  },
+
+  etapaCard: {
+    minHeight: "48px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "6px 12px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "10px",
-    marginBottom: "20px",
-    flexWrap: "wrap",
-  },
-
-  header: { textAlign: "center", marginBottom: "24px" },
-  icone: { fontSize: "46px", marginBottom: "6px" },
-
-  titulo: {
-    fontSize: "clamp(38px, 6vw, 58px)",
-    fontWeight: "900",
-    color: "#1e293b",
-    margin: 0,
-  },
-
-  regra: {
-    color: "#9333ea",
-    fontWeight: "900",
-    fontSize: "20px",
-    margin: "10px 0",
-  },
-
-  botaoVoltar: {
-    background: "#9333ea",
-    border: "none",
-    borderRadius: "18px",
-    color: "white",
-    fontWeight: "900",
-    padding: "12px 18px",
+    marginBottom: "6px",
+    boxShadow: "0 4px 10px rgba(15,23,42,0.04)",
     cursor: "pointer",
-    fontSize: "14px",
-    flex: "1",
-    minWidth: "150px",
   },
 
-  botaoHistoria: {
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "18px",
-    padding: "12px 18px",
-    fontWeight: "900",
-    cursor: "pointer",
-    fontSize: "14px",
-    flex: "1",
-    minWidth: "130px",
-  },
-
-  etapas: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-    gap: "10px",
-    margin: "24px 0",
-  },
-
-  etapaBox: {
-    padding: "12px",
-    borderRadius: "16px",
-    textAlign: "center",
-    fontWeight: "900",
-    fontSize: "13px",
-  },
-
-  mensagemEtapa: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    color: "#475569",
-    fontSize: "14px",
-    lineHeight: "1.7",
-    whiteSpace: "pre-wrap",
-    fontWeight: "700",
-    marginBottom: "20px",
-  },
-
-  introBox: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "28px",
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-
-  caixaTema: {
-    fontSize: "34px",
-    fontWeight: "900",
-    color: "#9333ea",
-    marginBottom: "14px",
-  },
-
-  textoIntro: {
+  etapaNumero: {
     color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.7",
+    fontSize: "11px",
     fontWeight: "700",
   },
 
-  conteudoDesafio: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "20px",
-    marginBottom: "20px",
-  },
-
-  coluna: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "24px",
-    color: "#475569",
-    minHeight: "300px",
-    boxSizing: "border-box",
-  },
-
-  colunaGrande: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "24px",
-    color: "#475569",
-    minHeight: "300px",
-    gridColumn: "1 / -1",
-    boxSizing: "border-box",
-  },
-
-  tituloCaixa: {
-    color: "#475569",
-    marginTop: 0,
-    fontSize: "24px",
+  etapaNome: {
+    margin: "1px 0 0",
+    color: "#1e293b",
+    fontSize: "18px",
     fontWeight: "900",
-    textAlign: "center",
   },
 
-  disponiveisContainer: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-    padding: "16px",
+  setaBaixo: {
+    fontSize: "22px",
+    color: "#1e293b",
+    fontWeight: "900",
+  },
+
+  listaEtapas: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "14px",
+    padding: "5px",
+    marginBottom: "6px",
     background: "white",
-    borderRadius: "16px",
-    minHeight: "120px",
-    border: "2px solid #e2e8f0",
-    justifyContent: "center",
+  },
+
+  etapaListaItem: {
+    padding: "5px 8px",
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "700",
+  },
+
+  etapaListaAtiva: {
+    padding: "5px 8px",
+    fontSize: "11px",
+    color: "#7c3aed",
+    fontWeight: "900",
+    background: "#ede9fe",
+    borderRadius: "10px",
+  },
+
+  mensagem: {
+    margin: "0 0 6px",
+    padding: "8px",
+    borderRadius: "14px",
+    background: "#f1f5f9",
+    color: "#475569",
+    textAlign: "center",
+    fontSize: "11px",
+    fontWeight: "700",
+  },
+
+  formAtualizacao: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "8px",
     alignItems: "center",
   },
 
-  itemDraggable: {
-    padding: "14px 20px",
-    background: "#9333ea",
+  input: {
+    flex: 1,
+    height: "36px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    padding: "0 10px",
+    fontSize: "12px",
+    minWidth: 0,
+  },
+
+  botaoAtualizar: {
+    width: "110px",
+    height: "36px",
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
     color: "white",
-    borderRadius: "14px",
-    cursor: "grab",
     fontWeight: "900",
-    fontSize: "14px",
+    fontSize: "12px",
+    cursor: "pointer",
+  },
+
+  subtitulo: {
+    margin: "0 0 5px",
+    color: "#1e293b",
+    fontSize: "15px",
+    fontWeight: "900",
+  },
+
+  personagensGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gap: "5px",
+    marginBottom: "8px",
+  },
+
+  cardPersonagem: {
+    height: "58px",
+    border: "none",
+    borderRadius: "13px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+    color: "white",
+    fontSize: "8px",
+    fontWeight: "900",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "4px",
+    justifyContent: "center",
+    gap: "1px",
     textAlign: "center",
+    cursor: "pointer",
+    padding: "3px",
   },
 
-  avatar: { fontSize: "28px" },
+  iconePersonagem: {
+    fontSize: "18px",
+  },
 
-  zonaDrop: {
-    border: "2px dashed #9333ea",
-    borderRadius: "18px",
-    padding: "16px",
-    minHeight: "430px",
+  grafoArea: {
+    marginTop: "4px",
+  },
+
+  grafoBox: {
+    minHeight: "260px",
+    border: "2px dashed #cbd5e1",
+    borderRadius: "16px",
     background: "white",
     display: "flex",
+    alignItems: "flex-start",
     justifyContent: "center",
-    alignItems: "center",
-    overflowX: "auto",
-  },
-
-  grafoGrande: {
-    background: "white",
-    border: "2px dashed #9333ea",
-    borderRadius: "18px",
-    padding: "10px",
-    overflowX: "auto",
+    overflow: "hidden",
   },
 
   vertice: {
-    width: "116px",
-    height: "94px",
+    width: "72px",
+    height: "62px",
     background: "rgba(129,140,248,0.12)",
-    borderRadius: "18px",
+    borderRadius: "12px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-    padding: "8px",
+    padding: "4px",
     boxSizing: "border-box",
   },
 
   avatarVertice: {
-    fontSize: "25px",
-    marginBottom: "4px",
+    fontSize: "15px",
   },
 
-  nomeItem: {
-    fontSize: "12px",
+  nomeVertice: {
+    fontSize: "8px",
     fontWeight: "900",
     color: "#475569",
     textAlign: "center",
-    lineHeight: "1.15",
+    lineHeight: "1",
+  },
+
+  papelVertice: {
+    fontSize: "6.5px",
+    color: "#64748b",
+    fontWeight: "800",
+    marginTop: "1px",
   },
 
   busca: {
-    position: "absolute",
-    bottom: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: "#9333ea",
-    color: "white",
-    fontSize: "9px",
-    padding: "3px 7px",
-    borderRadius: "999px",
-    fontWeight: "900",
+    ...etiquetaBase,
+    background: "#7c3aed",
   },
 
   selecionado: {
-    position: "absolute",
-    bottom: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
+    ...etiquetaBase,
     background: "#22c55e",
-    color: "white",
-    fontSize: "9px",
-    padding: "3px 7px",
-    borderRadius: "999px",
-    fontWeight: "900",
   },
 
   verificado: {
-    position: "absolute",
-    bottom: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
+    ...etiquetaBase,
     background: "#22c55e",
-    color: "white",
-    fontSize: "9px",
-    padding: "3px 7px",
-    borderRadius: "999px",
-    fontWeight: "900",
   },
 
   atualizado: {
-    position: "absolute",
-    bottom: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
+    ...etiquetaBase,
     background: "#22c55e",
-    color: "white",
-    fontSize: "9px",
-    padding: "3px 7px",
-    borderRadius: "999px",
-    fontWeight: "900",
   },
 
-  explicacaoRemocao: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "14px",
-    color: "#64748b",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    marginBottom: "16px",
+  infectado: {
+    ...etiquetaBase,
+    background: "#ec4899",
   },
 
-  zonaRemocao: {
-    border: "3px dashed #ec4899",
-    borderRadius: "18px",
-    padding: "24px",
-    minHeight: "220px",
-    display: "flex",
+  areaRemocao: {
+    marginTop: "6px",
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "7px",
+    display: "grid",
+    gridTemplateColumns: "1fr 1.2fr",
+    gap: "6px",
     alignItems: "center",
-    justifyContent: "center",
-    color: "#ec4899",
-    fontWeight: "900",
-    fontSize: "20px",
-    background: "rgba(236,72,153,0.08)",
-    textAlign: "center",
   },
 
-  formAtualizacao: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    marginBottom: "20px",
-    textAlign: "center",
-  },
-
-  tituloAtualizacao: {
-    margin: "0 0 6px",
-    color: "#475569",
-    fontWeight: "900",
-  },
-
-  textoAtualizacao: {
-    margin: "0 0 10px",
-    color: "#64748b",
+  subtituloRemovido: {
+    margin: "0 0 2px",
+    color: "#1e293b",
     fontSize: "13px",
+    fontWeight: "900",
+  },
+
+  textoRemocao: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: "10px",
     fontWeight: "700",
   },
 
-  inputAtualizacao: {
-    width: "100%",
-    maxWidth: "400px",
-    padding: "12px",
+  caixaRemovido: {
+    minHeight: "46px",
+    border: "2px dashed #ec4899",
     borderRadius: "12px",
-    border: "2px solid #9333ea",
-    fontSize: "15px",
-    marginTop: "10px",
-    marginBottom: "10px",
-    boxSizing: "border-box",
-  },
-
-  botaoAtualizar: {
-    padding: "12px 20px",
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "12px",
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-
-  caixaConceito: {
     background: "white",
-    border: "2px solid #e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "5px",
+    padding: "5px",
+    flexWrap: "wrap",
+  },
+
+  vazioRemovido: {
+    color: "#cbd5e1",
+    fontSize: "10px",
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
+  cardRemovido: {
+    background: "#fdf2f8",
+    color: "#be185d",
+    borderRadius: "10px",
+    padding: "5px",
+    fontSize: "9px",
+    fontWeight: "900",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+  },
+
+  conceito: {
+    marginTop: "6px",
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "10px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    gap: "6px",
+    color: "#475569",
+    fontSize: "10px",
+    fontWeight: "700",
+  },
+
+  iconeInfo: {
+    width: "28px",
+    height: "28px",
+    borderRadius: "50%",
+    background: "#ede9fe",
+    color: "#7c3aed",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900",
+    fontSize: "15px",
+  },
+
+  rodape: {
+    position: "fixed",
+    left: "50%",
+    bottom: "10px",
+    transform: "translateX(-50%)",
+    width: "calc(100% - 20px)",
+    maxWidth: "410px",
+    padding: "8px",
+    background: "rgba(255,255,255,0.95)",
+    border: "1px solid #e2e8f0",
     borderRadius: "18px",
-    padding: "16px",
-    fontSize: "14px",
-    color: "#64748b",
-    lineHeight: "1.6",
-    marginTop: "20px",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "8px",
+    zIndex: 40,
+    boxShadow: "0 10px 30px rgba(15,23,42,0.12)",
   },
 
   botaoResetar: {
     width: "100%",
-    padding: "13px",
-    background: "#f43f5e",
-    border: "none",
-    borderRadius: "16px",
-    color: "white",
-    fontWeight: "bold",
+    height: "34px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "999px",
+    background: "white",
+    color: "#7c3aed",
+    fontSize: "12px",
+    fontWeight: "900",
     cursor: "pointer",
-    marginTop: "18px",
+  },
+
+  botaoTutorial: {
+    width: "100%",
+    height: "34px",
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+    color: "white",
+    fontSize: "12px",
+    fontWeight: "900",
+    cursor: "pointer",
   },
 
   fundoModal: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.45)",
-    backdropFilter: "blur(5px)",
+    background: "rgba(15,23,42,0.45)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 200,
+    zIndex: 50,
   },
 
-  modalHistoria: {
-    width: "min(90%, 620px)",
+  modal: {
+    width: "86%",
+    maxWidth: "340px",
     background: "white",
-    borderRadius: "24px",
-    padding: "32px",
+    borderRadius: "22px",
+    padding: "22px",
     textAlign: "center",
     color: "#475569",
-    fontWeight: "700",
-    lineHeight: "1.8",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
   },
 
-  botaoEntendi: {
-    marginTop: "24px",
-    width: "100%",
-    padding: "14px",
-    background: "#9333ea",
-    color: "white",
-    border: "none",
-    borderRadius: "16px",
+  tituloModal: {
+    color: "#7c3aed",
+    fontSize: "24px",
     fontWeight: "900",
-    cursor: "pointer",
+    marginBottom: "12px",
   },
 
-  cardConclusao: {
+  tituloConcluido: {
+    color: "#7c3aed",
+    fontSize: "26px",
+    fontWeight: "900",
+    marginBottom: "12px",
+  },
+
+  modalTexto: {
+    fontSize: "14px",
+    lineHeight: "1.6",
+  },
+
+  botaoFechar: {
     width: "100%",
-    maxWidth: "700px",
-    margin: "0 auto",
-    background: "rgba(255,255,255,0.88)",
-    borderRadius: "28px",
-    padding: "clamp(24px, 4vw, 50px)",
-    textAlign: "center",
-    boxSizing: "border-box",
-  },
-
-  resumoBox: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    padding: "20px",
-    borderRadius: "18px",
-    margin: "24px 0",
-    textAlign: "left",
-    color: "#475569",
-    lineHeight: "1.7",
-  },
-
-  botaoPrincipal: {
-    width: "100%",
-    padding: "16px",
-    background: "#9333ea",
+    height: "42px",
     border: "none",
-    borderRadius: "18px",
+    borderRadius: "14px",
+    background: "#7c3aed",
     color: "white",
     fontWeight: "900",
-    fontSize: "15px",
+    marginTop: "14px",
     cursor: "pointer",
-    marginTop: "10px",
   },
 
   vazio: {
     color: "#94a3b8",
     fontWeight: "bold",
+    fontSize: "12px",
+    alignSelf: "center",
+    margin: "auto",
   },
 };
 

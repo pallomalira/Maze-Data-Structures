@@ -11,15 +11,15 @@ function MenuInicial({
   return (
     <div style={pagina}>
       <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        initial={{ scale: 0.96, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         style={card}
       >
         <span style={versao}>v1.0</span>
 
-        <div style={logoContainer}>
+        <section style={logoContainer}>
           <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
+            animate={{ rotate: [0, 8, -8, 0] }}
             transition={{ repeat: Infinity, duration: 4 }}
             style={iconeLogo}
           >
@@ -28,176 +28,180 @@ function MenuInicial({
 
           <h1 style={titulo}>MAZE</h1>
           <h2 style={subtitulo}>DATA STRUCTURES</h2>
-        </div>
+        </section>
 
         <p style={descricao}>
-          Explore labirintos e resolva desafios de Estruturas de Dados.
+          Aprenda Estruturas de Dados explorando fases, desafios e fragmentos do
+          conhecimento.
         </p>
 
         <div style={containerBotoes}>
           {mostrarContinuar && (
             <motion.button
-              whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={continuar}
               style={botaoPrincipal}
             >
-              ▶ CONTINUAR JOGO
+              ▶ Continuar jogo
             </motion.button>
           )}
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={iniciar}
             style={botaoPrincipal}
           >
-            🆕 NOVO JOGO
+            🆕 Novo jogo
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={abrirComoJogar}
             style={botaoSecundario}
           >
-            📘 COMO JOGAR
+            📘 Como jogar
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={abrirSobre}
             style={botaoSecundario}
           >
-            ℹ️ SOBRE O JOGO
+            ℹ️ Sobre o jogo
           </motion.button>
         </div>
 
-        <p style={footer}>Jogo educativo sobre Estruturas de Dados</p>
+        <footer style={footer}>
+          <span>Jogo educativo</span>
+          <strong>Estruturas de Dados</strong>
+        </footer>
       </motion.div>
     </div>
   );
 }
 
 const pagina = {
-  minHeight: "100vh",
-  background:
-    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  width: "100vw",
+  minHeight: "100svh",
+  background: "#f8fafc",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "20px",
+  padding: "8px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
+  overflow: "hidden",
 };
 
 const card = {
   width: "100%",
-  maxWidth: "700px",
-  minHeight: "600px",
-  background: "rgba(255,255,255,0.88)",
-  backdropFilter: "blur(15px)",
-  borderRadius: "28px",
-  padding: "clamp(24px, 4vw, 50px)",
-  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
+  maxWidth: "430px",
+  height: "calc(100svh - 16px)",
+  background: "white",
+  borderRadius: "24px",
+  boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
   position: "relative",
-  zIndex: 1,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   textAlign: "center",
+  padding: "26px 20px 18px",
+  boxSizing: "border-box",
+  overflow: "hidden",
 };
 
 const versao = {
   position: "absolute",
-  top: "24px",
-  right: "32px",
-  fontSize: "12px",
-  fontWeight: "bold",
+  top: "18px",
+  right: "20px",
+  fontSize: "11px",
+  fontWeight: "900",
   color: "#94a3b8",
-  letterSpacing: "1px",
 };
 
 const logoContainer = {
-  marginTop: "40px",
-  marginBottom: "28px",
+  marginTop: "44px",
+  marginBottom: "18px",
 };
 
 const iconeLogo = {
-  fontSize: "clamp(60px, 10vw, 100px)",
-  marginBottom: "10px",
+  fontSize: "64px",
+  lineHeight: 1,
+  marginBottom: "8px",
+  filter: "drop-shadow(0 10px 18px rgba(124,58,237,0.18))",
 };
 
 const titulo = {
-  fontSize: "clamp(42px, 8vw, 72px)",
+  fontSize: "46px",
   fontWeight: "900",
   color: "#1e293b",
   margin: 0,
-  letterSpacing: "4px",
-  lineHeight: "1",
+  letterSpacing: "6px",
+  lineHeight: "0.95",
 };
 
 const subtitulo = {
-  fontSize: "clamp(17px, 2.5vw, 26px)",
-  fontWeight: "bold",
+  fontSize: "14px",
+  fontWeight: "900",
   color: "#818cf8",
-  margin: 0,
+  margin: "6px 0 0",
   letterSpacing: "2px",
 };
 
 const descricao = {
-  maxWidth: "460px",
-  fontSize: "clamp(14px, 2vw, 17px)",
+  maxWidth: "330px",
+  fontSize: "13px",
   color: "#64748b",
-  lineHeight: "1.7",
-  marginBottom: "36px",
+  lineHeight: "1.6",
+  fontWeight: "700",
+  margin: "0 0 24px",
 };
 
 const containerBotoes = {
   width: "100%",
-  maxWidth: "420px",
   display: "flex",
   flexDirection: "column",
-  gap: "15px",
-  marginBottom: "36px",
+  gap: "10px",
+  marginTop: "4px",
 };
 
 const botaoPrincipal = {
   width: "100%",
-  padding: "17px",
-  background: "#9333ea",
+  height: "46px",
+  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
   border: "none",
-  borderRadius: "18px",
+  borderRadius: "999px",
   color: "white",
   fontWeight: "900",
-  fontSize: "16px",
+  fontSize: "14px",
   cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(147, 51, 234, 0.3)",
-  letterSpacing: "1px",
+  boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
 };
 
 const botaoSecundario = {
   width: "100%",
-  padding: "16px",
-  background: "white",
-  border: "2px solid #f1f5f9",
-  borderRadius: "18px",
+  height: "44px",
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "999px",
   color: "#475569",
-  fontWeight: "bold",
-  fontSize: "14px",
+  fontWeight: "900",
+  fontSize: "13px",
   cursor: "pointer",
-  boxShadow: "0 4px 8px rgba(0,0,0,0.04)",
-  letterSpacing: "0.5px",
 };
 
 const footer = {
   marginTop: "auto",
+  width: "100%",
+  background: "#f8fafc",
+  borderRadius: "16px",
+  padding: "10px",
+  color: "#64748b",
   fontSize: "11px",
-  color: "#94a3b8",
-  fontWeight: "bold",
-  textTransform: "uppercase",
-  letterSpacing: "1px",
+  fontWeight: "700",
+  display: "flex",
+  flexDirection: "column",
+  gap: "2px",
 };
 
 export default MenuInicial;

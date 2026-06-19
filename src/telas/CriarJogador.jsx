@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+
 function CriarJogador({ continuar }) {
   const [nome, setNome] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -12,207 +13,239 @@ function CriarJogador({ continuar }) {
       return;
     }
 
-    continuar(nome);
+    continuar(nome.trim());
   }
 
   return (
     <div style={pagina}>
       <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        style={card}
+          initial={{scale: 0.96, opacity: 0, y: 20}}
+          animate={{scale: 1, opacity: 1, y: 0}}
+          style={card}
       >
-        <span style={versao}>v1.0</span>
 
-        <div style={logoContainer}>
+
+        <section style={logoContainer}>
           <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 4 }}
-            style={iconeLogo}
+              animate={{
+                rotate: [0, 10, -10, 0],
+                y: [0, -6, 0],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 3,
+              }}
+              style={iconeLogo}
           >
-            🧙
+            🧙‍♂️
           </motion.div>
 
-          <h1 style={titulo}>CRIAR</h1>
-          <h2 style={subtitulo}>JOGADOR</h2>
-        </div>
+          <h1 style={tituloCriar}>CRIAR</h1>
+          <h2 style={subtituloCriar}>JOGADOR</h2>
+        </section>
 
-        <p style={descricao}>
-          Escolha o nome do guardião que irá recuperar os fragmentos perdidos.
-        </p>
+        <section style={perfilBox}>
+          <p style={descricao}>
+            Escolha o nome do guardião que irá recuperar os fragmentos perdidos.
+          </p>
 
-        <div style={containerInputButton}>
-          <label style={labelInput}>NOME DO JOGADOR</label>
+          <label style={labelInput}>Nome do jogador</label>
 
           <input
-            type="text"
-            placeholder="Digite seu nome"
-            value={nome}
-            onFocus={() => setInputFocado(true)}
-            onBlur={() => setInputFocado(false)}
-            onChange={(e) => {
-              setNome(e.target.value);
-              setMensagem("");
-            }}
-            style={{
-              ...inputField,
-              borderColor: inputFocado ? "#818cf8" : "#e2e8f0",
-            }}
+              type="text"
+              placeholder="Digite seu nome"
+              value={nome}
+              onFocus={() => setInputFocado(true)}
+              onBlur={() => setInputFocado(false)}
+              onChange={(e) => {
+                setNome(e.target.value);
+                setMensagem("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") iniciar();
+              }}
+              style={{
+                ...inputField,
+                borderColor: inputFocado ? "#7c3aed" : "#e2e8f0",
+              }}
           />
 
           {mensagem && <p style={mensagemErro}>{mensagem}</p>}
 
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={iniciar}
-            style={botaoPrincipal}
-          >
-            ▶ CONTINUAR
+          <motion.button whileTap={{scale: 0.97}} onClick={iniciar} style={botaoPrincipal}>
+            ▶ Continuar
           </motion.button>
-        </div>
+        </section>
 
-        <p style={footer}>Maze Data Structures • Criar perfil</p>
+        <footer style={footer}>
+          <span>Maze Data Structures</span>
+          <strong>Criar perfil</strong>
+        </footer>
       </motion.div>
     </div>
   );
 }
 
 const pagina = {
-  minHeight: "100vh",
-  background:
-    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  width: "100vw",
+  minHeight: "100svh",
+  background: "#f8fafc",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "20px",
+  padding: "8px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
+  overflow: "hidden",
 };
 
 const card = {
   width: "100%",
-  maxWidth: "700px",
-  minHeight: "600px",
-  background: "rgba(255,255,255,0.88)",
-  backdropFilter: "blur(15px)",
-  borderRadius: "28px",
-  padding: "clamp(24px, 4vw, 50px)",
-  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
+  maxWidth: "430px",
+  height: "calc(100svh - 16px)",
+  background: "white",
+  borderRadius: "24px",
+  boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
   position: "relative",
-  zIndex: 1,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   textAlign: "center",
+  padding: "26px 20px 18px",
+  boxSizing: "border-box",
+  overflow: "hidden",
 };
 
 const versao = {
   position: "absolute",
-  top: "24px",
-  right: "32px",
-  fontSize: "12px",
-  fontWeight: "bold",
+  top: "18px",
+  right: "20px",
+  fontSize: "11px",
+  fontWeight: "900",
   color: "#94a3b8",
-  letterSpacing: "1px",
 };
 
 const logoContainer = {
-  marginTop: "40px",
-  marginBottom: "28px",
+  marginTop: "38px",
+  marginBottom: "18px",
 };
 
 const iconeLogo = {
-  fontSize: "clamp(60px, 10vw, 100px)",
-  marginBottom: "10px",
+  fontSize: "70px",
+  lineHeight: 1,
+  marginBottom: "8px",
+  filter: "drop-shadow(0 10px 18px rgba(124,58,237,0.18))",
 };
 
 const titulo = {
-  fontSize: "clamp(42px, 8vw, 72px)",
+  fontSize: "42px",
+  fontWeight: "900",
+  color: "#1e293b",
+  margin: 0,
+  letterSpacing: "6px",
+  lineHeight: "0.95",
+};
+
+const subtitulo = {
+  fontSize: "13px",
+  fontWeight: "900",
+  color: "#818cf8",
+  margin: "6px 0 0",
+  letterSpacing: "2px",
+};
+const tituloCriar = {
+  fontSize: "42px",
   fontWeight: "900",
   color: "#1e293b",
   margin: 0,
   letterSpacing: "4px",
-  lineHeight: "1",
+  lineHeight: "0.95",
 };
 
-const subtitulo = {
-  fontSize: "clamp(17px, 2.5vw, 26px)",
-  fontWeight: "bold",
+const subtituloCriar = {
+  fontSize: "14px",
+  fontWeight: "900",
   color: "#818cf8",
-  margin: 0,
+  margin: "6px 0 0",
   letterSpacing: "2px",
 };
 
-const descricao = {
-  maxWidth: "460px",
-  fontSize: "clamp(14px, 2vw, 17px)",
-  color: "#64748b",
-  lineHeight: "1.7",
-  marginBottom: "36px",
-};
-
-const containerInputButton = {
+const perfilBox = {
   width: "100%",
-  maxWidth: "420px",
+  marginTop: "14px",
   display: "flex",
   flexDirection: "column",
-  gap: "15px",
-  marginBottom: "36px",
+  gap: "10px",
+};
+
+
+const descricao = {
+  maxWidth: "310px",
+  fontSize: "12px",
+  color: "#64748b",
+  lineHeight: "1.5",
+  fontWeight: "700",
+  margin: "8px 0 18px",
 };
 
 const labelInput = {
-  textAlign: "left",
-  fontSize: "13px",
-  fontWeight: "bold",
-  color: "#1e293b",
-  marginBottom: "4px",
   width: "100%",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: "900",
+  color: "#475569",
+  marginBottom: "6px",
 };
 
 const inputField = {
   width: "100%",
-  padding: "15px 16px",
-  borderRadius: "18px",
-  border: "2px solid #e2e8f0",
-  background: "#f8fafc",
+  height: "44px",
+  borderRadius: "14px",
+  border: "1px solid #e2e8f0",
+  background: "white",
   color: "#1e293b",
-  fontSize: "15px",
+  fontSize: "14px",
   boxSizing: "border-box",
   outline: "none",
-  transition: "border-color 0.3s ease",
+  transition: "all 0.25s ease",
+  padding: "0 14px",
 };
 
 const mensagemErro = {
+  width: "100%",
   color: "#ef4444",
-  fontSize: "13px",
-  margin: "0",
-  fontWeight: "bold",
+  fontSize: "12px",
+  margin: "8px 0 0",
+  fontWeight: "800",
   textAlign: "left",
 };
 
 const botaoPrincipal = {
   width: "100%",
-  padding: "17px",
-  background: "#9333ea",
+  height: "44px",
+  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
   border: "none",
-  borderRadius: "18px",
+  borderRadius: "999px",
   color: "white",
   fontWeight: "900",
-  fontSize: "16px",
+  fontSize: "14px",
   cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(147, 51, 234, 0.3)",
-  letterSpacing: "1px",
-  marginTop: "8px",
+  boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
+  marginTop: "14px",
 };
 
 const footer = {
   marginTop: "auto",
+  width: "100%",
+  background: "#f8fafc",
+  borderRadius: "16px",
+  padding: "10px",
+  color: "#64748b",
   fontSize: "11px",
-  color: "#94a3b8",
-  fontWeight: "bold",
-  textTransform: "uppercase",
-  letterSpacing: "1px",
+  fontWeight: "700",
+  display: "flex",
+  flexDirection: "column",
+  gap: "2px",
 };
 
 export default CriarJogador;

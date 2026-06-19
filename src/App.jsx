@@ -3,23 +3,44 @@ import "./App.css";
 
 import MenuInicial from "./telas/MenuInicial";
 import CriarJogador from "./telas/CriarJogador";
-
 import MapaFases from "./telas/MapaFases";
+
 import LabirintoFila from "./telas/LabirintoFila";
 import LabirintoPilha from "./telas/LabirintoPilha";
-import LabirintoArvore from "./telas/LabirintoArvore";
 import LabirintoLista from "./telas/LabirintoLista";
+import LabirintoArvore from "./telas/LabirintoArvore";
 import LabirintoGrafo from "./telas/LabirintoGrafo";
-import LabirintoHash from "./telas/LabirintoHash";
-import LabirintoHeap from "./telas/LabirintoHeap";
 
 import Inventario from "./telas/Inventario";
 import TelaFinal from "./telas/TelaFinal";
 import SobreJogo from "./telas/SobreJogo";
 import ComoJogar from "./telas/ComoJogar";
 
+const TELAS = {
+  MENU: "menu",
+  CRIAR: "criar",
+  MAPA: "mapa",
+  COMO_JOGAR: "comoJogar",
+  SOBRE: "sobre",
+  INVENTARIO: "inventario",
+  FINAL: "final",
+  FILA: "labirintoFila",
+  PILHA: "labirintoPilha",
+  LISTA: "labirintoLista",
+  ARVORE: "labirintoArvore",
+  GRAFO: "labirintoGrafo",
+};
+
+const FRAGMENTOS = {
+  1: { id: 1, nome: "Fila", icone: "🏪" },
+  2: { id: 2, nome: "Pilha", icone: "🏰" },
+  3: { id: 3, nome: "Lista", icone: "🚪" },
+  4: { id: 4, nome: "Árvore", icone: "🌳" },
+  5: { id: 5, nome: "Grafo", icone: "🕸️" },
+};
+
 function App() {
-  const [tela, setTela] = useState("menu");
+  const [tela, setTela] = useState(TELAS.MENU);
   const [nomeJogador, setNomeJogador] = useState("");
   const [fasesLiberadas, setFasesLiberadas] = useState(1);
   const [pecas, setPecas] = useState([]);
@@ -28,7 +49,7 @@ function App() {
 
   function voltarAoMenu() {
     setJogoEmAndamento(true);
-    setTela("menu");
+    setTela(TELAS.MENU);
   }
 
   function novoJogo() {
@@ -37,74 +58,72 @@ function App() {
     setPecas([]);
     setMostrarHistoriaMapa(false);
     setJogoEmAndamento(false);
-    setTela("criar");
+    setTela(TELAS.CRIAR);
   }
 
   function continuarJogo() {
-    setTela("mapa");
+    setTela(TELAS.MAPA);
   }
 
   function concluirFase(numeroFase) {
-    const fragmentos = {
-      1: { id: 1, nome: "Fila", icone: "🚶" },
-      2: { id: 2, nome: "Pilha", icone: "📚" },
-      3: { id: 3, nome: "Árvore", icone: "🌳" },
-      4: { id: 4, nome: "Lista", icone: "🔗" },
-      5: { id: 5, nome: "Grafo", icone: "🕸️" },
-      6: { id: 6, nome: "Hash", icone: "🔐" },
-      7: { id: 7, nome: "Heap", icone: "🏔️" },
-    };
-
-    const novaPeca = fragmentos[numeroFase];
+    const novaPeca = FRAGMENTOS[numeroFase];
 
     if (!novaPeca) return;
 
-    if (!pecas.some((p) => p.id === novaPeca.id)) {
-      setPecas([...pecas, novaPeca]);
-    }
+    setPecas((pecasAtuais) => {
+      const jaExiste = pecasAtuais.some((p) => p.id === novaPeca.id);
 
-    if (fasesLiberadas === numeroFase) {
-      setFasesLiberadas(numeroFase + 1);
-    }
+      if (jaExiste) return pecasAtuais;
+
+      return [...pecasAtuais, novaPeca];
+    });
+
+    setFasesLiberadas((faseAtual) => {
+      if (faseAtual === numeroFase) {
+        return numeroFase + 1;
+      }
+
+      return faseAtual;
+    });
 
     setJogoEmAndamento(true);
-    setTela("mapa");
+    setTela(TELAS.MAPA);
   }
 
-  if (tela === "menu") {
+  if (tela === TELAS.MENU) {
     return (
       <MenuInicial
         iniciar={novoJogo}
         continuar={continuarJogo}
         mostrarContinuar={jogoEmAndamento}
-        abrirComoJogar={() => setTela("comoJogar")}
-        abrirSobre={() => setTela("sobre")}
+        abrirComoJogar={() => setTela(TELAS.COMO_JOGAR)}
+        abrirSobre={() => setTela(TELAS.SOBRE)}
       />
     );
   }
 
-  if (tela === "comoJogar") {
-    return <ComoJogar voltar={() => setTela("menu")} />;
+  if (tela === TELAS.COMO_JOGAR) {
+    return <ComoJogar voltar={() => setTela(TELAS.MENU)} />;
   }
 
-  if (tela === "sobre") {
-    return <SobreJogo voltar={() => setTela("menu")} />;
+  if (tela === TELAS.SOBRE) {
+    return <SobreJogo voltar={() => setTela(TELAS.MENU)} />;
   }
 
-  if (tela === "criar") {
+  if (tela === TELAS.CRIAR) {
     return (
       <CriarJogador
         continuar={(nome) => {
           setNomeJogador(nome);
           setMostrarHistoriaMapa(true);
           setJogoEmAndamento(true);
-          setTela("mapa");
+          setTela(TELAS.MAPA);
         }}
       />
     );
   }
 
-  if (tela === "mapa") {
+  if (tela === TELAS.MAPA) {
     return (
       <MapaFases
         nomeJogador={nomeJogador}
@@ -112,100 +131,77 @@ function App() {
         pecas={pecas}
         mostrarHistoriaMapa={mostrarHistoriaMapa}
         fecharHistoriaMapa={() => setMostrarHistoriaMapa(false)}
-        abrirMapaLabirinto={() => setTela("mapaLabirinto")}
-        abrirFila={() => setTela("labirintoFila")}
-        abrirPilha={() => setTela("labirintoPilha")}
-        abrirArvore={() => setTela("labirintoArvore")}
-        abrirLista={() => setTela("labirintoLista")}
-        abrirGrafo={() => setTela("labirintoGrafo")}
-        abrirHash={() => setTela("labirintoHash")}
-        abrirHeap={() => setTela("labirintoHeap")}
-        abrirFinal={() => setTela("final")}
-        abrirInventario={() => setTela("inventario")}
+        abrirFila={() => setTela(TELAS.FILA)}
+        abrirPilha={() => setTela(TELAS.PILHA)}
+        abrirLista={() => setTela(TELAS.LISTA)}
+        abrirArvore={() => setTela(TELAS.ARVORE)}
+        abrirGrafo={() => setTela(TELAS.GRAFO)}
+        abrirFinal={() => setTela(TELAS.FINAL)}
+        abrirInventario={() => setTela(TELAS.INVENTARIO)}
         voltarMenu={voltarAoMenu}
       />
     );
   }
 
-  if (tela === "labirintoFila") {
+  if (tela === TELAS.FILA) {
     return (
       <LabirintoFila
-        voltar={() => setTela("mapa")}
+        voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(1)}
       />
     );
   }
 
-  if (tela === "labirintoPilha") {
+  if (tela === TELAS.PILHA) {
     return (
       <LabirintoPilha
-        voltar={() => setTela("mapa")}
+        voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(2)}
       />
     );
   }
 
-  if (tela === "labirintoArvore") {
+  if (tela === TELAS.LISTA) {
     return (
-      <LabirintoArvore
-        voltar={() => setTela("mapa")}
+      <LabirintoLista
+        voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(3)}
         nomeJogador={nomeJogador}
       />
     );
   }
 
-  if (tela === "labirintoLista") {
+  if (tela === TELAS.ARVORE) {
     return (
-      <LabirintoLista
-        voltar={() => setTela("mapa")}
+      <LabirintoArvore
+        voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(4)}
         nomeJogador={nomeJogador}
       />
     );
   }
 
-  if (tela === "labirintoGrafo") {
+  if (tela === TELAS.GRAFO) {
     return (
       <LabirintoGrafo
-        voltar={() => setTela("mapa")}
+        voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(5)}
         nomeJogador={nomeJogador}
       />
     );
   }
 
-  if (tela === "labirintoHash") {
-    return (
-      <LabirintoHash
-        voltar={() => setTela("mapa")}
-        concluir={() => concluirFase(6)}
-        nomeJogador={nomeJogador}
-      />
-    );
-  }
-
-  if (tela === "labirintoHeap") {
-    return (
-      <LabirintoHeap
-        voltar={() => setTela("mapa")}
-        concluir={() => concluirFase(7)}
-        nomeJogador={nomeJogador}
-      />
-    );
-  }
-
-  if (tela === "inventario") {
+  if (tela === TELAS.INVENTARIO) {
     return (
       <Inventario
         pecas={pecas}
-        fecharInventario={() => setTela("mapa")}
+        fecharInventario={() => setTela(TELAS.MAPA)}
       />
     );
   }
 
-  if (tela === "final") {
-    return <TelaFinal voltar={() => setTela("mapa")} />;
+  if (tela === TELAS.FINAL) {
+    return <TelaFinal voltar={() => setTela(TELAS.MAPA)} />;
   }
 
   return null;

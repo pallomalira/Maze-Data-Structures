@@ -1,24 +1,28 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import * as ReactJoyride from "react-joyride";
+
+const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
 
 function MapaFases({
   nomeJogador = "",
   fasesLiberadas = 1,
   fasesConcluidas = [],
   pecas = [],
+  mostrarHistoriaMapa,
+  fecharHistoriaMapa,
   abrirFila,
   abrirPilha,
-  abrirArvore,
   abrirLista,
+  abrirArvore,
   abrirGrafo,
-  abrirHash,
-  abrirHeap,
   abrirFinal,
   abrirInventario,
   voltarMenu,
 }) {
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [finalAberto, setFinalAberto] = useState(false);
+  const [runTour, setRunTour] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -29,201 +33,303 @@ function MapaFases({
     verificarTela();
     window.addEventListener("resize", verificarTela);
 
-    return () => {
-      window.removeEventListener("resize", verificarTela);
-    };
+    return () => window.removeEventListener("resize", verificarTela);
   }, []);
 
-  const finalLiberada = pecas.length === 7;
+  const totalFases = 5;
+  const finalLiberada = pecas.length >= totalFases || fasesLiberadas >= 6;
 
-  const fasesDesktop = [
-    { n: 1, nome: "Fila", x: 90, y: 220, onClick: abrirFila },
-    { n: 2, nome: "Pilha", x: 190, y: 120, onClick: abrirPilha },
-    { n: 3, nome: "Árvore", x: 330, y: 250, onClick: abrirArvore },
-    { n: 4, nome: "Lista", x: 450, y: 130, onClick: abrirLista },
-    { n: 5, nome: "Grafo", x: 580, y: 300, onClick: abrirGrafo },
-    { n: 6, nome: "Hash", x: 700, y: 180, onClick: abrirHash },
-    { n: 7, nome: "Heap", x: 790, y: 330, onClick: abrirHeap },
-    { n: 8, nome: "Núcleo", x: 420, y: 430, onClick: () => setFinalAberto(true) },
+  const fases = [
+    { n: 1, nome: "Fila", subtitulo: "Queue", icone: "🏪", x: 82, y: 70, onClick: abrirFila },
+    { n: 2, nome: "Pilha", subtitulo: "Stack", icone: "🏰", x: 318, y: 94, onClick: abrirPilha },
+    { n: 3, nome: "Lista", subtitulo: "Linked List", icone: "🚪", x: 82, y: 245, onClick: abrirLista },
+    { n: 4, nome: "Árvore", subtitulo: "Tree", icone: "🌳", x: 318, y: 270, onClick: abrirArvore },
+    { n: 5, nome: "Grafo", subtitulo: "Graph", icone: "🕸️", x: 82, y: 430, onClick: abrirGrafo },
+    { n: 6, nome: "Núcleo", subtitulo: "Final", icone: "💎", x: 318, y: 458, onClick: () => setFinalAberto(true) },
   ];
 
-  const fasesMobile = [
-    { n: 1, nome: "Fila", x: 120, y: 90, onClick: abrirFila },
-    { n: 2, nome: "Pilha", x: 300, y: 190, onClick: abrirPilha },
-    { n: 3, nome: "Árvore", x: 120, y: 290, onClick: abrirArvore },
-    { n: 4, nome: "Lista", x: 300, y: 390, onClick: abrirLista },
-    { n: 5, nome: "Grafo", x: 120, y: 500, onClick: abrirGrafo },
-    { n: 6, nome: "Hash", x: 300, y: 610, onClick: abrirHash },
-    { n: 7, nome: "Heap", x: 120, y: 720, onClick: abrirHeap },
-    { n: 8, nome: "Núcleo", x: 300, y: 830, onClick: () => setFinalAberto(true) },
-  ];
+  /*
+    Caminho em formato de labirinto, seguindo seu desenho:
+    Fila -> Pilha -> Lista -> Árvore -> Grafo -> Núcleo.
+    O trecho Lista -> Árvore faz a curva por baixo, sem cruzar por cima.
+  */
+  const caminhoMapa = `
+  M 82 70
+  C 150 45, 245 45, 318 94
 
-  const fases = isMobile ? fasesMobile : fasesDesktop;
+  C 250 130, 155 175, 82 245
 
-  const caminhoDesktop = `
-    M 115 245
-    C 180 120, 260 90, 220 150
-    C 190 230, 330 310, 360 275
-    C 430 195, 470 90, 500 155
-    C 540 245, 560 330, 610 320
-    C 700 300, 650 160, 725 205
-    C 820 260, 820 350, 800 360
-    C 690 440, 520 450, 445 445
-  `;
+  C 150 225, 245 225, 318 270
 
-  const caminhoMobile = `
-    M 120 90
-    C 220 120, 330 120, 300 190
-    C 270 260, 130 230, 120 290
-    C 110 360, 280 330, 300 390
-    C 330 470, 120 430, 120 500
-    C 120 580, 300 530, 300 610
-    C 300 690, 120 650, 120 720
-    C 120 800, 290 760, 300 830
-  `;
+  C 250 305, 155 360, 82 430
 
-  const progressoDesktop = {
-    1: 0.03,
-    2: 0.11,
-    3: 0.3,
-    4: 0.39,
-    5: 0.55,
-    6: 0.65,
-    7: 0.75,
-    8: 1,
-  };
+  C 150 465, 245 485, 318 458
+`;
 
-  const progressoMobile = {
-    1: 0.02,
-    2: 0.15,
-    3: 0.28,
-    4: 0.42,
-    5: 0.56,
-    6: 0.7,
-    7: 0.84,
-    8: 1,
+  const progresso = {
+    1: 0.04,
+    2: 0.22,
+    3: 0.42,
+    4: 0.62,
+    5: 0.82,
+    6: 1,
   };
 
   const progressoCaminho = finalLiberada
     ? 1
-    : isMobile
-    ? progressoMobile[fasesLiberadas] || 0.02
-    : progressoDesktop[fasesLiberadas] || 0.03;
+    : progresso[Math.min(fasesLiberadas, 6)] || 0.04;
 
-  const caminhoMapa = isMobile ? caminhoMobile : caminhoDesktop;
-  const viewBox = isMobile ? "0 0 420 900" : "0 0 900 520";
-  const viewW = isMobile ? 420 : 900;
-  const viewH = isMobile ? 900 : 520;
+  const viewBox = "0 0 400 540";
+  const viewW = 400;
+  const viewH = 540;
+
+  const steps = [
+    {
+      target: ".tour-topo",
+      content: "Aqui ficam Menu, nome do jogo, Ajuda, jogador e inventário.",
+      placement: "bottom",
+      disableBeacon: true,
+    },
+    {
+      target: ".tour-inventario",
+      content: "O inventário mostra os fragmentos coletados nas fases.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-mapa",
+      content: "Esse é o mapa da jornada. Cada ponto representa uma fase.",
+      placement: "top",
+    },
+    {
+      target: ".tour-caminho",
+      content: "O caminho colorido mostra o progresso até o Núcleo.",
+      placement: "top",
+    },
+    {
+      target: ".tour-fase-1",
+      content: "Esta é uma fase liberada. Clique nela para iniciar o desafio.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-fase-6",
+      content: "O Núcleo é a fase final. Ele será liberado depois das fases principais.",
+      placement: "top",
+    },
+    {
+      target: ".tour-tutorial",
+      content: "Use este botão para rever o tutorial quando quiser.",
+      placement: "top",
+    },
+  ];
+
+  function iniciarTutorial() {
+    setRunTour(false);
+    setTimeout(() => setRunTour(true), 100);
+  }
 
   function bloqueada(numero) {
-    if (numero === 8) return !finalLiberada;
+    if (numero === 6) return !finalLiberada;
     return fasesLiberadas < numero;
+  }
+
+  function faseConcluida(numero) {
+    return (
+      fasesConcluidas.includes(numero) ||
+      pecas.some((peca) => peca.id === numero) ||
+      fasesLiberadas > numero
+    );
+  }
+
+  function abrirFase(fase) {
+    if (bloqueada(fase.n)) return;
+
+    if (fase.n === 6) {
+      setFinalAberto(true);
+      return;
+    }
+
+    if (fase.onClick) fase.onClick();
   }
 
   return (
     <div style={pagina}>
       <div style={card}>
-        <div style={barraSuperior}>
-          <button onClick={voltarMenu} style={botaoVoltar}>
-            🏠
+        <Joyride
+          steps={steps}
+          run={runTour}
+          continuous
+          showSkipButton
+          showProgress
+          disableOverlayClose
+          disableScrolling
+          locale={{
+            back: "Voltar",
+            close: "Fechar",
+            last: "Concluir",
+            next: "Próximo",
+            skip: "Pular",
+          }}
+          styles={{
+            options: {
+              zIndex: 3000,
+              primaryColor: "#7c3aed",
+              textColor: "#334155",
+              overlayColor: "rgba(15, 23, 42, 0.65)",
+              backgroundColor: "#ffffff",
+              arrowColor: "#ffffff",
+            },
+            tooltip: {
+              borderRadius: "20px",
+              padding: "14px",
+              maxWidth: "290px",
+              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
+              border: "1px solid #e2e8f0",
+            },
+            tooltipContent: {
+              padding: "8px 4px",
+              fontSize: "13px",
+              lineHeight: "1.45",
+              fontWeight: "700",
+            },
+            spotlight: {
+              borderRadius: "18px",
+              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
+            },
+            buttonNext: {
+              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+              borderRadius: "999px",
+              padding: "9px 16px",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonBack: {
+              color: "#64748b",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+            buttonSkip: {
+              color: "#ec4899",
+              fontWeight: "900",
+              fontSize: "13px",
+            },
+          }}
+          callback={(data) => {
+            if (data.status === "finished" || data.status === "skipped") {
+              setRunTour(false);
+            }
+          }}
+        />
+
+        <header style={topo} className="tour-topo">
+          <button onClick={voltarMenu} style={botaoMenu}>
+            <span style={setaMenu}>←</span>
+            <span>Menu</span>
           </button>
 
-          <div style={statusItem}>
-            <span>🎒</span>
-            <span>{pecas.length}/7</span>
-            <button onClick={abrirInventario} style={botaoPlus}>
-              +
-            </button>
-          </div>
-
-          <div style={statusItem}>
-            <span>🧙</span>
-            <span style={nomeJogadorStyle}>{nomeJogador || "Jogador"}</span>
+          <div style={logoBox}>
+            <div style={logoIcone}>🧩</div>
+            <h1 style={tituloMapa}>MAZE</h1>
+            <span style={subtituloMapa}>Data Structures</span>
           </div>
 
           <button onClick={() => setAjudaAberta(true)} style={botaoAjuda}>
-            📜 <span>Ajuda</span>
+            Ajuda
           </button>
-        </div>
+        </header>
 
-        <div
-          style={{
-            ...containerMapa,
-            aspectRatio: isMobile ? "420 / 900" : "900 / 560",
-            maxWidth: isMobile ? "430px" : "980px",
-          }}
-        >
-          <svg style={svgCaminho} viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <linearGradient id="rosaCaminho" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#f9a8d4" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
-            </defs>
+        <section style={painelInfo}>
+          <div style={infoJogador}>
+            <span style={iconeInfo}>🧙</span>
+            <div style={infoTexto}>
+              <span style={labelInfo}>Jogador</span>
+              <strong style={valorInfo}>{nomeJogador || "Jogador"}</strong>
+            </div>
+          </div>
 
-            <path
-              d={caminhoMapa}
-              fill="none"
-              stroke="white"
-              strokeWidth={isMobile ? 42 : 58}
-              strokeLinecap="round"
-            />
-
-            <path
-              d={caminhoMapa}
-              fill="none"
-              stroke="#e2e8f0"
-              strokeWidth={isMobile ? 30 : 42}
-              strokeLinecap="round"
-            />
-
-            <motion.path
-              d={caminhoMapa}
-              fill="none"
-              stroke="url(#rosaCaminho)"
-              strokeWidth={isMobile ? 30 : 42}
-              strokeLinecap="round"
-              initial={false}
-              animate={{ pathLength: progressoCaminho }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            />
-          </svg>
-
-          {fases.map((fase) => (
-            <Fase
-              key={fase.n}
-              {...fase}
-              viewW={viewW}
-              viewH={viewH}
-              isMobile={isMobile}
-              bloqueada={bloqueada(fase.n)}
-              concluida={fasesConcluidas.includes(fase.n)}
-              onClick={() => {
-                if (!bloqueada(fase.n) && fase.onClick) fase.onClick();
-              }}
-            />
-          ))}
-
-          <motion.div
-            style={{
-              ...presente,
-              left: isMobile ? `${(300 / 420) * 100}%` : `${(445 / 900) * 100}%`,
-              top: isMobile ? `${(830 / 900) * 100}%` : `${(420 / 520) * 100}%`,
-            }}
-            animate={
-              finalAberto
-                ? { scale: [1, 1.4, 0.9, 1.2], rotate: [0, -15, 15, 0] }
-                : { scale: 1 }
-            }
-            transition={{ duration: 0.7 }}
+          <button
+            onClick={abrirInventario}
+            style={infoInventario}
+            className="tour-inventario"
           >
-            {finalAberto ? "🎉" : "🎁"}
-          </motion.div>
+            <span style={iconeInfo}>🎒</span>
+            <div style={infoTexto}>
+              <span style={labelInfo}>Inventário</span>
+              <strong style={valorInfo}>
+                {Math.min(pecas.length, totalFases)}/{totalFases}
+              </strong>
+            </div>
+          </button>
+        </section>
+
+        <div style={mapaWrapper} className="tour-mapa">
+          <div style={containerMapa}>
+            <svg
+                style={svgCaminho}
+                viewBox={viewBox}
+                preserveAspectRatio="xMidYMid meet"
+                className="tour-caminho"
+            >
+              <defs>
+                <linearGradient id="caminhoGradiente" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#7c3aed"/>
+                  <stop offset="100%" stopColor="#ec4899"/>
+                </linearGradient>
+              </defs>
+
+              <path
+                  d={caminhoMapa}
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="36"
+                  strokeLinecap="round"
+              />
+
+              <path
+                  d={caminhoMapa}
+                  fill="none"
+                  stroke="#e2e8f0"
+                  strokeWidth="23"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+              />
+
+              <motion.path
+                  d={caminhoMapa}
+                  fill="none"
+                  stroke="url(#caminhoGradiente)"
+                  strokeWidth="23"
+                  strokeLinecap="round"
+                  initial={false}
+                  animate={{pathLength: progressoCaminho}}
+                  transition={{duration: 0.8, ease: "easeInOut"}}
+              />
+            </svg>
+
+            {fases.map((fase) => (
+                <Fase
+                    key={fase.n}
+                    {...fase}
+                    viewW={viewW}
+                viewH={viewH}
+                bloqueada={bloqueada(fase.n)}
+                concluida={faseConcluida(fase.n)}
+                onClick={() => abrirFase(fase)}
+              />
+            ))}
+          </div>
         </div>
 
-        <div style={footer}>
-          <p style={textoFooter}>Complete os labirintos para restaurar o núcleo!</p>
-        </div>
+        <footer style={rodape}>
+          <p style={textoFooter}>Complete as fases para restaurar o Núcleo.</p>
+
+          <button
+            onClick={iniciarTutorial}
+            style={botaoTutorial}
+            className="tour-tutorial"
+          >
+            Ver tutorial
+          </button>
+        </footer>
 
         <AnimatePresence>
           {ajudaAberta && (
@@ -236,27 +342,21 @@ function MapaFases({
             >
               <motion.div
                 style={modal}
-                initial={{ scale: 0.8, y: 20 }}
+                initial={{ scale: 0.88, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 20 }}
+                exit={{ scale: 0.88, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 style={{ color: "#4f46e5" }}>📜 Ajuda</h2>
+                <h2 style={tituloModal}>📖 Ajuda</h2>
 
                 <p style={textoAjuda}>
-                  • Clique em uma fase liberada.
-                  <br />
-                  • Ao concluir uma fase, você recebe um fragmento.
-                  <br />
-                  • Colete os 7 fragmentos.
-                  <br />
-                  • Complete o inventário para desbloquear o Núcleo Final.
-                  <br />
-                  • O caminho rosa mostra seu progresso.
+                  Clique nas fases liberadas para entrar nos labirintos.
+                  Ao concluir uma fase, você recebe um fragmento no inventário.
+                  Quando juntar os fragmentos principais, o Núcleo será liberado.
                 </p>
 
                 <button onClick={() => setAjudaAberta(false)} style={botaoFechar}>
-                  ENTENDI
+                  Entendi
                 </button>
               </motion.div>
             </motion.div>
@@ -274,17 +374,17 @@ function MapaFases({
             >
               <motion.div
                 style={modalFinal}
-                initial={{ scale: 0.6, y: 40 }}
+                initial={{ scale: 0.7, y: 30 }}
                 animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.6, y: 40 }}
+                exit={{ scale: 0.7, y: 30 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={iconeFinal}>🎁✨</div>
-                <h2 style={tituloFinal}>Parabéns!</h2>
+                <div style={iconeFinal}>💎✨</div>
+                <h2 style={tituloFinal}>Núcleo do Conhecimento</h2>
 
                 <p style={textoFinal}>
-                  Você juntou todos os fragmentos e chegou à fase final.
-                  Agora falta restaurar o Núcleo do Conhecimento!
+                  Você chegou ao Núcleo Final. Agora falta restaurar o equilíbrio
+                  do Reino MazeData.
                 </p>
 
                 <button
@@ -292,9 +392,44 @@ function MapaFases({
                     setFinalAberto(false);
                     if (abrirFinal) abrirFinal();
                   }}
-                  style={botaoFinal}
+                  style={{
+                    ...botaoFinal,
+                    opacity: finalLiberada ? 1 : 0.6,
+                    cursor: finalLiberada ? "pointer" : "not-allowed",
+                  }}
+                  disabled={!finalLiberada}
                 >
-                  ENTRAR NA FASE FINAL
+                  {finalLiberada ? "Entrar na fase final" : "Núcleo bloqueado"}
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {mostrarHistoriaMapa && (
+            <motion.div
+              style={modalFundo}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={fecharHistoriaMapa}
+            >
+              <motion.div
+                style={modal}
+                initial={{ scale: 0.88, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.88, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 style={tituloModal}>🧩 Jornada Maze</h2>
+                <p style={textoAjuda}>
+                  O Reino MazeData perdeu seus fragmentos. Complete cada fase
+                  para recuperar uma parte do conhecimento e chegar ao Núcleo.
+                </p>
+
+                <button onClick={fecharHistoriaMapa} style={botaoFechar}>
+                  Começar jornada
                 </button>
               </motion.div>
             </motion.div>
@@ -308,6 +443,8 @@ function MapaFases({
 function Fase({
   n,
   nome,
+  subtitulo,
+  icone,
   x,
   y,
   viewW,
@@ -315,81 +452,69 @@ function Fase({
   bloqueada,
   concluida,
   onClick,
-  isMobile,
 }) {
+  const isNucleo = n === 6;
+
   return (
     <div
+      className={`tour-fase-${n}`}
       style={{
         position: "absolute",
         left: `${(x / viewW) * 100}%`,
         top: `${(y / viewH) * 100}%`,
         transform: "translate(-50%, -50%)",
         zIndex: 10,
-        cursor: bloqueada ? "not-allowed" : "pointer",
       }}
     >
-      <motion.div
+      <motion.button
         whileTap={!bloqueada ? { scale: 0.95 } : {}}
         onClick={() => {
-          if (!bloqueada && onClick) {
-            onClick();
-          }
+          if (!bloqueada && onClick) onClick();
+        }}
+        style={{
+          ...faseBotao,
+          background: bloqueada
+            ? "#e2e8f0"
+            : concluida
+            ? "linear-gradient(135deg, #22c55e, #16a34a)"
+            : "linear-gradient(135deg, #7c3aed, #ec4899)",
+          cursor: bloqueada ? "not-allowed" : "pointer",
+          opacity: bloqueada ? 0.9 : 1,
         }}
       >
-        {concluida && (
-          <div style={estrelas}>
-            <span>⭐</span>
-            <span>⭐</span>
-            <span>⭐</span>
-          </div>
-        )}
+        <span style={iconeFase}>{bloqueada ? "🔒" : isNucleo ? "💎" : icone}</span>
+      </motion.button>
 
-        <div
-          style={{
-            ...circuloFase,
-            width: isMobile ? "70px" : "80px",
-            height: isMobile ? "70px" : "80px",
-            background: bloqueada
-              ? "#cbd5e1"
-              : concluida
-              ? "#9333ea"
-              : "#9333ea",
-          }}
-        >
-          {bloqueada ? "🔒" : n}
-        </div>
+      {concluida && !isNucleo && <span style={checkFase}>✓</span>}
 
-        <span
-          style={{
-            ...nomeFase,
-            fontSize: isMobile ? "12px" : "14px",
-          }}
-        >
-          {nome}
-        </span>
-      </motion.div>
+      <div style={nomeFaseBox}>
+        <strong style={nomeFase}>{nome}</strong>
+        <span style={subtituloFase}>({subtitulo})</span>
+      </div>
     </div>
   );
 }
+
 const pagina = {
+  width: "100vw",
   minHeight: "100svh",
-  background: "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  background: "#f8fafc",
   display: "flex",
   justifyContent: "center",
   alignItems: "flex-start",
-  padding: "18px 10px 12px",
+  padding: "8px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
+  overflow: "hidden",
 };
 
 const card = {
   width: "100%",
-  maxWidth: "1100px",
-  background: "rgba(255, 255, 255, 0.88)",
-  backdropFilter: "blur(10px)",
-  borderRadius: "28px",
-  padding: "clamp(12px, 3vw, 24px)",
-  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
+  maxWidth: "430px",
+  height: "calc(100svh - 16px)",
+  background: "white",
+  borderRadius: "24px",
+  boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
@@ -397,92 +522,157 @@ const card = {
   position: "relative",
 };
 
-const barraSuperior = {
+const topo = {
+  minHeight: "70px",
   display: "grid",
-  gridTemplateColumns:
-    "44px minmax(88px, auto) minmax(92px, auto) minmax(82px, auto)",
+  gridTemplateColumns: "1fr auto 1fr",
   alignItems: "center",
-  justifyContent: "space-between",
-  gap: "7px",
-  marginBottom: "10px",
-  width: "100%",
-};
-
-const statusItem = {
-  background: "rgba(79, 70, 229, 0.16)",
-  border: "2px solid rgba(147, 51, 234, 0.25)",
-  padding: "7px 9px",
-  borderRadius: "999px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "5px",
-  color: "#4c1d95",
-  fontSize: "clamp(11px, 3vw, 14px)",
-  fontWeight: "900",
-  boxShadow: "0 8px 18px rgba(147,51,234,0.12)",
-  minWidth: 0,
-  whiteSpace: "nowrap",
-};
-
-const nomeJogadorStyle = {
-  maxWidth: "70px",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  display: "inline-block",
-};
-
-const botaoVoltar = {
-  width: "44px",
-  height: "44px",
-  borderRadius: "50%",
-  border: "none",
-  background: "linear-gradient(135deg, #9333ea, #7e22ce)",
-  color: "white",
-  cursor: "pointer",
-  fontSize: "20px",
-  fontWeight: "bold",
-  boxShadow: "0 10px 22px rgba(147,51,234,0.35)",
-};
-
-const botaoPlus = {
-  background: "linear-gradient(135deg, #4ade80, #22c55e)",
-  border: "3px solid white",
-  borderRadius: "50%",
-  width: "27px",
-  height: "27px",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: "900",
-  boxShadow: "0 6px 12px rgba(34,197,94,0.3)",
+  borderBottom: "1px solid #e2e8f0",
+  padding: "6px 14px",
+  boxSizing: "border-box",
   flexShrink: 0,
 };
 
-const botaoAjuda = {
-  height: "44px",
-  padding: "0 10px",
-  borderRadius: "999px",
-  background: "rgba(147, 51, 234, 0.16)",
-  border: "2px solid rgba(147, 51, 234, 0.25)",
-  color: "#6b21a8",
-  fontSize: "clamp(11px, 3vw, 15px)",
+const botaoMenu = {
+  border: "none",
+  background: "transparent",
+  color: "#1e293b",
+  fontSize: "18px",
   fontWeight: "900",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: 0,
   cursor: "pointer",
-  boxShadow: "0 8px 18px rgba(147,51,234,0.12)",
+};
+
+const setaMenu = {
+  fontSize: "25px",
+  lineHeight: 1,
+  fontWeight: "400",
+};
+
+const logoBox = {
+  textAlign: "center",
+  lineHeight: 1,
+};
+
+const logoIcone = {
+  fontSize: "24px",
+  lineHeight: 1,
+};
+
+const tituloMapa = {
+  margin: "1px 0 0",
+  color: "#1e293b",
+  fontSize: "22px",
+  letterSpacing: "4px",
+  fontWeight: "900",
+};
+
+const subtituloMapa = {
+  color: "#818cf8",
+  fontSize: "10px",
+  fontWeight: "900",
+  textTransform: "uppercase",
+  letterSpacing: "1.5px",
+};
+
+const botaoAjuda = {
+  justifySelf: "end",
+  height: "34px",
+  border: "1px solid #e2e8f0",
+  borderRadius: "999px",
+  background: "#f8fafc",
+  color: "#7c3aed",
+  fontSize: "12px",
+  fontWeight: "900",
+  padding: "0 12px",
+  cursor: "pointer",
+};
+
+const painelInfo = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "8px",
+  padding: "10px 12px 4px",
+  boxSizing: "border-box",
+  flexShrink: 0,
+};
+
+const infoJogador = {
+  minWidth: 0,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "16px",
+  padding: "8px 10px",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+};
+
+const infoInventario = {
+  minWidth: 0,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "16px",
+  padding: "8px 10px",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  cursor: "pointer",
+  textAlign: "left",
+};
+
+const infoTexto = {
+  minWidth: 0,
+};
+
+const iconeInfo = {
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  background: "#ede9fe",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "5px",
-  minWidth: "82px",
+  flexShrink: 0,
+};
+
+const labelInfo = {
+  display: "block",
+  color: "#64748b",
+  fontSize: "9px",
+  fontWeight: "800",
+  lineHeight: "1",
+};
+
+const valorInfo = {
+  display: "block",
+  color: "#1e293b",
+  fontSize: "12px",
+  fontWeight: "900",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+};
+
+const mapaWrapper = {
+  padding: "0 8px",
+  boxSizing: "border-box",
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const containerMapa = {
   position: "relative",
   width: "100%",
-  margin: "4px auto 0",
-  flexShrink: 0,
+  maxWidth: "410px",
+  aspectRatio: "400 / 540",
+  maxHeight: "100%",
 };
 
 const svgCaminho = {
@@ -493,135 +683,185 @@ const svgCaminho = {
   zIndex: 1,
 };
 
-const estrelas = {
-  position: "absolute",
-  top: "-24px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  display: "flex",
-  gap: "2px",
-  fontSize: "12px",
-  zIndex: 20,
-  pointerEvents: "none",
-};
-
-const circuloFase = {
+const faseBotao = {
+  width: "58px",
+  height: "58px",
   borderRadius: "50%",
   border: "4px solid white",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+  color: "white",
+  fontWeight: "900",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  position: "relative",
+  boxShadow: "0 10px 24px rgba(124,58,237,0.24)",
+};
+
+const iconeFase = {
+  fontSize: "22px",
+  fontWeight: "900",
+};
+
+const checkFase = {
+  position: "absolute",
+  top: "-7px",
+  right: "-4px",
+  width: "20px",
+  height: "20px",
+  borderRadius: "50%",
+  background: "#22c55e",
   color: "white",
-  fontWeight: "bold",
+  border: "2px solid white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "11px",
+  fontWeight: "900",
+  zIndex: 20,
+};
+
+const nomeFaseBox = {
+  position: "absolute",
+  top: "calc(100% + 5px)",
+  left: "50%",
+  transform: "translateX(-50%)",
+  textAlign: "center",
+  minWidth: "84px",
 };
 
 const nomeFase = {
-  position: "absolute",
-  top: "calc(100% + 4px)",
-  left: "50%",
-  transform: "translateX(-50%)",
-  color: "#64748b",
-  fontWeight: "bold",
-  textTransform: "uppercase",
+  display: "block",
+  color: "#334155",
+  fontSize: "10px",
+  fontWeight: "900",
+  lineHeight: "1.05",
   whiteSpace: "nowrap",
 };
 
-const presente = {
-  position: "absolute",
-  transform: "translate(-50%, -50%)",
-  fontSize: "clamp(28px, 8vw, 46px)",
-  zIndex: 25,
-  pointerEvents: "none",
+const subtituloFase = {
+  display: "block",
+  color: "#7c3aed",
+  fontSize: "8px",
+  fontWeight: "900",
+  lineHeight: "1.05",
+  whiteSpace: "nowrap",
 };
 
-const footer = {
-  textAlign: "center",
-  padding: "8px 0 0",
-  marginTop: "6px",
-  borderTop: "1px solid rgba(0,0,0,0.05)",
+const rodape = {
+  padding: "8px 12px 12px",
+  borderTop: "1px solid #e2e8f0",
+  background: "rgba(255,255,255,0.96)",
+  flexShrink: 0,
 };
 
 const textoFooter = {
-  fontSize: "clamp(11px, 2.7vw, 13px)",
+  margin: "0 0 8px",
   color: "#64748b",
+  fontSize: "11px",
   fontWeight: "700",
-  margin: 0,
+  textAlign: "center",
+};
+
+const botaoTutorial = {
+  width: "100%",
+  height: "36px",
+  border: "none",
+  borderRadius: "999px",
+  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+  color: "white",
+  fontSize: "13px",
+  fontWeight: "900",
+  cursor: "pointer",
+  boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
 };
 
 const modalFundo = {
   position: "absolute",
   inset: 0,
-  background: "rgba(0,0,0,0.5)",
+  background: "rgba(15,23,42,0.5)",
   backdropFilter: "blur(5px)",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
   zIndex: 100,
-  borderRadius: "28px",
+  borderRadius: "24px",
 };
 
 const modal = {
-  width: "min(90%, 420px)",
-  padding: "26px",
+  width: "min(88%, 340px)",
+  padding: "22px",
   background: "white",
-  borderRadius: "24px",
+  borderRadius: "22px",
   textAlign: "center",
+  color: "#475569",
+  boxShadow: "0 25px 50px rgba(0,0,0,0.22)",
+};
+
+const tituloModal = {
+  color: "#7c3aed",
+  fontSize: "24px",
+  fontWeight: "900",
+  margin: "0 0 12px",
 };
 
 const textoAjuda = {
   fontSize: "14px",
   color: "#64748b",
-  lineHeight: "1.8",
-  textAlign: "left",
+  lineHeight: "1.7",
+  textAlign: "center",
+  fontWeight: "700",
 };
 
 const botaoFechar = {
-  marginTop: "20px",
-  padding: "12px",
-  background: "#818cf8",
+  marginTop: "16px",
+  height: "42px",
+  background: "#7c3aed",
   border: "none",
-  borderRadius: "15px",
+  borderRadius: "14px",
   color: "white",
-  fontWeight: "bold",
+  fontWeight: "900",
   cursor: "pointer",
   width: "100%",
 };
 
 const modalFinal = {
-  width: "min(90%, 430px)",
+  width: "min(88%, 340px)",
   background: "white",
-  borderRadius: "28px",
-  padding: "32px",
+  borderRadius: "24px",
+  padding: "26px",
   textAlign: "center",
   boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
 };
 
-const iconeFinal = { fontSize: "56px", marginBottom: "10px" };
+const iconeFinal = {
+  fontSize: "48px",
+  marginBottom: "8px",
+};
 
 const tituloFinal = {
-  fontSize: "34px",
+  fontSize: "26px",
   color: "#1e293b",
-  margin: "0 0 12px",
+  margin: "0 0 10px",
   fontWeight: "900",
 };
 
 const textoFinal = {
   color: "#64748b",
-  fontSize: "15px",
-  lineHeight: "1.7",
+  fontSize: "14px",
+  lineHeight: "1.6",
+  fontWeight: "700",
 };
 
 const botaoFinal = {
   width: "100%",
-  padding: "15px",
-  background: "#9333ea",
+  height: "42px",
+  background: "#7c3aed",
   border: "none",
-  borderRadius: "16px",
+  borderRadius: "14px",
   color: "white",
   fontWeight: "900",
   cursor: "pointer",
-  marginTop: "20px",
+  marginTop: "16px",
 };
 
 export default MapaFases;

@@ -7,122 +7,126 @@ function embaralhar(lista) {
 
 function TelaFinal({ voltar }) {
   const fragmentosBase = [
-    { id: "fila", nome: "Fila", icone: "🚶", conceito: "FIFO" },
-    { id: "pilha", nome: "Pilha", icone: "📚", conceito: "LIFO" },
+    { id: "fila", nome: "Fila", icone: "🏪", conceito: "FIFO" },
+    { id: "pilha", nome: "Pilha", icone: "🏰", conceito: "LIFO" },
+    { id: "lista", nome: "Lista", icone: "🚪", conceito: "Próximo nó" },
     { id: "arvore", nome: "Árvore", icone: "🌳", conceito: "Esquerda / Direita" },
-    { id: "lista", nome: "Lista", icone: "🔗", conceito: "Próximo nó" },
     { id: "grafo", nome: "Grafo", icone: "🕸️", conceito: "Conexões" },
-    { id: "hash", nome: "Hash", icone: "🔐", conceito: "Código → Gaveta" },
-    { id: "heap", nome: "Heap", icone: "🏔️", conceito: "Maior no topo" },
   ];
 
   const portaisBase = [
     { id: "fila", texto: "Quem chega primeiro também sai primeiro." },
     { id: "pilha", texto: "O último que entra é o primeiro que sai." },
-    { id: "arvore", texto: "A busca segue caminhos pela esquerda ou direita." },
     { id: "lista", texto: "Cada elemento aponta para o próximo." },
+    { id: "arvore", texto: "A busca segue caminhos pela esquerda ou direita." },
     { id: "grafo", texto: "Pontos ligados por conexões e caminhos." },
-    { id: "hash", texto: "Um código calcula onde o valor será guardado." },
-    { id: "heap", texto: "O maior valor ou prioridade fica no topo." },
   ];
 
   const [fragmentos, setFragmentos] = useState(() => embaralhar(fragmentosBase));
   const [portais, setPortais] = useState(() => embaralhar(portaisBase));
   const [encaixados, setEncaixados] = useState({});
-  const [dragged, setDragged] = useState(null);
+  const [selecionado, setSelecionado] = useState(null);
   const [mensagem, setMensagem] = useState(
-    "🌌 Núcleo Final\n\nOs fragmentos e os portais estão embaralhados.\n\nLeia cada portal e arraste o fragmento que combina com a descrição."
+    "Selecione um fragmento e depois toque no portal que combina com a descrição."
   );
 
   const completo = Object.keys(encaixados).length === portaisBase.length;
 
-  function soltarNoPortal(portalId) {
-    if (!dragged) return;
+  function selecionarFragmento(fragmento) {
+    setSelecionado(fragmento);
+    setMensagem(`Fragmento ${fragmento.nome} selecionado. Agora escolha o portal correto.`);
+  }
 
-    if (dragged.id !== portalId) {
+  function encaixarNoPortal(portalId) {
+    if (!selecionado) {
+      setMensagem("Primeiro selecione um fragmento.");
+      return;
+    }
+
+    if (selecionado.id !== portalId) {
       setMensagem(
-        `❌ Não encaixou.\n\nVocê tentou colocar ${dragged.nome}, mas essa descrição pertence a outra estrutura.\n\nLeia a frase com calma e procure a lógica correta.`
+        `Não encaixou. ${selecionado.nome} pertence a outro conceito. Leia a pista com calma.`
       );
-      setDragged(null);
       return;
     }
 
     setEncaixados({
       ...encaixados,
-      [portalId]: dragged,
+      [portalId]: selecionado,
     });
 
-    setFragmentos(fragmentos.filter((item) => item.id !== dragged.id));
-    setDragged(null);
-
-    setMensagem(
-      `✅ Fragmento de ${dragged.nome} encaixado!\n\nConceito: ${dragged.conceito}`
-    );
+    setFragmentos(fragmentos.filter((item) => item.id !== selecionado.id));
+    setMensagem(`Fragmento de ${selecionado.nome} encaixado! Conceito: ${selecionado.conceito}`);
+    setSelecionado(null);
   }
 
   function resetar() {
     setFragmentos(embaralhar(fragmentosBase));
     setPortais(embaralhar(portaisBase));
     setEncaixados({});
-    setDragged(null);
-    setMensagem(
-      "🌌 Núcleo Final\n\nOs fragmentos e os portais foram embaralhados novamente.\n\nLeia cada portal e encontre a estrutura correta."
-    );
+    setSelecionado(null);
+    setMensagem("Os fragmentos foram embaralhados novamente. Selecione um fragmento e encontre o portal correto.");
   }
 
   return (
     <div style={estilos.pagina}>
-      <div style={estilos.container}>
-        <button onClick={voltar} style={estilos.botaoVoltar}>
-          ← VOLTAR AO MAPA
-        </button>
+      <div style={estilos.card}>
+        <header style={estilos.topo}>
+          <button onClick={voltar} style={estilos.botaoVoltar}>
+            <span style={estilos.setaVoltar}>←</span>
+            <span>Mapa</span>
+          </button>
 
-        <div style={estilos.header}>
-          <div style={estilos.icone}>💎</div>
-          <h1 style={estilos.titulo}>NÚCLEO FINAL</h1>
-          <p style={estilos.regra}>
-            Encaixe cada fragmento no portal correto.
-          </p>
-        </div>
+          <h1 style={estilos.tituloTopo}>Núcleo Final</h1>
 
-        <div style={estilos.mensagem}>{mensagem}</div>
+          <div style={estilos.espacoTopo} />
+        </header>
 
-        {!completo && (
+        {!completo ? (
           <>
-            <div style={estilos.areaFragmentos}>
-              <h2 style={estilos.subtitulo}>Fragmentos embaralhados</h2>
+            <section style={estilos.hero}>
+              <div style={estilos.iconeHero}>💎</div>
+              <p style={estilos.mensagem}>{mensagem}</p>
+            </section>
+
+            <section style={estilos.areaFragmentos}>
+              <h2 style={estilos.subtitulo}>Fragmentos</h2>
 
               <div style={estilos.fragmentos}>
                 {fragmentos.map((fragmento) => (
-                  <motion.div
+                  <motion.button
                     key={fragmento.id}
-                    draggable
-                    whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
-                    onDragStart={() => setDragged(fragmento)}
-                    style={estilos.fragmento}
+                    onClick={() => selecionarFragmento(fragmento)}
+                    style={{
+                      ...estilos.fragmento,
+                      border:
+                        selecionado?.id === fragmento.id
+                          ? "2px solid #ec4899"
+                          : "2px solid #e2e8f0",
+                    }}
                   >
                     <span style={estilos.iconeFragmento}>{fragmento.icone}</span>
                     <strong>{fragmento.nome}</strong>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div style={estilos.portais}>
+            <section style={estilos.portais}>
               {portais.map((portal, index) => {
                 const item = encaixados[portal.id];
 
                 return (
-                  <div
+                  <motion.button
                     key={portal.id}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => soltarNoPortal(portal.id)}
+                    whileTap={{ scale: item ? 1 : 0.97 }}
+                    onClick={() => encaixarNoPortal(portal.id)}
                     style={{
                       ...estilos.portal,
                       border: item
-                        ? "3px solid #22c55e"
-                        : "3px dashed #9333ea",
+                        ? "2px solid #22c55e"
+                        : "2px dashed #cbd5e1",
                     }}
                   >
                     <span style={estilos.numeroPortal}>Portal {index + 1}</span>
@@ -130,55 +134,45 @@ function TelaFinal({ voltar }) {
                     {item ? (
                       <>
                         <span style={estilos.iconePortal}>{item.icone}</span>
-                        <strong>{item.nome}</strong>
-                        <p>{portal.texto}</p>
+                        <strong style={estilos.nomePortal}>{item.nome}</strong>
                         <span style={estilos.check}>✓</span>
                       </>
                     ) : (
-                      <>
-                        <strong>Leia a pista:</strong>
-                        <p>{portal.texto}</p>
-                      </>
+                      <p style={estilos.textoPortal}>{portal.texto}</p>
                     )}
-                  </div>
+                  </motion.button>
                 );
               })}
-            </div>
+            </section>
 
             <button onClick={resetar} style={estilos.botaoResetar}>
-              ↻ EMBARALHAR NOVAMENTE
+              ↻ Embaralhar novamente
             </button>
           </>
-        )}
+        ) : (
+            <motion.section
+                initial={{scale: 0.9, opacity: 0}}
+                animate={{scale: 1, opacity: 1}}
+                style={estilos.finalBox}
+            >
+              <div style={estilos.emojiFinal}>🎁 ✨</div>
+              <h1 style={estilos.tituloFinal}>Parabéns!</h1>
+              <p style={estilos.textoFinal}>
+                Você restaurou o Núcleo do Conhecimento.
+              </p>
 
-        {completo && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            style={estilos.finalBox}
-          >
-            <div style={estilos.caixaAberta}>🎁✨</div>
+              <div style={estilos.resumo}>
+                <p>🏪 Fila: primeiro que entra, primeiro que sai.</p>
+                <p>🏰 Pilha: último que entra, primeiro que sai.</p>
+                <p>🚪 Lista: cada nó aponta para o próximo.</p>
+                <p>🌳 Árvore: busca por esquerda e direita.</p>
+                <p>🕸️ Grafo: pontos conectados por caminhos.</p>
+              </div>
 
-            <h1 style={estilos.titulo}>PARABÉNS!</h1>
-
-            <p style={estilos.textoFinal}>
-              Você juntou todos os fragmentos e restaurou o Núcleo do Conhecimento.
-            </p>
-
-            <div style={estilos.resumo}>
-              <p>🚶 Fila: primeiro que entra, primeiro que sai.</p>
-              <p>📚 Pilha: último que entra, primeiro que sai.</p>
-              <p>🌳 Árvore: busca por esquerda e direita.</p>
-              <p>🔗 Lista: cada nó aponta para o próximo.</p>
-              <p>🕸️ Grafo: pontos conectados por caminhos.</p>
-              <p>🔐 Hash: código calcula a gaveta.</p>
-              <p>🏔️ Heap: maior prioridade fica no topo.</p>
-            </div>
-
-            <button onClick={voltar} style={estilos.botaoPrincipal}>
-              VOLTAR AO MAPA
-            </button>
-          </motion.div>
+              <button onClick={voltar} style={estilos.botaoPrincipal}>
+                Voltar ao mapa
+              </button>
+            </motion.section>
         )}
       </div>
     </div>
@@ -187,123 +181,158 @@ function TelaFinal({ voltar }) {
 
 const estilos = {
   pagina: {
-    minHeight: "100vh",
-    background: "#f3efff",
-    padding: "20px",
+    width: "100vw",
+    minHeight: "100svh",
+    background: "#f8fafc",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "8px",
     boxSizing: "border-box",
     fontFamily: "'Inter', sans-serif",
+    overflow: "hidden",
   },
 
-  container: {
+  card: {
     width: "100%",
-    maxWidth: "1100px",
-    margin: "0 auto",
-    background: "rgba(255,255,255,0.76)",
-    borderRadius: "28px",
-    padding: "clamp(20px, 4vw, 42px)",
+    maxWidth: "430px",
+    height: "calc(100svh - 16px)",
+    background: "white",
+    borderRadius: "24px",
+    boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
     boxSizing: "border-box",
+  },
+
+  topo: {
+    height: "54px",
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    borderBottom: "1px solid #e2e8f0",
+    padding: "0 14px",
+    boxSizing: "border-box",
+    flexShrink: 0,
   },
 
   botaoVoltar: {
-    background: "#9333ea",
     border: "none",
-    borderRadius: "18px",
-    color: "white",
-    fontWeight: "900",
-    padding: "12px 18px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-
-  header: {
-    textAlign: "center",
-    marginBottom: "24px",
-  },
-
-  icone: {
-    fontSize: "54px",
-  },
-
-  titulo: {
-    fontSize: "clamp(38px, 6vw, 62px)",
-    fontWeight: "900",
+    background: "transparent",
     color: "#1e293b",
-    margin: "8px 0",
+    fontSize: "18px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: 0,
+    cursor: "pointer",
   },
 
-  regra: {
-    color: "#9333ea",
+  setaVoltar: {
+    fontSize: "25px",
+    lineHeight: 1,
+    fontWeight: "400",
+  },
+
+  tituloTopo: {
+    margin: 0,
+    color: "#1e293b",
+    fontSize: "19px",
     fontWeight: "900",
-    fontSize: "18px",
+    whiteSpace: "nowrap",
+  },
+
+  espacoTopo: {
+    width: "50px",
+  },
+
+  hero: {
+    padding: "12px",
+    textAlign: "center",
+    flexShrink: 0,
+  },
+
+  iconeHero: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    margin: "0 auto 8px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
   },
 
   mensagem: {
-    background: "white",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "16px",
-    color: "#475569",
-    whiteSpace: "pre-wrap",
-    fontWeight: "700",
-    lineHeight: "1.7",
-    marginBottom: "22px",
-    textAlign: "center",
+    margin: 0,
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "9px",
+    color: "#64748b",
+    fontSize: "11px",
+    fontWeight: "800",
+    lineHeight: "1.4",
   },
 
   areaFragmentos: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "22px",
-    marginBottom: "22px",
+    padding: "0 12px",
+    flexShrink: 0,
   },
 
   subtitulo: {
-    textAlign: "center",
-    color: "#475569",
+    margin: "0 0 6px",
+    color: "#1e293b",
+    fontSize: "14px",
     fontWeight: "900",
-    marginTop: 0,
+    textAlign: "center",
   },
 
   fragmentos: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: "14px",
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gap: "6px",
   },
 
   fragmento: {
-    width: "120px",
-    minHeight: "100px",
-    background: "#9333ea",
-    color: "white",
-    borderRadius: "18px",
+    height: "58px",
+    borderRadius: "14px",
+    background: "#f8fafc",
+    color: "#475569",
+    fontSize: "9px",
+    fontWeight: "900",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "grab",
-    textAlign: "center",
-    padding: "12px",
-    boxSizing: "border-box",
+    cursor: "pointer",
+    padding: "4px",
   },
 
   iconeFragmento: {
-    fontSize: "32px",
-    marginBottom: "6px",
+    fontSize: "19px",
   },
 
   portais: {
+    flex: 1,
+    minHeight: 0,
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-    gap: "16px",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "8px",
+    padding: "12px",
+    boxSizing: "border-box",
+    overflow: "hidden",
   },
 
   portal: {
-    minHeight: "165px",
+    minHeight: "82px",
     background: "white",
-    borderRadius: "20px",
-    padding: "18px",
+    borderRadius: "16px",
+    padding: "10px",
     color: "#475569",
     fontWeight: "800",
     textAlign: "center",
@@ -312,90 +341,116 @@ const estilos = {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    lineHeight: "1.5",
+    lineHeight: "1.35",
+    cursor: "pointer",
   },
 
   numeroPortal: {
     position: "absolute",
-    top: "10px",
-    left: "12px",
-    fontSize: "11px",
-    color: "#9333ea",
+    top: "7px",
+    left: "9px",
+    fontSize: "9px",
+    color: "#7c3aed",
     fontWeight: "900",
   },
 
+  textoPortal: {
+    fontSize: "10px",
+    margin: "8px 0 0",
+  },
+
   iconePortal: {
-    fontSize: "34px",
-    marginBottom: "6px",
+    fontSize: "24px",
+  },
+
+  nomePortal: {
+    fontSize: "12px",
+    color: "#334155",
   },
 
   check: {
     position: "absolute",
-    top: "-10px",
-    right: "-10px",
+    top: "-7px",
+    right: "-7px",
     background: "#22c55e",
     color: "white",
     borderRadius: "50%",
-    width: "28px",
-    height: "28px",
+    width: "22px",
+    height: "22px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "900",
+    border: "2px solid white",
+  },
+
+  botaoResetar: {
+    margin: "0 12px 12px",
+    height: "36px",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "999px",
+    color: "#7c3aed",
+    fontWeight: "900",
+    cursor: "pointer",
+    flexShrink: 0,
   },
 
   finalBox: {
-    background: "white",
-    border: "3px solid #ec4899",
-    borderRadius: "26px",
-    padding: "32px",
+    margin: "12px",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "22px",
+    padding: "18px",
     textAlign: "center",
     color: "#475569",
   },
 
   caixaAberta: {
-    fontSize: "74px",
-  },
+  fontSize: "58px",
+  marginBottom: "12px",
+},
+
+tituloFinal: {
+  margin: "0 0 12px",
+  fontSize: "30px",
+  fontWeight: "900",
+  color: "#1e293b",
+},
 
   textoFinal: {
-    fontSize: "18px",
+    fontSize: "13px",
     fontWeight: "800",
-    lineHeight: "1.7",
+    lineHeight: "1.5",
   },
 
   resumo: {
-    background: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "18px",
+    background: "white",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "12px",
     textAlign: "left",
-    lineHeight: "1.8",
-    marginTop: "20px",
+    fontSize: "11px",
+    fontWeight: "700",
+    lineHeight: "1.5",
+    marginTop: "12px",
   },
-
+emojiFinal: {
+  fontSize: "54px",
+  marginBottom: "14px",
+  lineHeight: 1,
+},
   botaoPrincipal: {
     width: "100%",
-    padding: "16px",
-    background: "#9333ea",
+    height: "38px",
+    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
     border: "none",
-    borderRadius: "18px",
+    borderRadius: "999px",
     color: "white",
     fontWeight: "900",
-    fontSize: "15px",
+    fontSize: "13px",
     cursor: "pointer",
-    marginTop: "20px",
-  },
-
-  botaoResetar: {
-    width: "100%",
-    padding: "13px",
-    background: "#f43f5e",
-    border: "none",
-    borderRadius: "16px",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginTop: "22px",
+    marginTop: "14px",
   },
 };
 

@@ -1,144 +1,258 @@
-import Card from "../components/Card.jsx";
-
 function ComoJogar({ voltar }) {
   return (
     <div style={pagina}>
-      <Card>
+      <div style={card}>
 
-            <span style={versao}>v1.0</span>
+        <header style={topo}>
+          <button onClick={voltar} style={botaoVoltar}>
+            <span style={setaVoltar}>←</span>
+            <span>Menu</span>
+          </button>
 
-            <div style={icone}>📘</div>
+          <h1 style={tituloTopo}>Como jogar</h1>
 
-            <h1 style={titulo}>COMO JOGAR</h1>
+          <div style={espacoTopo} />
+        </header>
 
-            <p style={subtitulo}>
-              Recupere os fragmentos do Núcleo do Conhecimento resolvendo desafios
-              de Estruturas de Dados.
-            </p>
+        <section style={conteudo}>
+          <div style={icone}>📘</div>
 
-            <div style={caixa}>
-              <p>🎯 Escolha uma fase no mapa.</p>
-              <p>💡 Leia a regra de cada estrutura.</p>
-              <p>🧩 Resolva o desafio interativo.</p>
-              <p>🎒 Colete os fragmentos.</p>
-              <p>🌌 Complete tudo para liberar o Núcleo Final.</p>
+          <h2 style={titulo}>Guia da jornada</h2>
+
+          <p style={subtitulo}>
+            Recupere os fragmentos do Núcleo resolvendo desafios de Estruturas
+            de Dados.
+          </p>
+
+          <div style={caixa}>
+            <div style={linha}>
+              <span style={emoji}>🗺️</span>
+              <p>Escolha uma fase liberada no mapa.</p>
             </div>
 
-            <div style={caixaPequena}>
-              <strong>Estruturas:</strong>
-              <p>Fila • Pilha • Árvore • Lista • Grafos • Hash • Heap</p>
+            <div style={linha}>
+              <span style={emoji}>📖</span>
+              <p>Leia a história e a dica da fase.</p>
             </div>
 
-            <button onClick={voltar} style={botao}>
-              ← VOLTAR AO MENU
-            </button>
-        </Card>
+            <div style={linha}>
+              <span style={emoji}>💡</span>
+              <p>Use o tutorial para entender cada parte da tela.</p>
+            </div>
+
+            <div style={linha}>
+              <span style={emoji}>🧩</span>
+              <p>Resolva o desafio interativo da estrutura.</p>
+            </div>
+
+            <div style={linha}>
+              <span style={emoji}>🎒</span>
+              <p>Colete os fragmentos no inventário.</p>
+            </div>
+
+            <div style={linha}>
+              <span style={emoji}>💎</span>
+              <p>Junte tudo para liberar o Núcleo Final.</p>
+            </div>
+          </div>
+
+          <div style={caixaEstruturas}>
+            <strong style={tituloEstruturas}>Estruturas da jornada</strong>
+
+            <div style={tags}>
+              <span style={tag}>Fila</span>
+              <span style={tag}>Pilha</span>
+              <span style={tag}>Lista</span>
+              <span style={tag}>Árvore</span>
+              <span style={tag}>Grafo</span>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
 
 const pagina = {
-  minHeight: "100vh",
-  background:
-    "linear-gradient(to bottom, #c084fc 0%, #818cf8 50%, #fbcfe8 100%)",
+  width: "100vw",
+  minHeight: "100svh",
+  background: "#f8fafc",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "20px",
+  padding: "8px",
   boxSizing: "border-box",
   fontFamily: "'Inter', sans-serif",
+  overflow: "hidden",
 };
 
 const card = {
   width: "100%",
-  maxWidth: "700px",
-  minHeight: "600px",
-  background: "rgba(255,255,255,0.88)",
-  backdropFilter: "blur(15px)",
-  borderRadius: "28px",
-  padding: "clamp(24px, 4vw, 50px)",
-  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
-  position: "relative",
+  maxWidth: "430px",
+  height: "calc(100svh - 16px)",
+  background: "white",
+  borderRadius: "24px",
+  boxShadow: "0 20px 45px rgba(15,23,42,0.14)",
   display: "flex",
   flexDirection: "column",
-  alignItems: "center",
-  textAlign: "center",
+  overflow: "hidden",
+  boxSizing: "border-box",
+  position: "relative",
 };
 
 const versao = {
   position: "absolute",
-  top: "24px",
-  right: "32px",
-  fontSize: "12px",
-  fontWeight: "bold",
+  top: "18px",
+  right: "20px",
+  fontSize: "11px",
+  fontWeight: "900",
   color: "#94a3b8",
-  letterSpacing: "1px",
+};
+
+const topo = {
+  height: "54px",
+  display: "grid",
+  gridTemplateColumns: "1fr auto 1fr",
+  alignItems: "center",
+  borderBottom: "1px solid #e2e8f0",
+  padding: "0 14px",
+  boxSizing: "border-box",
+  flexShrink: 0,
+};
+
+const botaoVoltar = {
+  border: "none",
+  background: "transparent",
+  color: "#1e293b",
+  fontSize: "18px",
+  fontWeight: "900",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: 0,
+  cursor: "pointer",
+};
+
+const setaVoltar = {
+  fontSize: "25px",
+  lineHeight: 1,
+  fontWeight: "400",
+};
+
+const tituloTopo = {
+  margin: 0,
+  color: "#1e293b",
+  fontSize: "19px",
+  fontWeight: "900",
+  whiteSpace: "nowrap",
+};
+
+const espacoTopo = {
+  width: "50px",
+};
+
+const conteudo = {
+  flex: 1,
+  padding: "20px 18px 18px",
+  boxSizing: "border-box",
+  overflowY: "auto",
+  textAlign: "center",
 };
 
 const icone = {
-  fontSize: "clamp(60px, 10vw, 100px)",
-  marginTop: "40px",
-  marginBottom: "10px",
+  width: "58px",
+  height: "58px",
+  borderRadius: "50%",
+  margin: "0 auto 12px",
+  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "28px",
+  boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
 };
 
 const titulo = {
-  fontSize: "clamp(36px, 7vw, 64px)",
+  fontSize: "26px",
   fontWeight: "900",
   color: "#1e293b",
-  margin: 0,
-  letterSpacing: "3px",
-  lineHeight: "1",
+  margin: "0 0 8px",
 };
 
 const subtitulo = {
-  maxWidth: "500px",
-  fontSize: "clamp(14px, 2vw, 17px)",
+  fontSize: "13px",
   color: "#64748b",
-  lineHeight: "1.7",
-  margin: "28px 0",
+  lineHeight: "1.6",
+  fontWeight: "700",
+  margin: "0 auto 18px",
+  maxWidth: "330px",
 };
 
 const caixa = {
   width: "100%",
-  maxWidth: "500px",
   background: "#f8fafc",
-  border: "2px solid #e2e8f0",
-  borderRadius: "18px",
-  padding: "18px 22px",
+  border: "1px solid #e2e8f0",
+  borderRadius: "20px",
+  padding: "12px",
   textAlign: "left",
-  fontSize: "clamp(14px, 2vw, 16px)",
-  color: "#475569",
-  lineHeight: "1.6",
   boxSizing: "border-box",
 };
 
-const caixaPequena = {
-  width: "100%",
-  maxWidth: "500px",
-  background: "rgba(129, 140, 248, 0.12)",
-  border: "2px solid rgba(129, 140, 248, 0.35)",
-  borderRadius: "18px",
-  padding: "14px 18px",
-  marginTop: "16px",
-  fontSize: "clamp(13px, 2vw, 15px)",
+const linha = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  background: "white",
+  borderRadius: "14px",
+  padding: "9px 10px",
+  marginBottom: "8px",
   color: "#475569",
-  boxSizing: "border-box",
+  fontSize: "12px",
+  fontWeight: "800",
 };
 
-const botao = {
-  width: "100%",
-  maxWidth: "420px",
-  padding: "17px",
-  background: "#9333ea",
-  border: "none",
+const emoji = {
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  background: "#ede9fe",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+
+const caixaEstruturas = {
+  marginTop: "12px",
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
   borderRadius: "18px",
-  color: "white",
+  padding: "12px",
+};
+
+const tituloEstruturas = {
+  display: "block",
+  color: "#1e293b",
+  fontSize: "13px",
   fontWeight: "900",
-  fontSize: "15px",
-  cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(147, 51, 234, 0.3)",
-  letterSpacing: "1px",
-  marginTop: "28px",
+  marginBottom: "10px",
+};
+
+const tags = {
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: "6px",
+};
+
+const tag = {
+  padding: "6px 10px",
+  borderRadius: "999px",
+  background: "#ede9fe",
+  color: "#7c3aed",
+  fontSize: "11px",
+  fontWeight: "900",
 };
 
 export default ComoJogar;
