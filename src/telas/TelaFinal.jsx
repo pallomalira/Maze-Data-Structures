@@ -8,18 +8,18 @@ function embaralhar(lista) {
 function TelaFinal({ voltar }) {
   const fragmentosBase = [
     { id: "fila", nome: "Fila", icone: "🏪", conceito: "FIFO" },
-    { id: "pilha", nome: "Pilha", icone: "🏰", conceito: "LIFO" },
+    { id: "pilha", nome: "Pilha", icone: "🎒", conceito: "LIFO" },
     { id: "lista", nome: "Lista", icone: "🚪", conceito: "Próximo nó" },
-    { id: "arvore", nome: "Árvore", icone: "🌳", conceito: "Esquerda / Direita" },
+    { id: "arvore", nome: "Árvore", icone: "🏥", conceito: "Busca eficiente" },
     { id: "grafo", nome: "Grafo", icone: "🕸️", conceito: "Conexões" },
   ];
 
   const portaisBase = [
-    { id: "fila", texto: "Quem chega primeiro também sai primeiro." },
-    { id: "pilha", texto: "O último que entra é o primeiro que sai." },
+    { id: "fila", texto: "Atendimento em ordem de chegada." },
+    { id: "pilha", texto: "O último item guardado é o primeiro a sair." },
     { id: "lista", texto: "Cada elemento aponta para o próximo." },
-    { id: "arvore", texto: "A busca segue caminhos pela esquerda ou direita." },
-    { id: "grafo", texto: "Pontos ligados por conexões e caminhos." },
+    { id: "arvore", texto: "Organiza informações para buscar mais rápido." },
+    { id: "grafo", texto: "Representa conexões e caminhos entre elementos." },
   ];
 
   const [fragmentos, setFragmentos] = useState(() => embaralhar(fragmentosBase));
@@ -27,14 +27,16 @@ function TelaFinal({ voltar }) {
   const [encaixados, setEncaixados] = useState({});
   const [selecionado, setSelecionado] = useState(null);
   const [mensagem, setMensagem] = useState(
-    "Selecione um fragmento e depois toque no portal que combina com a descrição."
+    "Você chegou ao Portal do Conhecimento. Reúna os fragmentos aprendidos durante a jornada."
   );
 
   const completo = Object.keys(encaixados).length === portaisBase.length;
 
   function selecionarFragmento(fragmento) {
     setSelecionado(fragmento);
-    setMensagem(`Fragmento ${fragmento.nome} selecionado. Agora escolha o portal correto.`);
+    setMensagem(
+      `Fragmento ${fragmento.nome} selecionado. Agora escolha o portal correto.`
+    );
   }
 
   function encaixarNoPortal(portalId) {
@@ -56,7 +58,9 @@ function TelaFinal({ voltar }) {
     });
 
     setFragmentos(fragmentos.filter((item) => item.id !== selecionado.id));
-    setMensagem(`Fragmento de ${selecionado.nome} encaixado! Conceito: ${selecionado.conceito}`);
+    setMensagem(
+      `Fragmento de ${selecionado.nome} encaixado! Conceito: ${selecionado.conceito}`
+    );
     setSelecionado(null);
   }
 
@@ -65,7 +69,9 @@ function TelaFinal({ voltar }) {
     setPortais(embaralhar(portaisBase));
     setEncaixados({});
     setSelecionado(null);
-    setMensagem("Os fragmentos foram embaralhados novamente. Selecione um fragmento e encontre o portal correto.");
+    setMensagem(
+      "Os fragmentos foram embaralhados novamente. Selecione um fragmento e encontre o portal correto."
+    );
   }
 
   return (
@@ -77,7 +83,7 @@ function TelaFinal({ voltar }) {
             <span>Mapa</span>
           </button>
 
-          <h1 style={estilos.tituloTopo}>Núcleo Final</h1>
+          <h1 style={estilos.tituloTopo}>Portal do Conhecimento</h1>
 
           <div style={estilos.espacoTopo} />
         </header>
@@ -90,7 +96,7 @@ function TelaFinal({ voltar }) {
             </section>
 
             <section style={estilos.areaFragmentos}>
-              <h2 style={estilos.subtitulo}>Fragmentos</h2>
+              <h2 style={estilos.subtitulo}>Fragmentos da jornada</h2>
 
               <div style={estilos.fragmentos}>
                 {fragmentos.map((fragmento) => (
@@ -106,7 +112,9 @@ function TelaFinal({ voltar }) {
                           : "2px solid #e2e8f0",
                     }}
                   >
-                    <span style={estilos.iconeFragmento}>{fragmento.icone}</span>
+                    <span style={estilos.iconeFragmento}>
+                      {fragmento.icone}
+                    </span>
                     <strong>{fragmento.nome}</strong>
                   </motion.button>
                 ))}
@@ -129,7 +137,9 @@ function TelaFinal({ voltar }) {
                         : "2px dashed #cbd5e1",
                     }}
                   >
-                    <span style={estilos.numeroPortal}>Portal {index + 1}</span>
+                    <span style={estilos.numeroPortal}>
+                      Portal {index + 1}
+                    </span>
 
                     {item ? (
                       <>
@@ -150,29 +160,37 @@ function TelaFinal({ voltar }) {
             </button>
           </>
         ) : (
-            <motion.section
-                initial={{scale: 0.9, opacity: 0}}
-                animate={{scale: 1, opacity: 1}}
-                style={estilos.finalBox}
-            >
-              <div style={estilos.emojiFinal}>🎁 ✨</div>
-              <h1 style={estilos.tituloFinal}>Parabéns!</h1>
-              <p style={estilos.textoFinal}>
-                Você restaurou o Núcleo do Conhecimento.
-              </p>
+          <motion.section
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={estilos.finalBox}
+          >
+            <div style={estilos.emojiFinal}>🎁✨</div>
 
-              <div style={estilos.resumo}>
-                <p>🏪 Fila: primeiro que entra, primeiro que sai.</p>
-                <p>🏰 Pilha: último que entra, primeiro que sai.</p>
-                <p>🚪 Lista: cada nó aponta para o próximo.</p>
-                <p>🌳 Árvore: busca por esquerda e direita.</p>
-                <p>🕸️ Grafo: pontos conectados por caminhos.</p>
-              </div>
+            <h1 style={estilos.tituloFinal}>Parabéns!</h1>
 
-              <button onClick={voltar} style={estilos.botaoPrincipal}>
-                Voltar ao mapa
-              </button>
-            </motion.section>
+            <p style={estilos.textoFinal}>
+              Os viajantes concluíram a jornada e restauraram o Portal do
+              Conhecimento. Durante o caminho, aprenderam como funcionam as
+              principais estruturas de dados.
+            </p>
+
+            <div style={estilos.resumo}>
+              <p>🏪 Fila → atendimento em ordem de chegada (FIFO).</p>
+              <p>🎒 Pilha → último que entra, primeiro que sai (LIFO).</p>
+              <p>🚪 Lista → cada nó aponta para o próximo.</p>
+              <p>🏥 Árvore → organiza informações para buscas rápidas.</p>
+              <p>🕸️ Grafo → representa conexões e caminhos entre elementos.</p>
+            </div>
+
+            <p style={estilos.tituloConquista}>
+              🏆 Mestre das Estruturas de Dados
+            </p>
+
+            <button onClick={voltar} style={estilos.botaoPrincipal}>
+              Voltar ao mapa
+            </button>
+          </motion.section>
         )}
       </div>
     </div>
@@ -239,7 +257,7 @@ const estilos = {
   tituloTopo: {
     margin: 0,
     color: "#1e293b",
-    fontSize: "19px",
+    fontSize: "17px",
     fontWeight: "900",
     whiteSpace: "nowrap",
   },
@@ -406,17 +424,18 @@ const estilos = {
     color: "#475569",
   },
 
-  caixaAberta: {
-  fontSize: "58px",
-  marginBottom: "12px",
-},
+  emojiFinal: {
+    fontSize: "54px",
+    marginBottom: "14px",
+    lineHeight: 1,
+  },
 
-tituloFinal: {
-  margin: "0 0 12px",
-  fontSize: "30px",
-  fontWeight: "900",
-  color: "#1e293b",
-},
+  tituloFinal: {
+    margin: "0 0 12px",
+    fontSize: "30px",
+    fontWeight: "900",
+    color: "#1e293b",
+  },
 
   textoFinal: {
     fontSize: "13px",
@@ -435,11 +454,14 @@ tituloFinal: {
     lineHeight: "1.5",
     marginTop: "12px",
   },
-emojiFinal: {
-  fontSize: "54px",
-  marginBottom: "14px",
-  lineHeight: 1,
-},
+
+  tituloConquista: {
+    marginTop: "12px",
+    color: "#7c3aed",
+    fontWeight: "900",
+    fontSize: "14px",
+  },
+
   botaoPrincipal: {
     width: "100%",
     height: "38px",

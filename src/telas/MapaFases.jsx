@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import * as ReactJoyride from "react-joyride";
+import Modal from "../components/fase/Modal";
+import TutorialJoyride from "../components/fase/TutorialJoyride";
 
-const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
+import { useState } from "react";
+import { motion } from "framer-motion";
 
 function MapaFases({
   nomeJogador = "",
@@ -23,48 +23,27 @@ function MapaFases({
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [finalAberto, setFinalAberto] = useState(false);
   const [runTour, setRunTour] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    function verificarTela() {
-      setIsMobile(window.innerWidth <= 768);
-    }
-
-    verificarTela();
-    window.addEventListener("resize", verificarTela);
-
-    return () => window.removeEventListener("resize", verificarTela);
-  }, []);
-
+  const [historiaAberta, setHistoriaAberta] = useState(false);
   const totalFases = 5;
   const finalLiberada = pecas.length >= totalFases || fasesLiberadas >= 6;
 
   const fases = [
-    { n: 1, nome: "Fila", subtitulo: "Queue", icone: "🏪", x: 82, y: 70, onClick: abrirFila },
-    { n: 2, nome: "Pilha", subtitulo: "Stack", icone: "🏰", x: 318, y: 94, onClick: abrirPilha },
-    { n: 3, nome: "Lista", subtitulo: "Linked List", icone: "🚪", x: 82, y: 245, onClick: abrirLista },
-    { n: 4, nome: "Árvore", subtitulo: "Tree", icone: "🌳", x: 318, y: 270, onClick: abrirArvore },
-    { n: 5, nome: "Grafo", subtitulo: "Graph", icone: "🕸️", x: 82, y: 430, onClick: abrirGrafo },
+    { n: 1, nome: "Fila", subtitulo: "Mercado", icone: "🏪", x: 82, y: 70, onClick: abrirFila },
+    { n: 2, nome: "Pilha", subtitulo: "Mochila", icone: "🎒", x: 318, y: 94, onClick: abrirPilha },
+    { n: 3, nome: "Lista", subtitulo: "Portais", icone: "🚪", x: 82, y: 245, onClick: abrirLista },
+    { n: 4, nome: "Árvore", subtitulo: "Hospital", icone: "🏥", x: 318, y: 270, onClick: abrirArvore },
+    { n: 5, nome: "Grafo", subtitulo: "Rede", icone: "🕸️", x: 82, y: 430, onClick: abrirGrafo },
     { n: 6, nome: "Núcleo", subtitulo: "Final", icone: "💎", x: 318, y: 458, onClick: () => setFinalAberto(true) },
   ];
 
-  /*
-    Caminho em formato de labirinto, seguindo seu desenho:
-    Fila -> Pilha -> Lista -> Árvore -> Grafo -> Núcleo.
-    O trecho Lista -> Árvore faz a curva por baixo, sem cruzar por cima.
-  */
   const caminhoMapa = `
-  M 82 70
-  C 150 45, 245 45, 318 94
-
-  C 250 130, 155 175, 82 245
-
-  C 150 225, 245 225, 318 270
-
-  C 250 305, 155 360, 82 430
-
-  C 150 465, 245 485, 318 458
-`;
+    M 82 70
+    C 150 45, 245 45, 318 94
+    C 250 130, 155 175, 82 245
+    C 150 225, 245 225, 318 270
+    C 250 305, 155 360, 82 430
+    C 150 465, 245 485, 318 458
+  `;
 
   const progresso = {
     1: 0.04,
@@ -85,10 +64,25 @@ function MapaFases({
 
   const steps = [
     {
-      target: ".tour-topo",
-      content: "Aqui ficam Menu, nome do jogo, Ajuda, jogador e inventário.",
+      target: ".tour-menu",
+      content: "Aqui você volta para o menu.",
       placement: "bottom",
       disableBeacon: true,
+    },
+    {
+      target: ".tour-historia",
+      content: "Aqui você pode reler a história da jornada.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-ajuda",
+      content: "Aqui você vê uma explicação rápida de como jogar.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-jogador",
+      content: "Aqui aparece o nome do jogador.",
+      placement: "bottom",
     },
     {
       target: ".tour-inventario",
@@ -97,22 +91,22 @@ function MapaFases({
     },
     {
       target: ".tour-mapa",
-      content: "Esse é o mapa da jornada. Cada ponto representa uma fase.",
+      content: "Esse é o mapa da jornada. Cada ponto representa uma estrutura de dados.",
       placement: "top",
     },
     {
       target: ".tour-caminho",
-      content: "O caminho colorido mostra o progresso até o Núcleo.",
+      content: "O caminho colorido mostra seu progresso até o Núcleo Final.",
       placement: "top",
     },
     {
       target: ".tour-fase-1",
-      content: "Esta é uma fase liberada. Clique nela para iniciar o desafio.",
+      content: "Esta é a primeira fase da jornada: a fila do mercado.",
       placement: "bottom",
     },
     {
       target: ".tour-fase-6",
-      content: "O Núcleo é a fase final. Ele será liberado depois das fases principais.",
+      content: "O Núcleo Final será liberado quando você concluir as estruturas principais.",
       placement: "top",
     },
     {
@@ -154,91 +148,45 @@ function MapaFases({
   return (
     <div style={pagina}>
       <div style={card}>
-        <Joyride
+        <TutorialJoyride
           steps={steps}
-          run={runTour}
-          continuous
-          showSkipButton
-          showProgress
-          disableOverlayClose
-          disableScrolling
-          locale={{
-            back: "Voltar",
-            close: "Fechar",
-            last: "Concluir",
-            next: "Próximo",
-            skip: "Pular",
-          }}
-          styles={{
-            options: {
-              zIndex: 3000,
-              primaryColor: "#7c3aed",
-              textColor: "#334155",
-              overlayColor: "rgba(15, 23, 42, 0.65)",
-              backgroundColor: "#ffffff",
-              arrowColor: "#ffffff",
-            },
-            tooltip: {
-              borderRadius: "20px",
-              padding: "14px",
-              maxWidth: "290px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
-              border: "1px solid #e2e8f0",
-            },
-            tooltipContent: {
-              padding: "8px 4px",
-              fontSize: "13px",
-              lineHeight: "1.45",
-              fontWeight: "700",
-            },
-            spotlight: {
-              borderRadius: "18px",
-              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
-            },
-            buttonNext: {
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-              borderRadius: "999px",
-              padding: "9px 16px",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonBack: {
-              color: "#64748b",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonSkip: {
-              color: "#ec4899",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-          }}
-          callback={(data) => {
-            if (data.status === "finished" || data.status === "skipped") {
-              setRunTour(false);
-            }
-          }}
+          runTour={runTour}
+          setRunTour={setRunTour}
         />
 
-        <header style={topo} className="tour-topo">
-          <button onClick={voltarMenu} style={botaoMenu}>
+        <header style={topo}>
+          <button onClick={voltarMenu} style={botaoMenu} className="tour-menu">
             <span style={setaMenu}>←</span>
             <span>Menu</span>
           </button>
 
-          <div style={logoBox}>
+          <div style={logoBox} className="tour-logo">
             <div style={logoIcone}>🧩</div>
             <h1 style={tituloMapa}>MAZE</h1>
             <span style={subtituloMapa}>Data Structures</span>
           </div>
 
-          <button onClick={() => setAjudaAberta(true)} style={botaoAjuda}>
-            Ajuda
-          </button>
+          <div style={botoesTopo}>
+            <button
+                onClick={() => setHistoriaAberta(true)}
+                style={botaoTopoPequeno}
+                className="tour-historia"
+            >
+              📖
+            </button>
+
+            <button
+                onClick={() => setAjudaAberta(true)}
+                style={botaoTopoPequeno}
+                className="tour-ajuda"
+            >
+               <span style={{ color: "#3b82f6" }}>?</span>
+            </button>
+          </div>
         </header>
 
         <section style={painelInfo}>
-          <div style={infoJogador}>
+          <div style={infoJogador} className="tour-jogador">
             <span style={iconeInfo}>🧙</span>
             <div style={infoTexto}>
               <span style={labelInfo}>Jogador</span>
@@ -264,52 +212,52 @@ function MapaFases({
         <div style={mapaWrapper} className="tour-mapa">
           <div style={containerMapa}>
             <svg
-                style={svgCaminho}
-                viewBox={viewBox}
-                preserveAspectRatio="xMidYMid meet"
-                className="tour-caminho"
+              style={svgCaminho}
+              viewBox={viewBox}
+              preserveAspectRatio="xMidYMid meet"
+              className="tour-caminho"
             >
               <defs>
                 <linearGradient id="caminhoGradiente" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#7c3aed"/>
-                  <stop offset="100%" stopColor="#ec4899"/>
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#ec4899" />
                 </linearGradient>
               </defs>
 
               <path
-                  d={caminhoMapa}
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="36"
-                  strokeLinecap="round"
+                d={caminhoMapa}
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="36"
+                strokeLinecap="round"
               />
 
               <path
-                  d={caminhoMapa}
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="23"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                d={caminhoMapa}
+                fill="none"
+                stroke="#e2e8f0"
+                strokeWidth="23"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
 
               <motion.path
-                  d={caminhoMapa}
-                  fill="none"
-                  stroke="url(#caminhoGradiente)"
-                  strokeWidth="23"
-                  strokeLinecap="round"
-                  initial={false}
-                  animate={{pathLength: progressoCaminho}}
-                  transition={{duration: 0.8, ease: "easeInOut"}}
+                d={caminhoMapa}
+                fill="none"
+                stroke="url(#caminhoGradiente)"
+                strokeWidth="23"
+                strokeLinecap="round"
+                initial={false}
+                animate={{ pathLength: progressoCaminho }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
               />
             </svg>
 
             {fases.map((fase) => (
-                <Fase
-                    key={fase.n}
-                    {...fase}
-                    viewW={viewW}
+              <Fase
+                key={fase.n}
+                {...fase}
+                viewW={viewW}
                 viewH={viewH}
                 bloqueada={bloqueada(fase.n)}
                 concluida={faseConcluida(fase.n)}
@@ -320,7 +268,7 @@ function MapaFases({
         </div>
 
         <footer style={rodape}>
-          <p style={textoFooter}>Complete as fases para restaurar o Núcleo.</p>
+          <p style={textoFooter}>Complete as fases para liberar o Núcleo Final.</p>
 
           <button
             onClick={iniciarTutorial}
@@ -331,110 +279,71 @@ function MapaFases({
           </button>
         </footer>
 
-        <AnimatePresence>
-          {ajudaAberta && (
-            <motion.div
-              style={modalFundo}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setAjudaAberta(false)}
+        {ajudaAberta && (
+          <Modal titulo="📖 Ajuda" fechar={() => setAjudaAberta(false)}>
+            <p style={textoAjuda}>
+              Clique nas fases liberadas para entrar nos desafios. Ao concluir
+              cada fase, você recebe um fragmento no inventário.
+            </p>
+
+            <p style={textoAjuda}>
+              Quando juntar os cinco fragmentos principais, o Núcleo Final será
+              liberado.
+            </p>
+          </Modal>
+        )}
+
+        {finalAberto && (
+          <Modal titulo="💎 Núcleo Final" fechar={() => setFinalAberto(false)}>
+            <p style={textoAjuda}>
+              Você reuniu os fragmentos da jornada.
+            </p>
+
+            <p style={textoAjuda}>
+              Agora entre no Núcleo para restaurar o conhecimento do Reino
+              MazeData.
+            </p>
+
+            <button
+              onClick={() => {
+                setFinalAberto(false);
+                if (abrirFinal) abrirFinal();
+              }}
+              style={{
+                ...botaoFinal,
+                opacity: finalLiberada ? 1 : 0.6,
+                cursor: finalLiberada ? "pointer" : "not-allowed",
+              }}
+              disabled={!finalLiberada}
             >
-              <motion.div
-                style={modal}
-                initial={{ scale: 0.88, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.88, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 style={tituloModal}>📖 Ajuda</h2>
+              {finalLiberada ? "Entrar no Núcleo" : "Núcleo bloqueado"}
+            </button>
+          </Modal>
+        )}
 
-                <p style={textoAjuda}>
-                  Clique nas fases liberadas para entrar nos labirintos.
-                  Ao concluir uma fase, você recebe um fragmento no inventário.
-                  Quando juntar os fragmentos principais, o Núcleo será liberado.
-                </p>
 
-                <button onClick={() => setAjudaAberta(false)} style={botaoFechar}>
-                  Entendi
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {(mostrarHistoriaMapa || historiaAberta) && (
+          <Modal
+            titulo="🧩 Jornada Maze"
+            fechar={() => {
+              if (mostrarHistoriaMapa) fecharHistoriaMapa();
+              setHistoriaAberta(false);
+            }}
+  >            <p style={textoAjuda}>
+              O Reino MazeData perdeu os fragmentos do conhecimento.
+            </p>
 
-        <AnimatePresence>
-          {finalAberto && (
-            <motion.div
-              style={modalFundo}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setFinalAberto(false)}
-            >
-              <motion.div
-                style={modalFinal}
-                initial={{ scale: 0.7, y: 30 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.7, y: 30 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div style={iconeFinal}>💎✨</div>
-                <h2 style={tituloFinal}>Núcleo do Conhecimento</h2>
+            <p style={textoAjuda}>
+              Para recuperá-los, os viajantes precisarão atravessar desafios
+              baseados em estruturas de dados: fila, pilha, lista, árvore e grafo.
+            </p>
 
-                <p style={textoFinal}>
-                  Você chegou ao Núcleo Final. Agora falta restaurar o equilíbrio
-                  do Reino MazeData.
-                </p>
-
-                <button
-                  onClick={() => {
-                    setFinalAberto(false);
-                    if (abrirFinal) abrirFinal();
-                  }}
-                  style={{
-                    ...botaoFinal,
-                    opacity: finalLiberada ? 1 : 0.6,
-                    cursor: finalLiberada ? "pointer" : "not-allowed",
-                  }}
-                  disabled={!finalLiberada}
-                >
-                  {finalLiberada ? "Entrar na fase final" : "Núcleo bloqueado"}
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {mostrarHistoriaMapa && (
-            <motion.div
-              style={modalFundo}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={fecharHistoriaMapa}
-            >
-              <motion.div
-                style={modal}
-                initial={{ scale: 0.88, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.88, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 style={tituloModal}>🧩 Jornada Maze</h2>
-                <p style={textoAjuda}>
-                  O Reino MazeData perdeu seus fragmentos. Complete cada fase
-                  para recuperar uma parte do conhecimento e chegar ao Núcleo.
-                </p>
-
-                <button onClick={fecharHistoriaMapa} style={botaoFechar}>
-                  Começar jornada
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <p style={textoAjuda}>
+              Cada fase ensina uma forma diferente de organizar informações.
+              Ao reunir todos os fragmentos, o Núcleo Final será liberado.
+            </p>
+          </Modal>
+        )}
       </div>
     </div>
   );
@@ -696,6 +605,24 @@ const faseBotao = {
   position: "relative",
   boxShadow: "0 10px 24px rgba(124,58,237,0.24)",
 };
+const botoesTopo = {
+  justifySelf: "end",
+  display: "flex",
+  gap: "6px",
+  alignItems: "center",
+};
+
+const botaoTopoPequeno = {
+  height: "34px",
+  border: "1px solid #e2e8f0",
+  borderRadius: "999px",
+  background: "#f8fafc",
+  color: "#7c3aed",
+  fontSize: "11px",
+  fontWeight: "900",
+  padding: "0 9px",
+  cursor: "pointer",
+};
 
 const iconeFase = {
   fontSize: "22px",
@@ -775,80 +702,11 @@ const botaoTutorial = {
   boxShadow: "0 8px 18px rgba(124,58,237,0.22)",
 };
 
-const modalFundo = {
-  position: "absolute",
-  inset: 0,
-  background: "rgba(15,23,42,0.5)",
-  backdropFilter: "blur(5px)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 100,
-  borderRadius: "24px",
-};
-
-const modal = {
-  width: "min(88%, 340px)",
-  padding: "22px",
-  background: "white",
-  borderRadius: "22px",
-  textAlign: "center",
-  color: "#475569",
-  boxShadow: "0 25px 50px rgba(0,0,0,0.22)",
-};
-
-const tituloModal = {
-  color: "#7c3aed",
-  fontSize: "24px",
-  fontWeight: "900",
-  margin: "0 0 12px",
-};
-
 const textoAjuda = {
   fontSize: "14px",
   color: "#64748b",
   lineHeight: "1.7",
   textAlign: "center",
-  fontWeight: "700",
-};
-
-const botaoFechar = {
-  marginTop: "16px",
-  height: "42px",
-  background: "#7c3aed",
-  border: "none",
-  borderRadius: "14px",
-  color: "white",
-  fontWeight: "900",
-  cursor: "pointer",
-  width: "100%",
-};
-
-const modalFinal = {
-  width: "min(88%, 340px)",
-  background: "white",
-  borderRadius: "24px",
-  padding: "26px",
-  textAlign: "center",
-  boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-};
-
-const iconeFinal = {
-  fontSize: "48px",
-  marginBottom: "8px",
-};
-
-const tituloFinal = {
-  fontSize: "26px",
-  color: "#1e293b",
-  margin: "0 0 10px",
-  fontWeight: "900",
-};
-
-const textoFinal = {
-  color: "#64748b",
-  fontSize: "14px",
-  lineHeight: "1.6",
   fontWeight: "700",
 };
 

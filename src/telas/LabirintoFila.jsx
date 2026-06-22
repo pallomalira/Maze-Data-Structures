@@ -8,22 +8,22 @@ import BotoesRodape from "../components/fase/BotoesRodape";
 import FormAtualizacao from "../components/fase/FormAtualizacao";
 import ToastConfig from "../components/fase/ToastConfig";
 import TutorialJoyride from "../components/fase/TutorialJoyride";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
-
-
 function LabirintoFila({ voltar, concluir }) {
   const personagensIniciais = [
-    { nome: "Mercador João", icone: "🎩" },
-    { nome: "Arqueira Maria", icone: "🏹" },
-    { nome: "Ferreira Ana", icone: "🔨" },
-    { nome: "Mago Pedro", icone: "✨" },
+    { id: 1, nome: "Luna", icone: "🧭" },
+    { id: 2, nome: "Theo", icone: "🗺️" },
+    { id: 3, nome: "Maya", icone: "🎒" },
+    { id: 4, nome: "Gael", icone: "🏕️" },
   ];
 
   const viajanteDesafio = {
-    nome: "Curandeira Luna",
+    id: 5,
+    nome: "Sofia",
     icone: "🌙",
   };
 
@@ -44,7 +44,7 @@ function LabirintoFila({ voltar, concluir }) {
   const [indiceBusca, setIndiceBusca] = useState(0);
   const [novoNome, setNovoNome] = useState("");
   const [indiceSelecionado, setIndiceSelecionado] = useState(null);
-  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+  const [idAtualizado, setIdAtualizado] = useState(null);
 
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
   const [mostrarDica, setMostrarDica] = useState(false);
@@ -53,7 +53,7 @@ function LabirintoFila({ voltar, concluir }) {
   const [runTour, setRunTour] = useState(false);
 
   const [mensagem, setMensagem] = useState(
-    "Clique em um personagem para adicioná-lo ao final da fila."
+    "Adicione os viajantes ao final da fila do mercado."
   );
 
   const stepsBase = [
@@ -82,13 +82,13 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-personagens",
         content:
-          "Clique nos personagens disponíveis para adicioná-los ao final da fila.",
+          "Clique nos viajantes disponíveis para adicioná-los ao final da fila.",
         placement: "bottom",
       },
       {
         target: ".tour-fila",
         content:
-          "Os personagens entram sempre no final da fila. O início será o primeiro a sair.",
+          "Na fila, quem entra primeiro fica no início e será atendido primeiro.",
         placement: "top",
       },
     ],
@@ -96,7 +96,7 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-fila",
         content:
-          "Agora você precisa buscar a Arqueira Maria. A busca deve começar pelo início da fila, sem pular posições.",
+          "Theo esqueceu um item importante. Procure Theo começando pelo início da fila.",
         placement: "top",
       },
     ],
@@ -104,13 +104,13 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-fila",
         content:
-          "Clique na Arqueira Maria para selecionar quem será atualizado.",
+          "Clique em Theo para selecionar o viajante que terá a informação atualizada.",
         placement: "top",
       },
       {
         target: ".tour-atualizar",
         content:
-          "Depois de selecionar a personagem, digite o novo nome e clique em Atualizar.",
+          "Digite o novo nome ou correção e clique em Atualizar.",
         placement: "bottom",
       },
     ],
@@ -118,13 +118,13 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-fila",
         content:
-          "Na etapa de atendimento, apenas o primeiro personagem da fila pode sair.",
+          "O mercado começou o atendimento. Apenas o primeiro da fila pode sair.",
         placement: "top",
       },
       {
         target: ".tour-atendimento",
         content:
-          "Quando o primeiro personagem for atendido, ele aparecerá aqui para mostrar a remoção da fila.",
+          "O viajante atendido aparecerá aqui.",
         placement: "top",
       },
     ],
@@ -132,7 +132,7 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-fila",
         content:
-          "Uma nova viajante entrou no final da fila. Observe quem será atendido primeiro seguindo a regra FIFO.",
+          "Sofia chegou atrasada e entrou no final. Observe quem será atendido primeiro.",
         placement: "top",
       },
     ],
@@ -140,7 +140,7 @@ function LabirintoFila({ voltar, concluir }) {
       {
         target: ".tour-conceito",
         content:
-          "Parabéns! Você concluiu a fase e entendeu a regra FIFO: o primeiro que entra é o primeiro que sai.",
+          "Parabéns! Você entendeu a regra FIFO: o primeiro que entra é o primeiro que sai.",
         placement: "top",
       },
     ],
@@ -206,16 +206,20 @@ function LabirintoFila({ voltar, concluir }) {
     if (novaFila.length === 4) {
       setEtapa(2);
       setIndiceBusca(0);
-      setMensagem("Agora clique na fila em ordem até encontrar a Arqueira Maria.");
+      setMensagem(
+        "Os viajantes estão aguardando atendimento para comprar mantimentos.\n" +
+          "\n" +
+          " Theo comunicou que está com um problema. Procure onde ele está na fila."
+      );
 
       setTimeout(() => {
         mostrarToast(
           "info",
-          "🔍 Busque a Arqueira Maria começando pelo início da fila."
+          "🔍 Busque Theo começando pelo início da fila."
         );
-      }, 1900);
+      }, 2500);
     } else {
-      setMensagem("Personagem adicionado ao final da fila.");
+      setMensagem("Viajante adicionado ao final da fila.");
     }
   }
 
@@ -224,17 +228,20 @@ function LabirintoFila({ voltar, concluir }) {
 
     if (index !== indiceBusca) {
       mostrarToast("error", "A busca precisa começar pelo início da fila.");
-      setMensagem("A busca começa pelo início da fila.");
+      setMensagem("A busca começa pelo início da fila, sem pular posições.");
       return;
     }
 
-    if (fila[index].nome === "Arqueira Maria") {
+    if (fila[index].nome === "Theo") {
       setEtapa(3);
-      setMensagem("Arqueira Maria encontrada. Agora atualize o nome dela.");
+      setMensagem(
+        "Theo foi encontrado. Ele percebeu que seu nome foi registrado incorretamente e pediu a correção para evitar problemas durante a jornada.\n" +
+          "Atualize o nome dele para registrar a correção."
+      );
 
       mostrarToast(
         "success",
-        "Arqueira Maria encontrada! Clique nela para selecionar quem será atualizado."
+        "Theo encontrado! Clique nele para selecionar."
       );
       return;
     }
@@ -247,44 +254,47 @@ function LabirintoFila({ voltar, concluir }) {
   function selecionarParaAtualizar(index) {
     if (etapa !== 3) return;
 
-    if (fila[index].nome !== "Arqueira Maria") {
-      mostrarToast("error", "Selecione a Arqueira Maria para atualizar.");
-      setMensagem("Selecione a Arqueira Maria para atualizar.");
+    if (fila[index].nome !== "Theo") {
+      mostrarToast("error", "Selecione Theo para atualizar.");
+      setMensagem("Selecione Theo para atualizar a informação.");
       return;
     }
 
     setIndiceSelecionado(index);
-    setMensagem("Digite o novo nome e clique em Atualizar.");
-    mostrarToast("success", "Personagem selecionada. Agora digite o novo nome.");
+    setMensagem("Digite a correção e clique em Atualizar.");
+    mostrarToast("success", "Theo selecionado.");
   }
 
   function confirmarAtualizacao() {
     if (indiceSelecionado === null) {
-      mostrarToast("error", "Primeiro clique na Arqueira Maria para selecionar.");
-      setMensagem("Primeiro selecione a Arqueira Maria.");
+      mostrarToast("error", "Primeiro clique em Theo para selecionar.");
+      setMensagem("Primeiro selecione Theo.");
       return;
     }
 
     if (novoNome.trim() === "") {
-      mostrarToast("error", "Digite um novo nome antes de atualizar.");
-      setMensagem("Digite um novo nome.");
+      mostrarToast("error", "Digite uma informação antes de atualizar.");
+      setMensagem("Digite uma informação para atualizar.");
       return;
     }
 
-    const nomeAntigo = fila[indiceSelecionado].nome;
+    const pessoaSelecionada = fila[indiceSelecionado];
+    const nomeNovo = novoNome.trim();
 
-    const novaFila = fila.map((p, index) =>
-      index === indiceSelecionado ? { ...p, nome: novoNome.trim() } : p
+    const novaFila = fila.map((pessoa, index) =>
+      index === indiceSelecionado
+        ? { ...pessoa, nome: nomeNovo }
+        : pessoa
     );
 
     setFila(novaFila);
-    setIndiceAtualizado(indiceSelecionado);
+    setIdAtualizado(pessoaSelecionada.id);
     setNovoNome("");
     setIndiceSelecionado(null);
     setEtapa(4);
 
-    mostrarToast("success", `${nomeAntigo} foi atualizado com sucesso.`);
-    setMensagem("Agora clique no primeiro da fila para atendê-lo.");
+    mostrarToast("success", `${nomeNovo} foi atualizado com sucesso.`);
+    setMensagem("O mercado começou o atendimento. Clique no primeiro da fila.");
   }
 
   function atenderPersonagem(index) {
@@ -306,9 +316,13 @@ function LabirintoFila({ voltar, concluir }) {
     setFila(novaFila);
     setEtapa(5);
 
-    mostrarToast("success", `${atendido.nome} foi atendido. Curandeira Luna entrou no final.`);
+    mostrarToast(
+      "success",
+      `${atendido.nome} foi atendido. Sofia entrou no final da fila.`
+    );
+
     setMensagem(
-      "Curandeira Luna chegou agora e entrou no final da fila. Quem será atendido primeiro?"
+      "Sofia chegou atrasada ao mercado e entrou no final da fila. Quem será atendido primeiro?"
     );
   }
 
@@ -323,9 +337,9 @@ function LabirintoFila({ voltar, concluir }) {
       );
       mostrarToast("success", "Fase concluída!");
     } else {
-      mostrarToast("error", "Esse personagem ainda precisa esperar a vez.");
+      mostrarToast("error", "Esse viajante ainda precisa esperar a vez.");
       setMensagem(
-        "Na fila, quem chegou agora entra no final. Observe quem está no início."
+        "Na fila, quem chega agora entra no final. Observe quem está no início."
       );
     }
   }
@@ -347,74 +361,78 @@ function LabirintoFila({ voltar, concluir }) {
     setIndiceBusca(0);
     setNovoNome("");
     setIndiceSelecionado(null);
-    setIndiceAtualizado(null);
+    setIdAtualizado(null);
     setConcluido(false);
-    setMensagem("Clique em um personagem para adicioná-lo ao final da fila.");
+    setMensagem("Adicione os viajantes ao final da fila do mercado.");
     mostrarToast("info", "🔄 Fase reiniciada.");
   }
 
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-
         <TutorialJoyride
-      steps={steps}
-      runTour={runTour}
-      setRunTour={setRunTour}
-    />
+          steps={steps}
+          runTour={runTour}
+          setRunTour={setRunTour}
+        />
 
         <ToastConfig />
 
         <div className="tour-topo">
           <TopoFase
-              titulo="Fila do Mercado"
-              voltar={voltar}
-              abrirHistoria={() => setMostrarHistoria(true)}
-              abrirDica={() => setMostrarDica(true)}
+            titulo="Fila do Mercado"
+            voltar={voltar}
+            abrirHistoria={() => setMostrarHistoria(true)}
+            abrirDica={() => setMostrarDica(true)}
           />
         </div>
 
+        <div className="tour-etapa">
           <Etapa
-    etapa={etapa}
-    totalEtapas={etapas.length}
-    nomeEtapa={etapas[etapa - 1]}
-    mostrarEtapas={mostrarEtapas}
-    setMostrarEtapas={setMostrarEtapas}
-  />
+            etapa={etapa}
+            totalEtapas={etapas.length}
+            nomeEtapa={etapas[etapa - 1]}
+            mostrarEtapas={mostrarEtapas}
+            setMostrarEtapas={setMostrarEtapas}
+          />
+        </div>
 
         {mostrarEtapas && (
-  <ListaEtapas etapas={etapas} etapaAtual={etapa} />
-)}
+          <ListaEtapas etapas={etapas} etapaAtual={etapa} />
+        )}
 
-        <Mensagem texto={mensagem} />
+        <div className="tour-mensagem">
+          <Mensagem texto={mensagem} />
+        </div>
 
         {etapa === 3 && (
-  <FormAtualizacao
-    valor={novoNome}
-    setValor={setNovoNome}
-    confirmar={confirmarAtualizacao}
-    placeholder="Novo nome"
-  />
-)}
+
+         <FormAtualizacao
+            valor={novoNome}
+            setValor={setNovoNome}
+            confirmar={confirmarAtualizacao}
+            placeholder="Novo nome"
+         />
+        )}
 
         {disponiveis.length > 0 && (
-            <section className="tour-personagens">
-              <h2 style={estilos.subtitulo}>Personagens disponíveis</h2>
+          <section className="tour-personagens">
+            <h2 style={estilos.subtitulo}>Viajantes disponíveis</h2>
 
-              <div style={estilos.personagensGrid}>
-                {disponiveis.map((p, index) => (
-                    <motion.button
-                        key={p.nome}
-                        whileTap={{scale: 0.95}}
-                        onClick={() => adicionarPersonagem(index)}
-                        style={estilos.cardPersonagem}
-                    >
-                      <span style={estilos.iconePersonagem}>{p.icone}</span>
-                      <span>{p.nome}</span>
-                    </motion.button>
-                ))}
-              </div>
-            </section>
+            <div style={estilos.personagensGrid}>
+              {disponiveis.map((p, index) => (
+                <motion.button
+                  key={p.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => adicionarPersonagem(index)}
+                  style={estilos.cardPersonagem}
+                >
+                  <span style={estilos.iconePersonagem}>{p.icone}</span>
+                  <span>{p.nome}</span>
+                </motion.button>
+              ))}
+            </div>
+          </section>
         )}
 
         <section style={estilos.filaArea} className="tour-fila">
@@ -432,113 +450,125 @@ function LabirintoFila({ voltar, concluir }) {
               const personagem = fila[posicao];
 
               return (
-                  <motion.button
-                      key={posicao}
-                      whileTap={{scale: personagem ? 0.95 : 1}}
-                      onClick={() => clicarNaFila(posicao)}
-                      style={{
-                        ...estilos.slotFila,
-                        border:
-                            personagem && posicao === 0
-                                ? "2px solid #ec4899"
-                                : "2px dashed #cbd5e1",
-                      }}
-                  >
-                    {personagem ? (
-                        <>
-                          <span style={estilos.iconeFila}>{personagem.icone}</span>
-                          <strong style={estilos.nomeFila}>{personagem.nome}</strong>
+                <motion.button
+                  key={posicao}
+                  whileTap={{ scale: personagem ? 0.95 : 1 }}
+                  onClick={() => clicarNaFila(posicao)}
+                  style={{
+                    ...estilos.slotFila,
+                    border:
+                      personagem && posicao === 0
+                        ? "2px solid #ec4899"
+                        : "2px dashed #cbd5e1",
+                  }}
+                >
+                  {personagem ? (
+                    <>
+                      <span style={estilos.iconeFila}>{personagem.icone}</span>
+                      <strong style={estilos.nomeFila}>{personagem.nome}</strong>
 
-                          {etapa === 2 && posicao === indiceBusca && (
-                              <em style={estilos.tagRoxa}>Verificar</em>
-                          )}
+                      {etapa === 2 && posicao === indiceBusca && (
+                        <em style={estilos.tagRoxa}>Verificar</em>
+                      )}
 
-                          {etapa === 3 && posicao === indiceSelecionado && (
-                              <em style={estilos.tagVerde}>Selecionado</em>
-                          )}
+                      {etapa === 3 && posicao === indiceSelecionado && (
+                        <em style={estilos.tagVerde}>Selecionado</em>
+                      )}
 
-                          {etapa >= 4 && posicao === indiceAtualizado && (
-                              <em style={estilos.tagVerde}>Atualizado</em>
-                          )}
-                        </>
-                    ) : (
-                        <>
-                          <span style={estilos.numeroSlot}>{posicao + 1}</span>
-                          <span style={estilos.textoSlot}>Posição {posicao + 1}</span>
-                        </>
-                    )}
-                  </motion.button>
+                      {etapa >= 4 && idAtualizado === personagem.id && (
+                        <em style={estilos.tagVerde}>Atualizado</em>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span style={estilos.numeroSlot}>{posicao + 1}</span>
+                      <span style={estilos.textoSlot}>Posição {posicao + 1}</span>
+                    </>
+                  )}
+                </motion.button>
               );
             })}
           </div>
         </section>
 
         {etapa >= 4 && (
-            <section style={estilos.areaAtendimento} className="tour-atendimento">
-              <div>
-                <h2 style={estilos.subtituloAtendido}>Atendimento</h2>
-                <p style={estilos.textoAtendimento}>
-                  Clique no primeiro da fila para atender.
-                </p>
-              </div>
+          <section style={estilos.areaAtendimento} className="tour-atendimento">
+            <div>
+              <h2 style={estilos.subtituloAtendido}>Atendimento</h2>
+              <p style={estilos.textoAtendimento}>
+                Clique no primeiro da fila para atender.
+              </p>
+            </div>
 
-              <div style={estilos.caixaAtendido}>
-                {atendidos.length === 0 ? (
-                    <span style={estilos.vazioAtendido}>Aguardando atendimento</span>
-                ) : (
-                    atendidos.map((p, index) => (
-                        <div key={`${p.nome}-${index}`} style={estilos.cardAtendido}>
-                          <span>{p.icone}</span>
-                          <strong>{p.nome}</strong>
-                        </div>
-                    ))
-                )}
-              </div>
-            </section>
+            <div style={estilos.caixaAtendido}>
+              {atendidos.length === 0 ? (
+                <span style={estilos.vazioAtendido}>Aguardando atendimento</span>
+              ) : (
+                atendidos.map((p, index) => (
+                  <div key={`${p.id}-${index}`} style={estilos.cardAtendido}>
+                    <span>{p.icone}</span>
+                    <strong>{p.nome}</strong>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         )}
 
-            <Conceito
-              texto="Na fila, quem entra primeiro é o primeiro a sair."
-              conceito="FIFO: First In, First Out"
-            />
+        <Conceito
+          texto="Na fila, quem entra primeiro é o primeiro a sair."
+          conceito="FIFO: First In, First Out"
+        />
 
-             <BotoesRodape
-              resetar={resetar}
-              iniciarTutorial={iniciarTutorial}
-            />
+        <BotoesRodape
+          resetar={resetar}
+          iniciarTutorial={iniciarTutorial}
+        />
 
-{concluido && (
-  <Modal
-    titulo="🏆 Fila concluída!"
-    fechar={concluir}
-    textoBotao="Próxima fase"
-  >
-    <p>Você entendeu que novos personagens entram no final e aguardam a vez.</p>
-  </Modal>
-)}
+        {concluido && (
+          <Modal
+            titulo="🏆 Fila concluída!"
+            fechar={concluir}
+            textoBotao="Próxima fase"
+          >
+            <p>
+              Você entendeu que os viajantes são atendidos pela ordem de chegada.
+            </p>
+          </Modal>
+        )}
 
-{mostrarHistoria && (
-  <Modal fechar={fecharHistoria} titulo="📖 História">
-    <p>Você chegou ao Mercado do Reino dos Dados.</p>
-    <p>Os viajantes precisam formar uma fila para serem atendidos.</p>
-    <strong>Quem chega primeiro, sai primeiro.</strong>
-  </Modal>
-)}
+        {mostrarHistoria && (
+          <Modal fechar={fecharHistoria} titulo="📖 História">
+            <p>
+              Os viajantes estão se preparando para atravessar o Reino dos Dados.
+            </p>
+            <p>
+              Antes de iniciar a jornada, eles precisam comprar mantimentos no
+              Mercado Central.
+            </p>
+            <p>
+              Como há várias pessoas esperando atendimento, o mercado organiza
+              todos em uma fila.
+            </p>
+            <strong>
+              Quem chega primeiro é atendido primeiro.
+            </strong>
+          </Modal>
+        )}
 
         {mostrarDica && (
           <Modal fechar={() => setMostrarDica(false)} titulo="💡 Dica">
             <p>
               A fila usa a regra <strong>FIFO</strong>.
             </p>
-            <p>O primeiro personagem que entra será o primeiro atendido.</p>
-            <p>Novos personagens sempre entram no final da fila.</p>
+            <p>O primeiro viajante que entra será o primeiro atendido.</p>
+            <p>Novos viajantes sempre entram no final da fila.</p>
           </Modal>
         )}
       </div>
     </div>
   );
 }
-
 
 const estilos = {
   pagina: {
@@ -560,7 +590,6 @@ const estilos = {
     boxSizing: "border-box",
     overflow: "hidden",
   },
-
 
   subtitulo: {
     margin: "0 0 8px",
@@ -750,9 +779,6 @@ const estilos = {
     alignItems: "center",
     textAlign: "center",
   },
-
-
 };
-
 
 export default LabirintoFila;

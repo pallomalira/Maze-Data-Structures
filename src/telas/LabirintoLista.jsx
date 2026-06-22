@@ -1,9 +1,17 @@
+import TopoFase from "../components/fase/TopoFase";
+import Mensagem from "../components/fase/Mensagem";
+import Etapa from "../components/fase/Etapa";
+import ListaEtapas from "../components/fase/ListaEtapas";
+import Modal from "../components/fase/Modal";
+import Conceito from "../components/fase/Conceito";
+import BotoesRodape from "../components/fase/BotoesRodape";
+import FormAtualizacao from "../components/fase/FormAtualizacao";
+import ToastConfig from "../components/fase/ToastConfig";
+import TutorialJoyride from "../components/fase/TutorialJoyride";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
-import * as ReactJoyride from "react-joyride";
-
-const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
+import toast from "react-hot-toast";
 
 function LabirintoLista({ voltar, concluir }) {
   const portaisIniciais = [
@@ -40,7 +48,7 @@ function LabirintoLista({ voltar, concluir }) {
   const [runTour, setRunTour] = useState(false);
 
   const [mensagem, setMensagem] = useState(
-    "Clique em um portal para adicioná-lo ao final da lista."
+    "Monte a rota dos viajantes adicionando os portais ao final da lista."
   );
 
   const stepsBase = [
@@ -69,13 +77,13 @@ function LabirintoLista({ voltar, concluir }) {
       {
         target: ".tour-portais",
         content:
-          "Clique nos portais disponíveis para adicioná-los ao final da lista.",
+          "Clique nos portais disponíveis para adicioná-los ao final da rota.",
         placement: "bottom",
       },
       {
         target: ".tour-lista",
         content:
-          "Cada portal vira um nó. Um nó aponta para o próximo, formando a lista encadeada.",
+          "Cada portal vira um nó. Um nó aponta para o próximo, formando uma lista encadeada.",
         placement: "top",
       },
     ],
@@ -83,7 +91,7 @@ function LabirintoLista({ voltar, concluir }) {
       {
         target: ".tour-lista",
         content:
-          "A busca na lista começa no primeiro nó e segue de um em um até encontrar o portal desejado.",
+          "A busca começa no primeiro portal e segue de um em um até encontrar o Portal Água.",
         placement: "top",
       },
     ],
@@ -178,7 +186,7 @@ function LabirintoLista({ voltar, concluir }) {
 
   function adicionarPortal(index) {
     if (etapa !== 1) {
-      mostrarToast("error", "Agora não é o momento de montar a lista.");
+      mostrarToast("error", "Agora não é o momento de montar a rota.");
       return;
     }
 
@@ -188,21 +196,20 @@ function LabirintoLista({ voltar, concluir }) {
     setLista(novaLista);
     setDisponiveis(disponiveis.filter((_, i) => i !== index));
 
-    mostrarToast("success", `${portal.nome} entrou no final da lista.`);
+    mostrarToast("success", `${portal.nome} entrou no final da rota.`);
 
     if (novaLista.length === 4) {
       setEtapa(2);
       setIndiceBusca(0);
-      setMensagem("Agora busque o Portal Água começando pelo primeiro nó.");
+      setMensagem(
+        "Os viajantes precisam encontrar o Portal Água para seguir viagem. Busque começando pelo primeiro nó."
+      );
 
       setTimeout(() => {
-        mostrarToast(
-          "info",
-          "🔍 Busque o Portal Água seguindo nó por nó."
-        );
+        mostrarToast("info", "🔍 Busque o Portal Água seguindo nó por nó.");
       }, 1900);
     } else {
-      setMensagem("Portal adicionado. O próximo entrará no final da lista.");
+      setMensagem("Portal adicionado. O próximo entrará no final da rota.");
     }
   }
 
@@ -219,7 +226,9 @@ function LabirintoLista({ voltar, concluir }) {
 
     if (atual.nome === "Portal Água") {
       setEtapa(3);
-      setMensagem("Portal Água encontrado. Agora atualize esse portal.");
+      setMensagem(
+        "Portal Água encontrado. Ele está instável e precisa ser atualizado antes da travessia."
+      );
       mostrarToast("success", "Portal Água encontrado! Clique nele para selecionar.");
       return;
     }
@@ -239,7 +248,7 @@ function LabirintoLista({ voltar, concluir }) {
     }
 
     setIndiceSelecionado(index);
-    setMensagem("Digite o novo nome e clique em Atualizar.");
+    setMensagem("Digite o novo nome do portal e clique em Atualizar.");
     mostrarToast("success", "Portal selecionado. Agora digite o novo nome.");
   }
 
@@ -271,8 +280,9 @@ function LabirintoLista({ voltar, concluir }) {
     setEtapa(4);
 
     mostrarToast("success", "Portal atualizado com sucesso.");
+
     setMensagem(
-      "O portal atualizado ficou instável. Agora clique nele para removê-lo da rota."
+      "Mesmo atualizado, esse portal ficou instável e precisa ser removido da rota. Depois disso, a ligação entre os portais vizinhos deve continuar funcionando."
     );
   }
 
@@ -295,6 +305,7 @@ function LabirintoLista({ voltar, concluir }) {
     setEtapa(5);
 
     mostrarToast("success", `${removido.nome} foi removido.`);
+
     setMensagem(
       "O portal foi removido. Qual portal precisou atualizar sua ligação para a rota continuar funcionando?"
     );
@@ -338,165 +349,55 @@ function LabirintoLista({ voltar, concluir }) {
     setIndiceSelecionado(null);
     setIndiceAtualizado(null);
     setIndiceRespostaDesafio(null);
-    setMensagem("Clique em um portal para adicioná-lo ao final da lista.");
+    setMensagem("Monte a rota dos viajantes adicionando os portais ao final da lista.");
     mostrarToast("info", "🔄 Fase reiniciada.");
   }
 
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <Joyride
+        <TutorialJoyride
           steps={steps}
-          run={runTour}
-          continuous
-          showSkipButton
-          showProgress
-          disableOverlayClose
-          locale={{
-            back: "Voltar",
-            close: "Fechar",
-            last: "Concluir",
-            next: "Próximo",
-            skip: "Pular",
-          }}
-          styles={{
-            options: {
-              zIndex: 3000,
-              primaryColor: "#7c3aed",
-              textColor: "#334155",
-              overlayColor: "rgba(15, 23, 42, 0.65)",
-              backgroundColor: "#ffffff",
-              arrowColor: "#ffffff",
-            },
-            tooltip: {
-              borderRadius: "22px",
-              padding: "18px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
-              border: "1px solid #e2e8f0",
-            },
-            tooltipContent: {
-              padding: "10px 6px",
-              fontSize: "14px",
-              lineHeight: "1.6",
-              fontWeight: "700",
-            },
-            spotlight: {
-              borderRadius: "18px",
-              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
-            },
-            buttonNext: {
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-              borderRadius: "999px",
-              padding: "10px 18px",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonBack: {
-              color: "#64748b",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonSkip: {
-              color: "#ec4899",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonClose: {
-              color: "#94a3b8",
-            },
-          }}
-          callback={(data) => {
-            if (data.status === "finished" || data.status === "skipped") {
-              setRunTour(false);
-            }
-          }}
+          runTour={runTour}
+          setRunTour={setRunTour}
         />
 
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          gutter={8}
-          containerStyle={{ top: 70 }}
-          toastOptions={{
-            duration: 1800,
-            style: {
-              borderRadius: "14px",
-              background: "#1e293b",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "13px",
-              maxWidth: "320px",
-              textAlign: "center",
-            },
-          }}
-        />
+        <ToastConfig />
 
-        <header style={estilos.topo} className="tour-topo">
-          <button onClick={voltar} style={estilos.botaoMapa}>
-            <span style={estilos.setaVoltar}>←</span>
-            <span>Mapa</span>
-          </button>
+        <div className="tour-topo">
+          <TopoFase
+            titulo="Corredor dos Portais"
+            voltar={voltar}
+            abrirHistoria={() => setMostrarHistoria(true)}
+            abrirDica={() => setMostrarDica(true)}
+          />
+        </div>
 
-          <h1 style={estilos.tituloTopo}>Corredor dos Portais</h1>
-
-          <div style={estilos.iconesTopo}>
-            <button onClick={() => setMostrarHistoria(true)} style={estilos.botaoLivro}>
-              📖
-            </button>
-
-            <button onClick={() => setMostrarDica(true)} style={estilos.botaoLuz}>
-              💡
-            </button>
-          </div>
-        </header>
-
-        <section
-          style={estilos.etapaCard}
-          className="tour-etapa"
-          onClick={() => setMostrarEtapas(!mostrarEtapas)}
-        >
-          <div>
-            <span style={estilos.etapaNumero}>Etapa {etapa} de 6</span>
-            <h2 style={estilos.etapaNome}>{etapas[etapa - 1]}</h2>
-          </div>
-
-          <span style={estilos.setaBaixo}>⌄</span>
-        </section>
+        <div className="tour-etapa">
+          <Etapa
+            etapa={etapa}
+            totalEtapas={etapas.length}
+            nomeEtapa={etapas[etapa - 1]}
+            mostrarEtapas={mostrarEtapas}
+            setMostrarEtapas={setMostrarEtapas}
+          />
+        </div>
 
         {mostrarEtapas && (
-          <div style={estilos.listaEtapas}>
-            {etapas.map((nome, index) => (
-              <div
-                key={nome}
-                style={
-                  etapa === index + 1
-                    ? estilos.etapaListaAtiva
-                    : estilos.etapaListaItem
-                }
-              >
-                {index + 1}. {nome}
-              </div>
-            ))}
-          </div>
+          <ListaEtapas etapas={etapas} etapaAtual={etapa} />
         )}
 
-        <p style={estilos.mensagem} className="tour-mensagem">
-          {mensagem}
-        </p>
+        <div className="tour-mensagem">
+          <Mensagem texto={mensagem} />
+        </div>
 
         {etapa === 3 && (
-          <div style={estilos.formAtualizacao} className="tour-atualizar">
-            <input
-              value={novoNome}
-              onChange={(e) => setNovoNome(e.target.value)}
-              placeholder="Novo nome"
-              style={estilos.input}
-            />
-
-            <button onClick={confirmarAtualizacao} style={estilos.botaoAtualizar}>
-              Atualizar
-            </button>
-          </div>
+          <FormAtualizacao
+            valor={novoNome}
+            setValor={setNovoNome}
+            confirmar={confirmarAtualizacao}
+            placeholder="Novo nome"
+          />
         )}
 
         {disponiveis.length > 0 && (
@@ -618,46 +519,43 @@ function LabirintoLista({ voltar, concluir }) {
           </section>
         )}
 
-        <section style={estilos.conceito} className="tour-conceito">
-          <span style={estilos.iconeInfo}>i</span>
+        <Conceito
+          texto="Na lista, cada nó aponta para o próximo nó."
+          conceito="Lista Encadeada"
+        />
 
-          <div>
-            <p>Na lista, cada nó aponta para o próximo nó.</p>
-            <strong>Lista Encadeada</strong>
-          </div>
-        </section>
-
-        <div style={estilos.rodape} className="tour-resetar">
-          <button onClick={resetar} style={estilos.botaoResetar}>
-            ↻ Resetar
-          </button>
-
-          <button onClick={iniciarTutorial} style={estilos.botaoTutorial}>
-            Ver tutorial
-          </button>
-        </div>
+        <BotoesRodape
+          resetar={resetar}
+          iniciarTutorial={iniciarTutorial}
+        />
 
         {concluido && (
-          <div style={estilos.fundoModal}>
-            <div style={estilos.modal}>
-              <h2 style={estilos.tituloConcluido}>🏆 Lista concluída!</h2>
-              <p>Você entendeu que remover um nó exige ajustar a ligação da lista.</p>
-
-              <button onClick={concluir} style={estilos.botaoFechar}>
-                Próxima fase
-              </button>
-            </div>
-          </div>
+          <Modal
+            titulo="🏆 Lista concluída!"
+            fechar={concluir}
+            textoBotao="Próxima fase"
+          >
+            <p>Você entendeu que remover um nó exige ajustar a ligação da lista.</p>
+          </Modal>
         )}
 
         {mostrarHistoria && (
           <Modal fechar={fecharHistoria} titulo="📖 História">
-            <p>Você chegou ao Corredor dos Portais do Reino dos Dados.</p>
             <p>
-              Cada portal aponta para o próximo. Para atravessar o corredor, é
-              preciso seguir a sequência.
+              Depois de organizar os mapas na mochila, os viajantes chegaram ao
+              Corredor dos Portais.
             </p>
-            <strong>Um nó leva ao próximo nó.</strong>
+            <p>
+              Para seguir viagem, eles precisam atravessar os portais na ordem
+              correta.
+            </p>
+            <p>
+              Cada portal leva ao próximo, formando uma lista encadeada.
+            </p>
+            <strong>
+              Se um portal for removido, o portal anterior precisa apontar para
+              o próximo caminho.
+            </strong>
           </Modal>
         )}
 
@@ -667,7 +565,9 @@ function LabirintoLista({ voltar, concluir }) {
               A lista encadeada é formada por <strong>nós conectados</strong>.
             </p>
             <p>A busca começa no primeiro nó e segue um por um.</p>
-            <p>Ao remover o início, o próximo nó vira o novo início.</p>
+            <p>
+              Ao remover um nó do meio, o nó anterior precisa apontar para o próximo.
+            </p>
           </Modal>
         )}
       </div>
@@ -693,21 +593,6 @@ function definirBordaLista(
   return "2px dashed #cbd5e1";
 }
 
-function Modal({ titulo, children, fechar }) {
-  return (
-    <div style={estilos.fundoModal}>
-      <div style={estilos.modal}>
-        <h2 style={estilos.tituloModal}>{titulo}</h2>
-        <div style={estilos.modalTexto}>{children}</div>
-
-        <button onClick={fechar} style={estilos.botaoFechar}>
-          Entendi
-        </button>
-      </div>
-    </div>
-  );
-}
-
 const estilos = {
   pagina: {
     width: "100vw",
@@ -728,165 +613,6 @@ const estilos = {
     boxSizing: "border-box",
     overflowY: "auto",
     overflowX: "hidden",
-  },
-
-  topo: {
-    height: "54px",
-    display: "grid",
-    gridTemplateColumns: "1fr auto 1fr",
-    alignItems: "center",
-    borderBottom: "1px solid #e2e8f0",
-    margin: "0 -10px 8px",
-    padding: "0 14px",
-    boxSizing: "border-box",
-  },
-
-  botaoMapa: {
-    border: "none",
-    background: "transparent",
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "800",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: 0,
-    cursor: "pointer",
-  },
-
-  setaVoltar: {
-    fontSize: "26px",
-    lineHeight: 1,
-    fontWeight: "400",
-  },
-
-  tituloTopo: {
-    margin: 0,
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "900",
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  },
-
-  iconesTopo: {
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "14px",
-  },
-
-  botaoLivro: {
-    border: "none",
-    background: "transparent",
-    fontSize: "23px",
-    cursor: "pointer",
-    padding: 0,
-  },
-
-  botaoLuz: {
-    border: "none",
-    background: "transparent",
-    fontSize: "23px",
-    cursor: "pointer",
-    padding: 0,
-    filter: "drop-shadow(0 0 5px rgba(236,72,153,0.35))",
-  },
-
-  etapaCard: {
-    height: "48px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "6px 12px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "6px",
-    boxShadow: "0 4px 10px rgba(15,23,42,0.04)",
-    cursor: "pointer",
-  },
-
-  etapaNumero: {
-    color: "#64748b",
-    fontSize: "11px",
-    fontWeight: "700",
-  },
-
-  etapaNome: {
-    margin: "1px 0 0",
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "900",
-  },
-
-  setaBaixo: {
-    fontSize: "22px",
-    color: "#1e293b",
-    fontWeight: "900",
-  },
-
-  listaEtapas: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "14px",
-    padding: "5px",
-    marginBottom: "6px",
-    background: "white",
-  },
-
-  etapaListaItem: {
-    padding: "5px 8px",
-    fontSize: "11px",
-    color: "#64748b",
-    fontWeight: "700",
-  },
-
-  etapaListaAtiva: {
-    padding: "5px 8px",
-    fontSize: "11px",
-    color: "#7c3aed",
-    fontWeight: "900",
-    background: "#ede9fe",
-    borderRadius: "10px",
-  },
-
-  mensagem: {
-    margin: "0 0 6px",
-    padding: "8px",
-    borderRadius: "14px",
-    background: "#f1f5f9",
-    color: "#475569",
-    textAlign: "center",
-    fontSize: "11px",
-    fontWeight: "700",
-  },
-
-  formAtualizacao: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "8px",
-    alignItems: "center",
-  },
-
-  input: {
-    flex: 1,
-    height: "36px",
-    borderRadius: "12px",
-    border: "1px solid #cbd5e1",
-    padding: "0 10px",
-    fontSize: "12px",
-    minWidth: 0,
-  },
-
-  botaoAtualizar: {
-    width: "110px",
-    height: "36px",
-    border: "none",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-    color: "white",
-    fontWeight: "900",
-    fontSize: "12px",
-    cursor: "pointer",
   },
 
   subtitulo: {
@@ -945,35 +671,35 @@ const estilos = {
   },
 
   listaSlots: {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
-  gap: "6px",
-  padding: "4px 0 8px",
-},
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "6px",
+    padding: "4px 0 8px",
+  },
 
   itemComSeta: {
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  minWidth: 0,
-},
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    minWidth: 0,
+  },
 
   slotLista: {
-  width: "100%",
-  height: "88px",
-  borderRadius: "14px",
-  background: "white",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  textAlign: "center",
-  position: "relative",
-  color: "#475569",
-  padding: "4px",
-  boxSizing: "border-box",
-  cursor: "pointer",
-},
+    width: "100%",
+    height: "88px",
+    borderRadius: "14px",
+    background: "white",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    position: "relative",
+    color: "#475569",
+    padding: "4px",
+    boxSizing: "border-box",
+    cursor: "pointer",
+  },
 
   iconeLista: {
     fontSize: "22px",
@@ -1078,11 +804,11 @@ const estilos = {
   },
 
   setaLista: {
-  fontSize: "13px",
-  fontWeight: "900",
-  color: "#7c3aed",
-  flexShrink: 0,
-},
+    fontSize: "13px",
+    fontWeight: "900",
+    color: "#7c3aed",
+    flexShrink: 0,
+  },
 
   areaRemocao: {
     marginTop: "6px",
@@ -1139,120 +865,6 @@ const estilos = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-  },
-
-  conceito: {
-  marginTop: "6px",
-  background: "#f8fafc",
-  borderRadius: "14px",
-  padding: "10px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  textAlign: "center",
-  gap: "6px",
-  color: "#475569",
-  fontSize: "10px",
-  fontWeight: "700",
-},
-
-  iconeInfo: {
-  width: "28px",
-  height: "28px",
-  borderRadius: "50%",
-  background: "#ede9fe",
-  color: "#7c3aed",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: "900",
-  fontSize: "15px",
-},
-
-  rodape: {
-    marginTop: "6px",
-    paddingTop: "6px",
-    borderTop: "1px solid #e2e8f0",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "6px",
-  },
-
-  botaoResetar: {
-    width: "100%",
-    height: "34px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "999px",
-    background: "white",
-    color: "#7c3aed",
-    fontSize: "12px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  botaoTutorial: {
-    width: "100%",
-    height: "34px",
-    border: "none",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-    color: "white",
-    fontSize: "12px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  fundoModal: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15,23,42,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 50,
-  },
-
-  modal: {
-    width: "86%",
-    maxWidth: "340px",
-    background: "white",
-    borderRadius: "22px",
-    padding: "22px",
-    textAlign: "center",
-    color: "#475569",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
-  },
-
-  tituloModal: {
-    color: "#7c3aed",
-    fontSize: "24px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  tituloConcluido: {
-    color: "#7c3aed",
-    fontSize: "26px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  modalTexto: {
-    fontSize: "14px",
-    lineHeight: "1.6",
-  },
-
-  botaoFechar: {
-    width: "100%",
-    height: "42px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#7c3aed",
-    color: "white",
-    fontWeight: "900",
-    marginTop: "14px",
-    cursor: "pointer",
   },
 };
 

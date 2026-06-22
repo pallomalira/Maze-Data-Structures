@@ -1,7 +1,7 @@
-function ConceitoCard({ texto, conceito }) {
+function Conceito({ texto, conceito }) {
   return (
     <section style={estilos.conceito} className="tour-conceito">
-      <span style={estilos.iconeInfo}>i</span>
+      <span style={estilos.iconeInfo}> i </span>
 
       <div>
         <p style={estilos.texto}>{texto}</p>
@@ -40,8 +40,8 @@ const estilos = {
   },
 
   texto: {
-    margin: "0 0 4px",
+    margin: "0 0 3px",
   },
 };
 
-export default ConceitoCard;
+export default Conceito;

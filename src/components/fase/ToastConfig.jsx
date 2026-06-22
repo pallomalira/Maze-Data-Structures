@@ -8,7 +8,7 @@ function ToastConfig() {
       gutter={8}
       containerStyle={{ top: 70 }}
       toastOptions={{
-        duration: 1800,
+        duration:3000,
         style: {
           borderRadius: "14px",
           background: "#1e293b",

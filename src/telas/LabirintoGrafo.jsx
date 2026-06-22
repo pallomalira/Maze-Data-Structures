@@ -1,44 +1,52 @@
+import TopoFase from "../components/fase/TopoFase";
+import Mensagem from "../components/fase/Mensagem";
+import Etapa from "../components/fase/Etapa";
+import ListaEtapas from "../components/fase/ListaEtapas";
+import Modal from "../components/fase/Modal";
+import Conceito from "../components/fase/Conceito";
+import BotoesRodape from "../components/fase/BotoesRodape";
+import FormAtualizacao from "../components/fase/FormAtualizacao";
+import ToastConfig from "../components/fase/ToastConfig";
+import TutorialJoyride from "../components/fase/TutorialJoyride";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
-import * as ReactJoyride from "react-joyride";
-
-const Joyride = ReactJoyride.default || ReactJoyride.Joyride;
+import toast from "react-hot-toast";
 
 function LabirintoGrafo({ voltar, concluir }) {
   const personagensIniciais = [
-    { id: "arthur", nome: "Arthur", icone: "🛡️", papel: "Líder" },
-    { id: "maria", nome: "Maria", icone: "🏹", papel: "Ponte do grupo" },
-    { id: "lucas", nome: "Lucas", icone: "🧙", papel: "Mago" },
+    { id: "luna", nome: "Luna", icone: "🧭", papel: "Guia" },
+    { id: "theo", nome: "Theo", icone: "🗺️", papel: "Estrategista" },
+    { id: "maya", nome: "Maya", icone: "🎒", papel: "Exploradora" },
+    { id: "gael", nome: "Gael", icone: "🏕️", papel: "Aventureiro" },
     { id: "sofia", nome: "Sofia", icone: "🌙", papel: "Curandeira" },
-    { id: "beth", nome: "Beth", icone: "🕵️", papel: "Viajante" },
   ];
 
   const conexoesIniciais = [
-    ["arthur", "maria"],
-    ["maria", "beth"],
-    ["lucas", "beth"],
-    ["beth", "sofia"],
-    ["lucas", "sofia"],
+    ["luna", "theo"],
+    ["theo", "gael"],
+    ["maya", "gael"],
+    ["gael", "sofia"],
+    ["maya", "sofia"],
   ];
 
-  const caminhoBusca = ["arthur", "maria", "beth"];
+  const caminhoBusca = ["luna", "theo", "gael"];
 
   const posicoes = {
-    arthur: { x: 210, y: 42 },
-    maria: { x: 90, y: 135 },
-    lucas: { x: 330, y: 135 },
-    beth: { x: 210, y: 225 },
+    luna: { x: 210, y: 42 },
+    theo: { x: 90, y: 135 },
+    maya: { x: 330, y: 135 },
+    gael: { x: 210, y: 225 },
     sofia: { x: 210, y: 325 },
   };
 
   const etapas = [
     "Formar rede",
-    "Buscar",
-    "Marcar infiltrado",
-    "Remover infiltrado",
-    "Remover conexão infectada",
-    "Quem ficou isolado?",
+    "Buscar caminho",
+    "Atualizar vértice",
+    "Remover vértice",
+    "Remover ponte",
+    "Vértice isolado",
     "Conclusão",
   ];
 
@@ -47,11 +55,13 @@ function LabirintoGrafo({ voltar, concluir }) {
   const [disponiveis, setDisponiveis] = useState(personagensIniciais);
   const [arestas, setArestas] = useState([]);
   const [removidos, setRemovidos] = useState([]);
+
   const [indiceBusca, setIndiceBusca] = useState(0);
-  const [novoNome, setNovoNome] = useState("");
+  const [novoStatus, setNovoStatus] = useState("");
   const [idSelecionado, setIdSelecionado] = useState(null);
   const [idAtualizado, setIdAtualizado] = useState(null);
-  const [idInfectado, setIdInfectado] = useState(null);
+  const [idPonte, setIdPonte] = useState(null);
+
   const [concluido, setConcluido] = useState(false);
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
   const [mostrarDica, setMostrarDica] = useState(false);
@@ -59,8 +69,93 @@ function LabirintoGrafo({ voltar, concluir }) {
   const [runTour, setRunTour] = useState(false);
 
   const [mensagem, setMensagem] = useState(
-    "Clique nos aventureiros para formar a rede de comunicação dos aliados."
+    "Clique nos viajantes para formar a rede. Cada viajante será um vértice."
   );
+
+  const stepsBase = [
+    {
+      target: ".tour-topo",
+      content: "Aqui você volta ao mapa, abre a história ou vê uma dica.",
+      placement: "bottom",
+      disableBeacon: true,
+    },
+    {
+      target: ".tour-etapa",
+      content: "Aqui aparece a etapa atual da fase.",
+      placement: "bottom",
+    },
+    {
+      target: ".tour-mensagem",
+      content: "Essa mensagem mostra o que você precisa fazer agora.",
+      placement: "bottom",
+    },
+  ];
+
+  const stepsPorEtapa = {
+    1: [
+      {
+        target: ".tour-personagens",
+        content: "Clique nos viajantes. Cada pessoa adicionada vira um vértice.",
+        placement: "bottom",
+      },
+      {
+        target: ".tour-grafo",
+        content: "As linhas entre os vértices são as arestas.",
+        placement: "top",
+      },
+    ],
+    2: [
+      {
+        target: ".tour-grafo",
+        content: "Siga o caminho Luna → Theo → Gael para entender busca em grafo.",
+        placement: "top",
+      },
+    ],
+    3: [
+      {
+        target: ".tour-atualizar",
+        content: "Atualizar um vértice altera seus dados, mas mantém suas conexões.",
+        placement: "bottom",
+      },
+    ],
+    4: [
+      {
+        target: ".tour-grafo",
+        content: "Remova Gael e observe que as arestas ligadas a ele desaparecem.",
+        placement: "top",
+      },
+    ],
+    5: [
+      {
+        target: ".tour-grafo",
+        content: "Theo é uma ponte da rede. Remova Theo e observe quem fica isolado.",
+        placement: "top",
+      },
+    ],
+    6: [
+      {
+        target: ".tour-grafo",
+        content: "Clique no vértice que ficou sem nenhuma conexão.",
+        placement: "top",
+      },
+    ],
+  };
+
+  const steps = [
+    ...stepsBase,
+    ...(stepsPorEtapa[etapa] || []),
+    {
+      target: ".tour-conceito",
+      content:
+        "Grafo é formado por vértices e arestas. Vértices são pontos. Arestas são conexões.",
+      placement: "top",
+    },
+    {
+      target: ".tour-resetar",
+      content: "Aqui você pode resetar a fase ou ver o tutorial novamente.",
+      placement: "top",
+    },
+  ];
 
   function mostrarToast(tipo, texto) {
     toast.dismiss();
@@ -75,18 +170,12 @@ function LabirintoGrafo({ voltar, concluir }) {
   function iniciarTutorial() {
     setMostrarEtapas(false);
     setRunTour(false);
-
-    setTimeout(() => {
-      setRunTour(true);
-    }, 100);
+    setTimeout(() => setRunTour(true), 100);
   }
 
   function fecharHistoria() {
     setMostrarHistoria(false);
-
-    setTimeout(() => {
-      iniciarTutorial();
-    }, 400);
+    setTimeout(() => iniciarTutorial(), 400);
   }
 
   function criarArestas(verticesAtuais) {
@@ -125,26 +214,22 @@ function LabirintoGrafo({ voltar, concluir }) {
     setDisponiveis(disponiveis.filter((_, i) => i !== index));
     setArestas(criarArestas(novosVertices));
 
-    mostrarToast("success", `${personagem.nome} entrou na rede.`);
-
     if (novosVertices.length === personagensIniciais.length) {
       setEtapa(2);
       setIndiceBusca(0);
       setMensagem(
-        "Há um infiltrado na rede. Siga as conexões para encontrá-lo: comece por Arthur."
+        "A rede foi formada. Agora siga um caminho pela rede: Luna → Theo → Gael."
       );
-
-      setTimeout(() => {
-        mostrarToast("info", "🔍 Siga o caminho Arthur → Maria → Beth.");
-      }, 1800);
+      mostrarToast("success", "Rede formada! Siga o caminho indicado.");
     } else {
       setMensagem(
-        "Aliado adicionado. Conforme a rede cresce, novas conexões aparecem."
+        "Viajante adicionado. Conforme novos vértices entram, as conexões aparecem."
       );
+      mostrarToast("success", `${personagem.nome} entrou na rede.`);
     }
   }
 
-  function buscarInfiltrado(index) {
+  function buscarVertice(index) {
     if (etapa !== 2) return;
 
     const vertice = vertices[index];
@@ -157,17 +242,17 @@ function LabirintoGrafo({ voltar, concluir }) {
 
       mostrarToast("error", `Caminho errado. Clique em ${esperadoNome}.`);
       setMensagem(
-        `Na busca em grafo, você precisa seguir as conexões. Agora clique em ${esperadoNome}.`
+        `Na busca em grafo, você deve seguir as conexões. Agora clique em ${esperadoNome}.`
       );
       return;
     }
 
-    if (vertice.id === "beth") {
+    if (vertice.id === "gael") {
       setEtapa(3);
       setMensagem(
-        "Beth foi encontrada. O grupo descobriu que ela é a infiltrada. Agora atualize o nome dela para Infiltrado."
+        "Gael foi encontrado. Agora atualize uma informação desse vértice."
       );
-      mostrarToast("success", "Beth encontrada! Clique nela para marcar.");
+      mostrarToast("success", "Gael encontrado! Clique nele para selecionar.");
       return;
     }
 
@@ -181,48 +266,51 @@ function LabirintoGrafo({ voltar, concluir }) {
 
     const vertice = vertices[index];
 
-    if (vertice.id !== "beth") {
-      mostrarToast("error", "Selecione Beth para marcar como infiltrada.");
-      setMensagem("Clique em Beth para atualizar as informações dela.");
+    if (vertice.id !== "gael") {
+      mostrarToast("error", "Selecione Gael para atualizar.");
+      setMensagem("Clique em Gael para atualizar as informações desse vértice.");
       return;
     }
 
     setIdSelecionado(vertice.id);
-    setNovoNome("Infiltrado");
-    setMensagem('Digite ou mantenha o nome "Infiltrado" e clique em Atualizar.');
-    mostrarToast("success", "Beth selecionada.");
+
+      setMensagem(
+        'Gael selecionado. Digite ou mantenha o status que você já escreveu e clique em Atualizar.'
+      );
+
+      mostrarToast("success", "Gael selecionado.");
   }
 
   function confirmarAtualizacao() {
     if (etapa !== 3) return;
 
-    if (idSelecionado !== "beth") {
-      mostrarToast("error", "Primeiro selecione Beth.");
-      setMensagem("Primeiro clique em Beth para selecionar o vértice.");
+    if (idSelecionado !== "gael") {
+      mostrarToast("error", "Primeiro selecione Gael.");
+      setMensagem("Primeiro clique em Gael para selecionar o vértice.");
       return;
     }
 
-    if (novoNome.trim() === "") {
-      mostrarToast("error", "Digite o novo nome.");
-      setMensagem("Digite o novo nome para atualizar o vértice.");
+    if (novoStatus.trim() === "") {
+      mostrarToast("error", "Digite um novo status.");
+      setMensagem("Digite uma informação para atualizar o vértice.");
       return;
     }
 
     const novosVertices = vertices.map((v) =>
-      v.id === "beth"
-        ? { ...v, nome: novoNome.trim(), icone: "🕵️", papel: "Infiltrado" }
+      v.id === "gael"
+        ? { ...v, papel: novoStatus.trim() }
         : v
     );
 
     setVertices(novosVertices);
-    setIdAtualizado("beth");
+    setIdAtualizado("gael");
     setIdSelecionado(null);
-    setNovoNome("");
+    setNovoStatus("");
     setEtapa(4);
 
-    mostrarToast("success", "Beth foi marcada como infiltrada.");
+    mostrarToast("success", "Informação de Gael atualizada.");
     setMensagem(
-      "Agora remova o Infiltrado da rede. Ao remover um vértice, todas as conexões ligadas a ele desaparecem."
+      "Agora remova o vértice Gael. Ao remover um vértice, todas as arestas ligadas a ele também desaparecem."
     );
   }
 
@@ -240,70 +328,63 @@ function LabirintoGrafo({ voltar, concluir }) {
     setArestas(novasArestas);
     setRemovidos((anteriores) => [...anteriores, removido]);
 
-    return {
-      removido,
-      novosVertices,
-      novasArestas,
-    };
+    return { removido, novosVertices, novasArestas };
   }
 
-  function removerInfiltrado(index) {
+  function removerGael(index) {
     if (etapa !== 4) return;
 
     const vertice = vertices[index];
 
-    if (vertice.id !== "beth") {
-      mostrarToast("error", "Remova o vértice marcado como Infiltrado.");
-      setMensagem("Clique no Infiltrado para removê-lo da rede.");
+    if (vertice.id !== "gael") {
+      mostrarToast("error", "Remova Gael.");
+      setMensagem("Clique em Gael para remover esse vértice da rede.");
       return;
     }
 
-    removerVertice("beth");
+    removerVertice("gael");
     setIdAtualizado(null);
-    setIdInfectado("maria");
+    setIdPonte("theo");
     setEtapa(5);
 
-    mostrarToast("success", "Infiltrado removido. As conexões dele desapareceram.");
+    mostrarToast("success", "Gael foi removido da rede.");
     setMensagem(
-      "O infiltrado foi removido, mas afetou Maria, que era uma ponte importante da rede. Clique em Maria para removê-la e observe o que acontece."
+      "Gael saiu da rede e suas arestas desapareceram. Agora remova Theo, que funciona como uma ponte entre partes da rede."
     );
   }
 
-  function removerMaria(index) {
+  function removerTheo(index) {
     if (etapa !== 5) return;
 
     const vertice = vertices[index];
 
-    if (vertice.id !== "maria") {
-      mostrarToast("error", "Maria foi afetada. Clique nela para removê-la.");
+    if (vertice.id !== "theo") {
+      mostrarToast("error", "Remova Theo, a ponte da rede.");
       setMensagem(
-        "Maria precisa sair da rede. Ao remover Maria, todas as conexões ligadas a ela desaparecem."
+        "Clique em Theo. Ele conecta Luna ao restante da rede."
       );
       return;
     }
 
-    const resultado = removerVertice("maria");
-    setIdInfectado(null);
+    const resultado = removerVertice("theo");
+    setIdPonte(null);
     setEtapa(6);
 
     const novosVertices = resultado?.novosVertices || [];
     const novasArestas = resultado?.novasArestas || [];
-
     const isolados = obterVerticesIsolados(novosVertices, novasArestas);
 
     if (isolados.length > 0) {
-      const nomes = isolados.map((v) => v.nome).join(", ");
-
       setMensagem(
-        `Maria saiu da rede. Agora descubra quem ficou isolado, ou seja, sem nenhuma conexão.`
+        "Theo foi removido. Agora descubra qual vértice ficou isolado, ou seja, sem nenhuma aresta ligada a ele."
       );
     } else {
       setMensagem(
-        "Maria saiu da rede. Ninguém ficou isolado, porque todos os vértices restantes ainda possuem pelo menos uma conexão."
+        "Theo foi removido. Nenhum vértice ficou isolado."
       );
     }
 
-    mostrarToast("success", "Maria foi removida. Veja quem ficou isolado.");
+    mostrarToast("success", "Theo foi removido. Observe a rede.");
   }
 
   function responderObservacao(index) {
@@ -332,10 +413,10 @@ function LabirintoGrafo({ voltar, concluir }) {
   function clicarVertice(index) {
     if (!vertices[index]) return;
 
-    if (etapa === 2) buscarInfiltrado(index);
+    if (etapa === 2) buscarVertice(index);
     if (etapa === 3) selecionarParaAtualizar(index);
-    if (etapa === 4) removerInfiltrado(index);
-    if (etapa === 5) removerMaria(index);
+    if (etapa === 4) removerGael(index);
+    if (etapa === 5) removerTheo(index);
     if (etapa === 6) responderObservacao(index);
   }
 
@@ -346,112 +427,17 @@ function LabirintoGrafo({ voltar, concluir }) {
     setArestas([]);
     setRemovidos([]);
     setIndiceBusca(0);
-    setNovoNome("");
+    setNovoStatus("");
     setIdSelecionado(null);
     setIdAtualizado(null);
-    setIdInfectado(null);
+    setIdPonte(null);
     setConcluido(false);
     setMostrarHistoria(true);
     setMensagem(
-      "Clique nos aventureiros para formar a rede de comunicação dos aliados."
+      "Clique nos viajantes para formar a rede. Cada viajante será um vértice."
     );
     mostrarToast("info", "🔄 Fase reiniciada.");
   }
-
-  const stepsBase = [
-    {
-      target: ".tour-topo",
-      content:
-        "Aqui você volta ao mapa, abre a história ou vê uma dica sobre grafos.",
-      placement: "bottom",
-      disableBeacon: true,
-    },
-    {
-      target: ".tour-etapa",
-      content:
-        "Aqui aparece a etapa atual. Toque para visualizar todas as etapas.",
-      placement: "bottom",
-    },
-    {
-      target: ".tour-mensagem",
-      content:
-        "Essa mensagem mostra a missão atual e explica o que você precisa fazer.",
-      placement: "bottom",
-    },
-  ];
-
-  const stepsPorEtapa = {
-    1: [
-      {
-        target: ".tour-personagens",
-        content:
-          "Clique nos aventureiros para adicioná-los à rede. Cada pessoa será um vértice.",
-        placement: "bottom",
-      },
-      {
-        target: ".tour-grafo",
-        content:
-          "As linhas representam conexões. Essas linhas são as arestas do grafo.",
-        placement: "top",
-      },
-    ],
-    2: [
-      {
-        target: ".tour-grafo",
-        content:
-          "Para encontrar o infiltrado, siga o caminho de conexões indicado pela rede.",
-        placement: "top",
-      },
-    ],
-    3: [
-      {
-        target: ".tour-atualizar",
-        content:
-          "Atualizar um vértice muda sua informação, mas mantém suas conexões.",
-        placement: "bottom",
-      },
-    ],
-    4: [
-      {
-        target: ".tour-grafo",
-        content:
-          "Remover um vértice também remove todas as arestas ligadas a ele.",
-        placement: "top",
-      },
-    ],
-    5: [
-      {
-        target: ".tour-grafo",
-        content:
-          "Maria era uma ponte importante da rede. Clique nela para removê-la e observe quem perde conexão.",
-        placement: "top",
-      },
-    ],
-    6: [
-      {
-        target: ".tour-grafo",
-        content:
-          "Agora clique no vértice isolado. Um vértice isolado não possui nenhuma aresta ligada a ele.",
-        placement: "top",
-      },
-    ],
-  };
-
-  const steps = [
-    ...stepsBase,
-    ...(stepsPorEtapa[etapa] || []),
-    {
-      target: ".tour-conceito",
-      content:
-        "Grafo é uma estrutura formada por vértices e arestas. Vértices são pontos da rede. Arestas são conexões entre eles.",
-      placement: "top",
-    },
-    {
-      target: ".tour-resetar",
-      content: "Aqui você pode resetar a fase ou ver o tutorial novamente.",
-      placement: "top",
-    },
-  ];
 
   function renderGrafo() {
     const altura = vertices.length <= 3 ? 260 : 390;
@@ -460,25 +446,18 @@ function LabirintoGrafo({ voltar, concluir }) {
 
     return (
       <svg width="100%" height={altura} viewBox="0 0 420 390">
-        {arestas.map(([origem, destino], index) => {
-          const p1 = posicoes[origem];
-          const p2 = posicoes[destino];
-
-          if (!p1 || !p2) return null;
-
-          return (
-            <line
-              key={`${origem}-${destino}-${index}`}
-              x1={p1.x}
-              y1={p1.y}
-              x2={p2.x}
-              y2={p2.y}
-              stroke="#818cf8"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
-          );
-        })}
+        {arestas.map(([origem, destino], i) => (
+          <line
+            key={i}
+            x1={posicoes[origem].x}
+            y1={posicoes[origem].y}
+            x2={posicoes[destino].x}
+            y2={posicoes[destino].y}
+            stroke="#818cf8"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        ))}
 
         {vertices.map((local, index) => {
           const pos = posicoes[local.id];
@@ -489,10 +468,10 @@ function LabirintoGrafo({ voltar, concluir }) {
           const verificar = etapa === 2 && local.id === esperado;
           const visto =
             etapa === 2 && caminhoBusca.slice(0, indiceBusca).includes(local.id);
-          const atualizar = etapa === 3 && local.id === "beth";
+          const atualizar = etapa === 3 && local.id === "gael";
           const selecionado = etapa === 3 && idSelecionado === local.id;
           const atualizado = idAtualizado === local.id;
-          const infectado = idInfectado === local.id;
+          const ponte = idPonte === local.id;
           const isolado = etapa === 6 && idsIsolados.includes(local.id);
           const conectado = etapa === 6 && !idsIsolados.includes(local.id);
 
@@ -514,26 +493,20 @@ function LabirintoGrafo({ voltar, concluir }) {
                     atualizar ||
                     selecionado ||
                     atualizado ||
-                    infectado ||
+                    ponte ||
                     isolado
                       ? "2px solid #ec4899"
                       : "2px solid #818cf8",
                   cursor:
-                    etapa === 2 ||
-                    etapa === 3 ||
-                    etapa === 4 ||
-                    etapa === 5 ||
-                    etapa === 6
-                      ? "pointer"
-                      : "default",
+                    etapa >= 2 && etapa <= 6 ? "pointer" : "default",
                 }}
               >
                 {verificar && <span style={estilos.busca}>VERIFICAR</span>}
                 {visto && <span style={estilos.verificado}>VISTO</span>}
-                {atualizar && <span style={estilos.busca}>MARCAR</span>}
+                {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
                 {selecionado && <span style={estilos.selecionado}>SELEC.</span>}
-                {atualizado && <span style={estilos.atualizado}>INFILTRADO</span>}
-                {infectado && <span style={estilos.infectado}>AFETADA</span>}
+                {atualizado && <span style={estilos.atualizado}>ATUALIZADO</span>}
+                {ponte && <span style={estilos.infectado}>PONTE</span>}
                 {isolado && <span style={estilos.infectado}>ISOLADO</span>}
                 {conectado && <span style={estilos.verificado}>CONECTADO</span>}
 
@@ -551,166 +524,53 @@ function LabirintoGrafo({ voltar, concluir }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <Joyride
+        <TutorialJoyride
           steps={steps}
-          run={runTour}
-          continuous
-          showSkipButton
-          showProgress
-          disableOverlayClose
-          locale={{
-            back: "Voltar",
-            close: "Fechar",
-            last: "Concluir",
-            next: "Próximo",
-            skip: "Pular",
-          }}
-          styles={{
-            options: {
-              zIndex: 3000,
-              primaryColor: "#7c3aed",
-              textColor: "#334155",
-              overlayColor: "rgba(15, 23, 42, 0.65)",
-              backgroundColor: "#ffffff",
-              arrowColor: "#ffffff",
-            },
-            tooltip: {
-              borderRadius: "22px",
-              padding: "18px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.22)",
-              border: "1px solid #e2e8f0",
-            },
-            tooltipContent: {
-              padding: "10px 6px",
-              fontSize: "14px",
-              lineHeight: "1.6",
-              fontWeight: "700",
-            },
-            spotlight: {
-              borderRadius: "18px",
-              boxShadow: "0 0 0 4px rgba(124, 58, 237, 0.25)",
-            },
-            buttonNext: {
-              background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-              borderRadius: "999px",
-              padding: "10px 18px",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonBack: {
-              color: "#64748b",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonSkip: {
-              color: "#ec4899",
-              fontWeight: "900",
-              fontSize: "13px",
-            },
-            buttonClose: {
-              color: "#94a3b8",
-            },
-          }}
-          callback={(data) => {
-            if (data.status === "finished" || data.status === "skipped") {
-              setRunTour(false);
-            }
-          }}
+          runTour={runTour}
+          setRunTour={setRunTour}
         />
 
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          gutter={8}
-          containerStyle={{ top: 70 }}
-          toastOptions={{
-            duration: 1800,
-            style: {
-              borderRadius: "14px",
-              background: "#1e293b",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "13px",
-              maxWidth: "320px",
-              textAlign: "center",
-            },
-          }}
-        />
+        <ToastConfig />
 
-        <header style={estilos.topo} className="tour-topo">
-          <button onClick={voltar} style={estilos.botaoMapa}>
-            <span style={estilos.setaVoltar}>←</span>
-            <span>Mapa</span>
-          </button>
+        <div className="tour-topo">
+          <TopoFase
+            titulo="Rede da Expedição"
+            voltar={voltar}
+            abrirHistoria={() => setMostrarHistoria(true)}
+            abrirDica={() => setMostrarDica(true)}
+          />
+        </div>
 
-          <h1 style={estilos.tituloTopo}>Rede dos Aliados</h1>
-
-          <div style={estilos.iconesTopo}>
-            <button
-              onClick={() => setMostrarHistoria(true)}
-              style={estilos.botaoLivro}
-            >
-              📖
-            </button>
-
-            <button onClick={() => setMostrarDica(true)} style={estilos.botaoLuz}>
-              💡
-            </button>
-          </div>
-        </header>
-
-        <section
-          style={estilos.etapaCard}
-          className="tour-etapa"
-          onClick={() => setMostrarEtapas(!mostrarEtapas)}
-        >
-          <div>
-            <span style={estilos.etapaNumero}>Etapa {etapa} de 7</span>
-            <h2 style={estilos.etapaNome}>{etapas[etapa - 1]}</h2>
-          </div>
-
-          <span style={estilos.setaBaixo}>⌄</span>
-        </section>
+        <div className="tour-etapa">
+          <Etapa
+            etapa={etapa}
+            totalEtapas={7}
+            nomeEtapa={etapas[etapa - 1]}
+            mostrarEtapas={mostrarEtapas}
+            setMostrarEtapas={setMostrarEtapas}
+          />
+        </div>
 
         {mostrarEtapas && (
-          <div style={estilos.listaEtapas}>
-            {etapas.map((nome, index) => (
-              <div
-                key={nome}
-                style={
-                  etapa === index + 1
-                    ? estilos.etapaListaAtiva
-                    : estilos.etapaListaItem
-                }
-              >
-                {index + 1}. {nome}
-              </div>
-            ))}
-          </div>
+          <ListaEtapas etapas={etapas} etapaAtual={etapa} />
         )}
 
-        <p style={estilos.mensagem} className="tour-mensagem">
-          {mensagem}
-        </p>
+        <div className="tour-mensagem">
+          <Mensagem texto={mensagem} />
+        </div>
 
         {etapa === 3 && (
-          <div style={estilos.formAtualizacao} className="tour-atualizar">
-            <input
-              value={novoNome}
-              onChange={(e) => setNovoNome(e.target.value)}
-              placeholder="Novo nome"
-              style={estilos.input}
-            />
-
-            <button onClick={confirmarAtualizacao} style={estilos.botaoAtualizar}>
-              Atualizar
-            </button>
-          </div>
+          <FormAtualizacao
+            valor={novoStatus}
+            setValor={setNovoStatus}
+            confirmar={confirmarAtualizacao}
+            placeholder="Novo status"
+          />
         )}
 
         {disponiveis.length > 0 && (
           <section className="tour-personagens">
-            <h2 style={estilos.subtitulo}>Aliados disponíveis</h2>
+            <h2 style={estilos.subtitulo}>Viajantes disponíveis</h2>
 
             <div style={estilos.personagensGrid}>
               {disponiveis.map((personagem, index) => (
@@ -729,7 +589,7 @@ function LabirintoGrafo({ voltar, concluir }) {
         )}
 
         <section style={estilos.grafoArea} className="tour-grafo">
-          <h2 style={estilos.subtitulo}>Rede de comunicação</h2>
+          <h2 style={estilos.subtitulo}>Grafo da rede</h2>
 
           <div style={estilos.grafoBox}>
             {vertices.length === 0 ? (
@@ -745,7 +605,7 @@ function LabirintoGrafo({ voltar, concluir }) {
             <div>
               <h2 style={estilos.subtituloRemovido}>Remoções</h2>
               <p style={estilos.textoRemocao}>
-                Remover um vértice apaga suas conexões.
+                Remover um vértice apaga suas arestas.
               </p>
             </div>
 
@@ -764,54 +624,42 @@ function LabirintoGrafo({ voltar, concluir }) {
           </section>
         )}
 
-        <section style={estilos.conceito} className="tour-conceito">
-          <span style={estilos.iconeInfo}>i</span>
+        <Conceito
+          texto="Em um grafo, os pontos são vértices e as linhas são arestas."
+          conceito="Vértice isolado: existe, mas não possui conexão."
+        />
 
-          <div>
-            <p>Em um grafo, pessoas são vértices e conexões são arestas.</p>
-            <strong>Vértice isolado: existe, mas não possui conexão.</strong>
-          </div>
-        </section>
-
-        <div style={estilos.rodape} className="tour-resetar">
-          <button onClick={resetar} style={estilos.botaoResetar}>
-            ↻ Resetar
-          </button>
-
-          <button onClick={iniciarTutorial} style={estilos.botaoTutorial}>
-            Ver tutorial
-          </button>
-        </div>
+        <BotoesRodape resetar={resetar} iniciarTutorial={iniciarTutorial} />
 
         {concluido && (
-          <div style={estilos.fundoModal}>
-            <div style={estilos.modal}>
-              <h2 style={estilos.tituloConcluido}>🏆 Grafo concluído!</h2>
-              <p>
-                Você entendeu que um vértice pode continuar existindo no grafo,
-                mesmo sem nenhuma conexão.
-              </p>
-
-              <button onClick={concluir} style={estilos.botaoFechar}>
-                Próxima fase
-              </button>
-            </div>
-          </div>
+          <Modal
+            titulo="🏆 Grafo concluído!"
+            fechar={concluir}
+            textoBotao="Próxima fase"
+          >
+            <p>
+              Você entendeu que um vértice pode continuar existindo no grafo,
+              mesmo sem nenhuma aresta ligada a ele.
+            </p>
+          </Modal>
         )}
 
         {mostrarHistoria && (
           <Modal fechar={fecharHistoria} titulo="📖 História">
-            <p>O Reino MazeData usa uma rede para manter os aliados conectados.</p>
             <p>
-              Cada aliado é um vértice, e cada ligação de comunicação é uma
-              aresta.
+              Depois de sair do Hospital dos Dados, os viajantes precisam se
+              organizar para continuar a jornada.
             </p>
             <p>
-              Existe um infiltrado na rede. Para proteger o grupo, será preciso
-              removê-lo e observar como a rede muda.
+              Para entender as conexões do grupo, eles montam uma rede de
+              comunicação.
+            </p>
+            <p>
+              Cada viajante é um vértice. Cada ligação entre dois viajantes é
+              uma aresta.
             </p>
             <strong>
-              Se um aliado perde todas as conexões, ele vira um vértice isolado.
+              Se um vértice perde todas as arestas, ele fica isolado.
             </strong>
           </Modal>
         )}
@@ -819,36 +667,19 @@ function LabirintoGrafo({ voltar, concluir }) {
         {mostrarDica && (
           <Modal fechar={() => setMostrarDica(false)} titulo="💡 Dica">
             <p>
-              Um <strong>vértice</strong> é uma pessoa, ponto ou elemento da
-              rede.
+              Um <strong>vértice</strong> é um ponto do grafo.
             </p>
             <p>
               Uma <strong>aresta</strong> é uma conexão entre dois vértices.
             </p>
             <p>
-              Ao remover um vértice, todas as arestas ligadas a ele desaparecem.
+              Um <strong>caminho</strong> é uma sequência de vértices conectados.
             </p>
             <p>
-              Um <strong>vértice isolado</strong> continua existindo, mas não
-              possui nenhuma conexão.
+              Um <strong>vértice isolado</strong> não possui nenhuma aresta.
             </p>
           </Modal>
         )}
-      </div>
-    </div>
-  );
-}
-
-function Modal({ titulo, children, fechar }) {
-  return (
-    <div style={estilos.fundoModal}>
-      <div style={estilos.modal}>
-        <h2 style={estilos.tituloModal}>{titulo}</h2>
-        <div style={estilos.modalTexto}>{children}</div>
-
-        <button onClick={fechar} style={estilos.botaoFechar}>
-          Entendi
-        </button>
       </div>
     </div>
   );
@@ -886,165 +717,6 @@ const estilos = {
     boxSizing: "border-box",
     overflowY: "auto",
     overflowX: "hidden",
-  },
-
-  topo: {
-    height: "54px",
-    display: "grid",
-    gridTemplateColumns: "1fr auto 1fr",
-    alignItems: "center",
-    borderBottom: "1px solid #e2e8f0",
-    margin: "0 -10px 8px",
-    padding: "0 14px",
-    boxSizing: "border-box",
-  },
-
-  botaoMapa: {
-    border: "none",
-    background: "transparent",
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "800",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: 0,
-    cursor: "pointer",
-  },
-
-  setaVoltar: {
-    fontSize: "26px",
-    lineHeight: 1,
-    fontWeight: "400",
-  },
-
-  tituloTopo: {
-    margin: 0,
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "900",
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  },
-
-  iconesTopo: {
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "14px",
-  },
-
-  botaoLivro: {
-    border: "none",
-    background: "transparent",
-    fontSize: "23px",
-    cursor: "pointer",
-    padding: 0,
-  },
-
-  botaoLuz: {
-    border: "none",
-    background: "transparent",
-    fontSize: "23px",
-    cursor: "pointer",
-    padding: 0,
-    filter: "drop-shadow(0 0 5px rgba(236,72,153,0.35))",
-  },
-
-  etapaCard: {
-    minHeight: "48px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "6px 12px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "6px",
-    boxShadow: "0 4px 10px rgba(15,23,42,0.04)",
-    cursor: "pointer",
-  },
-
-  etapaNumero: {
-    color: "#64748b",
-    fontSize: "11px",
-    fontWeight: "700",
-  },
-
-  etapaNome: {
-    margin: "1px 0 0",
-    color: "#1e293b",
-    fontSize: "18px",
-    fontWeight: "900",
-  },
-
-  setaBaixo: {
-    fontSize: "22px",
-    color: "#1e293b",
-    fontWeight: "900",
-  },
-
-  listaEtapas: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "14px",
-    padding: "5px",
-    marginBottom: "6px",
-    background: "white",
-  },
-
-  etapaListaItem: {
-    padding: "5px 8px",
-    fontSize: "11px",
-    color: "#64748b",
-    fontWeight: "700",
-  },
-
-  etapaListaAtiva: {
-    padding: "5px 8px",
-    fontSize: "11px",
-    color: "#7c3aed",
-    fontWeight: "900",
-    background: "#ede9fe",
-    borderRadius: "10px",
-  },
-
-  mensagem: {
-    margin: "0 0 6px",
-    padding: "8px",
-    borderRadius: "14px",
-    background: "#f1f5f9",
-    color: "#475569",
-    textAlign: "center",
-    fontSize: "11px",
-    fontWeight: "700",
-  },
-
-  formAtualizacao: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "8px",
-    alignItems: "center",
-  },
-
-  input: {
-    flex: 1,
-    height: "36px",
-    borderRadius: "12px",
-    border: "1px solid #cbd5e1",
-    padding: "0 10px",
-    fontSize: "12px",
-    minWidth: 0,
-  },
-
-  botaoAtualizar: {
-    width: "110px",
-    height: "36px",
-    border: "none",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-    color: "white",
-    fontWeight: "900",
-    fontSize: "12px",
-    cursor: "pointer",
   },
 
   subtitulo: {
@@ -1125,10 +797,11 @@ const estilos = {
   },
 
   papelVertice: {
-    fontSize: "6.5px",
-    color: "#64748b",
-    fontWeight: "800",
-    marginTop: "1px",
+  fontSize: "8px",
+  color: "#64748b",
+  fontWeight: "800",
+  marginTop: "2px",
+  marginBottom: "15px",
   },
 
   busca: {
@@ -1212,129 +885,6 @@ const estilos = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-  },
-
-  conceito: {
-    marginTop: "6px",
-    background: "#f8fafc",
-    borderRadius: "14px",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    gap: "6px",
-    color: "#475569",
-    fontSize: "10px",
-    fontWeight: "700",
-  },
-
-  iconeInfo: {
-    width: "28px",
-    height: "28px",
-    borderRadius: "50%",
-    background: "#ede9fe",
-    color: "#7c3aed",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "900",
-    fontSize: "15px",
-  },
-
-  rodape: {
-    position: "fixed",
-    left: "50%",
-    bottom: "10px",
-    transform: "translateX(-50%)",
-    width: "calc(100% - 20px)",
-    maxWidth: "410px",
-    padding: "8px",
-    background: "rgba(255,255,255,0.95)",
-    border: "1px solid #e2e8f0",
-    borderRadius: "18px",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "8px",
-    zIndex: 40,
-    boxShadow: "0 10px 30px rgba(15,23,42,0.12)",
-  },
-
-  botaoResetar: {
-    width: "100%",
-    height: "34px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "999px",
-    background: "white",
-    color: "#7c3aed",
-    fontSize: "12px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  botaoTutorial: {
-    width: "100%",
-    height: "34px",
-    border: "none",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-    color: "white",
-    fontSize: "12px",
-    fontWeight: "900",
-    cursor: "pointer",
-  },
-
-  fundoModal: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15,23,42,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 50,
-  },
-
-  modal: {
-    width: "86%",
-    maxWidth: "340px",
-    background: "white",
-    borderRadius: "22px",
-    padding: "22px",
-    textAlign: "center",
-    color: "#475569",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
-  },
-
-  tituloModal: {
-    color: "#7c3aed",
-    fontSize: "24px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  tituloConcluido: {
-    color: "#7c3aed",
-    fontSize: "26px",
-    fontWeight: "900",
-    marginBottom: "12px",
-  },
-
-  modalTexto: {
-    fontSize: "14px",
-    lineHeight: "1.6",
-  },
-
-  botaoFechar: {
-    width: "100%",
-    height: "42px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#7c3aed",
-    color: "white",
-    fontWeight: "900",
-    marginTop: "14px",
-    cursor: "pointer",
   },
 
   vazio: {
