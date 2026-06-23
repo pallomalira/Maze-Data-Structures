@@ -355,12 +355,11 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
 
     mostrarToast("success", `${nomeGael} foi removido da rede.`);
     setMensagem(
-  `${nomeGael} saiu da rede e suas arestas desapareceram.\n\n` +
-    `${nomeTheo} recebeu a missão de levar uma mensagem urgente ao Reino Central.\n\n` +
-    `Antes de partir, ele avisou que ${nomeLuna} ficará sem sua única conexão na rede.\n\n` +
-    `Para cumprir essa tarefa, ele precisará deixar o grupo temporariamente.\n\n` +
+    `${nomeGael} saiu da rede e suas arestas desapareceram.\n\n` +
+    `${nomeTheo} recebeu a missão de levar uma mensagem urgente ao Reino Central e precisará deixar a expedição temporariamente.\n\n` +
+    `Durante esse período, ${nomeLuna} ficará sem sua única conexão na rede.\n\n` +
     `Remova ${nomeTheo} da rede.`
-);
+    );
   }
 
   function removerTheo(index) {
