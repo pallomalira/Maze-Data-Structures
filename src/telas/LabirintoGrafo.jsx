@@ -51,7 +51,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
     "Buscar caminho",
     "Atualizar vértice",
     "Remover vértice",
-    "Remover ponte",
+    "Remover ligação",
     "Vértice isolado",
     "Conclusão",
   ];
@@ -135,7 +135,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
     5: [
       {
         target: ".tour-grafo",
-        content: `${nomeTheo} é uma ponte da rede. Remova esse vértice e observe quem fica isolado.`,
+        content: `${nomeTheo} recebeu a missão de levar uma mensagem ao Reino Central. Remova esse vértice e observe quem fica isolado.`,
         placement: "top",
       },
     ],
@@ -203,7 +203,9 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
     listaVertices = vertices,
     listaArestas = arestas
   ) {
-    return listaVertices.filter((vertice) => !estaConectado(vertice.id, listaArestas));
+    return listaVertices.filter(
+      (vertice) => !estaConectado(vertice.id, listaArestas)
+    );
   }
 
   function adicionarPersonagem(index) {
@@ -257,7 +259,10 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
       setMensagem(
         `${nomeGael} foi encontrado. Agora atualize a função desse vértice.`
       );
-      mostrarToast("success", `${nomeGael} encontrado! Clique nele para selecionar.`);
+      mostrarToast(
+        "success",
+        `${nomeGael} encontrado! Clique nele para selecionar.`
+      );
       return;
     }
 
@@ -311,7 +316,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
 
     mostrarToast("success", `Função de ${nomeGael} atualizada.`);
     setMensagem(
-      `Agora remova o vértice ${nomeGael}. Ao remover um vértice, todas as arestas ligadas a ele também desaparecem.`
+      `${nomeGael} recebeu uma nova função na expedição. Agora ele seguirá por outro caminho. Remova o vértice ${nomeGael} e observe que as arestas ligadas a ele também desaparecem.`
     );
   }
 
@@ -350,8 +355,12 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
 
     mostrarToast("success", `${nomeGael} foi removido da rede.`);
     setMensagem(
-      `${nomeGael} saiu da rede e suas arestas desapareceram. Agora remova ${nomeTheo}, que funciona como uma ponte entre partes da rede.`
-    );
+  `${nomeGael} saiu da rede e suas arestas desapareceram.\n\n` +
+    `${nomeTheo} recebeu a missão de levar uma mensagem urgente ao Reino Central.\n\n` +
+    `Antes de partir, ele avisou que ${nomeLuna} ficará sem sua única conexão na rede.\n\n` +
+    `Para cumprir essa tarefa, ele precisará deixar o grupo temporariamente.\n\n` +
+    `Remova ${nomeTheo} da rede.`
+);
   }
 
   function removerTheo(index) {
@@ -360,9 +369,9 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
     const vertice = vertices[index];
 
     if (vertice.id !== "theo") {
-      mostrarToast("error", `Remova ${nomeTheo}, a ponte da rede.`);
+      mostrarToast("error", `Remova ${nomeTheo}.`);
       setMensagem(
-        `Clique em ${nomeTheo}. Esse vértice conecta ${nomeLuna} ao restante da rede.`
+        `Clique em ${nomeTheo}. Depois da saída de ${nomeGael}, ele é a única conexão que ainda resta para ${nomeLuna}.`
       );
       return;
     }
@@ -377,8 +386,9 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
 
     if (isolados.length > 0) {
       setMensagem(
-        `${nomeTheo} foi removido. Agora descubra qual vértice ficou isolado, ou seja, sem nenhuma aresta ligada a ele.`
-      );
+      `${nomeTheo} deixou a rede para levar a mensagem ao Reino Central.\n\n` +
+        `Agora descubra qual viajante perdeu sua última conexão e ficou sem nenhuma aresta ligada.`
+    );
     } else {
       setMensagem(`${nomeTheo} foi removido. Nenhum vértice ficou isolado.`);
     }
@@ -396,9 +406,14 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
     if (idsIsolados.includes(vertice.id)) {
       setEtapa(7);
       setConcluido(true);
-      setMensagem(
-        `${vertice.nome} ficou isolado porque não possui nenhuma aresta ligada a ele.`
+
+     setMensagem(
+        `${vertice.nome} ficou isolada.\n\n` +
+          `Depois que ${nomeGael} deixou a rede, ${nomeLuna} permaneceu conectada apenas a ${nomeTheo}.\n\n` +
+          `Quando ${nomeTheo} saiu para levar a mensagem ao Reino Central, essa última conexão desapareceu.\n\n` +
+          `Por isso, ${nomeLuna} ficou sem nenhuma aresta ligada a ela, tornando-se um vértice isolado.`
       );
+
       mostrarToast("success", "Correto! Esse vértice ficou isolado.");
       return;
     }
@@ -471,7 +486,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
             etapa === 3 && local.id === "gael" && idSelecionado !== local.id;
           const selecionado = etapa === 3 && idSelecionado === local.id;
           const atualizado = idAtualizado === local.id;
-          const ponte = idPonte === local.id;
+          const ligacao = idPonte === local.id;
           const isolado = etapa === 6 && idsIsolados.includes(local.id);
           const conectado = etapa === 6 && !idsIsolados.includes(local.id);
 
@@ -493,7 +508,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
                     atualizar ||
                     selecionado ||
                     atualizado ||
-                    ponte ||
+                    ligacao ||
                     isolado
                       ? "2px solid #ec4899"
                       : "2px solid #818cf8",
@@ -505,7 +520,7 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
                 {atualizar && <span style={estilos.busca}>ATUALIZAR</span>}
                 {selecionado && <span style={estilos.selecionado}>SELEC.</span>}
                 {atualizado && <span style={estilos.atualizado}>ATUALIZADO</span>}
-                {ponte && <span style={estilos.infectado}>PONTE</span>}
+                {ligacao && <span style={estilos.infectado}>LIGAÇÃO</span>}
                 {isolado && <span style={estilos.infectado}>ISOLADO</span>}
                 {conectado && <span style={estilos.verificado}>CONECTADO</span>}
 
@@ -523,7 +538,12 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
   return (
     <div style={estilos.pagina}>
       <div style={estilos.container}>
-        <TutorialJoyride steps={steps} runTour={runTour} setRunTour={setRunTour} />
+        <TutorialJoyride
+          steps={steps}
+          runTour={runTour}
+          setRunTour={setRunTour}
+        />
+
         <ToastConfig />
 
         <div className="tour-topo">
@@ -624,7 +644,11 @@ function LabirintoGrafo({ voltar, concluir, nomesViajantes }) {
         <BotoesRodape resetar={resetar} iniciarTutorial={iniciarTutorial} />
 
         {concluido && (
-          <Modal titulo="🏆 Grafo concluído!" fechar={concluir} textoBotao="Próxima fase">
+          <Modal
+            titulo="🏆 Grafo concluído!"
+            fechar={concluir}
+            textoBotao="Próxima fase"
+          >
             <p>
               Você entendeu que um vértice pode continuar existindo no grafo,
               mesmo sem nenhuma aresta ligada a ele.
