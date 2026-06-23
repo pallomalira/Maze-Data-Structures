@@ -15,10 +15,10 @@ import toast from "react-hot-toast";
 
 function LabirintoLista({ voltar, concluir }) {
   const portaisIniciais = [
-    { nome: "Portal Lua", icone: "🌙" },
-    { nome: "Portal Fogo", icone: "🔥" },
-    { nome: "Portal Água", icone: "💧" },
-    { nome: "Portal Raio", icone: "⚡" },
+    { id: "lua", nome: "Portal Lua", icone: "🌙" },
+    { id: "fogo", nome: "Portal Fogo", icone: "🔥" },
+    { id: "agua", nome: "Portal Água", icone: "💧" },
+    { id: "raio", nome: "Portal Raio", icone: "⚡" },
   ];
 
   const etapas = [
@@ -38,7 +38,7 @@ function LabirintoLista({ voltar, concluir }) {
   const [indiceBusca, setIndiceBusca] = useState(0);
   const [novoNome, setNovoNome] = useState("");
   const [indiceSelecionado, setIndiceSelecionado] = useState(null);
-  const [indiceAtualizado, setIndiceAtualizado] = useState(null);
+  const [idAtualizado, setIdAtualizado] = useState(null);
   const [indiceRespostaDesafio, setIndiceRespostaDesafio] = useState(null);
 
   const [mostrarHistoria, setMostrarHistoria] = useState(true);
@@ -274,7 +274,7 @@ function LabirintoLista({ voltar, concluir }) {
     );
 
     setLista(novaLista);
-    setIndiceAtualizado(indiceSelecionado);
+    setIdAtualizado(lista[indiceSelecionado].id);
     setNovoNome("");
     setIndiceSelecionado(null);
     setEtapa(4);
@@ -289,7 +289,7 @@ function LabirintoLista({ voltar, concluir }) {
   function removerPortal(index) {
     if (etapa !== 4) return;
 
-    if (index !== indiceAtualizado) {
+    if (lista[index].id !== idAtualizado) {
       mostrarToast("error", "Remova o portal que foi atualizado.");
       setMensagem("Clique no portal atualizado para removê-lo da rota.");
       return;
@@ -300,6 +300,7 @@ function LabirintoLista({ voltar, concluir }) {
     const resposta = index === 0 ? 0 : index - 1;
 
     setRemovidos([...removidos, removido]);
+    setIdAtualizado(null)
     setLista(novaLista);
     setIndiceRespostaDesafio(resposta);
     setEtapa(5);
@@ -347,7 +348,7 @@ function LabirintoLista({ voltar, concluir }) {
     setConcluido(false);
     setNovoNome("");
     setIndiceSelecionado(null);
-    setIndiceAtualizado(null);
+    setIdAtualizado(null);
     setIndiceRespostaDesafio(null);
     setMensagem("Monte a rota dos viajantes adicionando os portais ao final da lista.");
     mostrarToast("info", "🔄 Fase reiniciada.");
@@ -447,7 +448,7 @@ function LabirintoLista({ voltar, concluir }) {
                         etapa,
                         indiceBusca,
                         indiceSelecionado,
-                        indiceAtualizado,
+                        idAtualizado,
                         lista.length
                       ),
                     }}
@@ -464,7 +465,7 @@ function LabirintoLista({ voltar, concluir }) {
                           <span style={estilos.verificado}>VISTO</span>
                         )}
 
-                        {etapa === 3 && portal.nome === "Portal Água" && (
+                        {etapa === 3 &&  portal.id === "agua" &&  posicao !== indiceSelecionado && (
                           <span style={estilos.busca}>ATUALIZAR</span>
                         )}
 
@@ -472,7 +473,7 @@ function LabirintoLista({ voltar, concluir }) {
                           <span style={estilos.selecionado}>SELECIONADO</span>
                         )}
 
-                        {etapa >= 4 && posicao === indiceAtualizado && (
+                        {etapa >= 4 && portal.id === idAtualizado && (
                           <span style={estilos.atualizado}>ATUALIZADO</span>
                         )}
 
@@ -576,20 +577,32 @@ function LabirintoLista({ voltar, concluir }) {
 }
 
 function definirBordaLista(
-  nome,
+  portal,
   index,
   etapa,
   indiceBusca,
   indiceSelecionado,
-  indiceAtualizado,
+  idAtualizado,
   tamanhoLista
 ) {
   if (etapa === 2 && index === indiceBusca) return "2px solid #ec4899";
+
   if (etapa === 3 && index === indiceSelecionado) return "2px solid #22c55e";
-  if (etapa === 3 && nome === "Portal Água") return "2px solid #ec4899";
-  if (etapa >= 4 && index === indiceAtualizado) return "2px solid #22c55e";
-  if (etapa === 5 && index === 0 && tamanhoLista > 0) return "2px solid #ec4899";
+
+  if (
+    etapa === 3 &&
+    portal?.id === "agua" &&
+    index !== indiceSelecionado
+  ) {
+    return "2px solid #ec4899";
+  }
+
+  if (etapa >= 4 && portal?.id === idAtualizado) {
+    return "2px solid #22c55e";
+  }
+
   if (index === 0 && tamanhoLista > 0) return "2px solid #ec4899";
+
   return "2px dashed #cbd5e1";
 }
 

@@ -13,7 +13,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
-function LabirintoFila({ voltar, concluir }) {
+function LabirintoFila({ voltar, concluir, nomesViajantes, setNomesViajantes,  }) {
   const personagensIniciais = [
     { id: 1, nome: "Luna", icone: "🧭" },
     { id: 2, nome: "Theo", icone: "🗺️" },
@@ -235,9 +235,10 @@ function LabirintoFila({ voltar, concluir }) {
     if (fila[index].nome === "Theo") {
       setEtapa(3);
       setMensagem(
-        "Theo foi encontrado. Ele percebeu que seu nome foi registrado incorretamente e pediu a correção para evitar problemas durante a jornada.\n" +
-          "Atualize o nome dele para registrar a correção."
-      );
+      "Theo foi encontrado.\n\n" +
+        "Ele disse que não poderá continuar a missão. Você foi escolhido para assumir a vaga dele.\n\n" +
+        "Atualize o cadastro substituindo Theo pelo seu nome."
+    );
 
       mostrarToast(
         "success",
@@ -261,8 +262,8 @@ function LabirintoFila({ voltar, concluir }) {
     }
 
     setIndiceSelecionado(index);
-    setMensagem("Digite a correção e clique em Atualizar.");
-    mostrarToast("success", "Theo selecionado.");
+    setMensagem("Digite seu nome para assumir a vaga de Theo na jornada.");
+    mostrarToast("success", "Theo selecionado. Agora digite seu nome.");
   }
 
   function confirmarAtualizacao() {
@@ -287,6 +288,12 @@ function LabirintoFila({ voltar, concluir }) {
         : pessoa
     );
 
+    if (pessoaSelecionada.id === 2 && setNomesViajantes) {
+      setNomesViajantes((anterior) => ({
+        ...anterior,
+        theo: nomeNovo,
+      }));
+    }
     setFila(novaFila);
     setIdAtualizado(pessoaSelecionada.id);
     setNovoNome("");
@@ -411,7 +418,7 @@ function LabirintoFila({ voltar, concluir }) {
             valor={novoNome}
             setValor={setNovoNome}
             confirmar={confirmarAtualizacao}
-            placeholder="Novo nome"
+            placeholder="Digite seu nome"
          />
         )}
 

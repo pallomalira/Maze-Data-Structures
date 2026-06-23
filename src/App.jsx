@@ -47,6 +47,13 @@ function App() {
   const [mostrarHistoriaMapa, setMostrarHistoriaMapa] = useState(false);
   const [jogoEmAndamento, setJogoEmAndamento] = useState(false);
 
+  const [nomesViajantes, setNomesViajantes] = useState({
+  luna: "Luna",
+  theo: "Theo",
+  maya: "Maya",
+  gael: "Gael",
+  sofia: "Sofia",
+  });
   function voltarAoMenu() {
     setJogoEmAndamento(true);
     setTela(TELAS.MENU);
@@ -59,6 +66,9 @@ function App() {
     setMostrarHistoriaMapa(false);
     setJogoEmAndamento(false);
     setTela(TELAS.CRIAR);
+    setNomesViajantes({
+    theo: "Theo",
+  });
   }
 
   function continuarJogo() {
@@ -148,6 +158,8 @@ function App() {
       <LabirintoFila
         voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(1)}
+        nomesViajantes={nomesViajantes}
+        setNomesViajantes={setNomesViajantes}
       />
     );
   }
@@ -187,6 +199,7 @@ function App() {
         voltar={() => setTela(TELAS.MAPA)}
         concluir={() => concluirFase(5)}
         nomeJogador={nomeJogador}
+        nomesViajantes={nomesViajantes}
       />
     );
   }
