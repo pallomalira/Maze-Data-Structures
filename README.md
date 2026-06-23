@@ -1,4 +1,4 @@
-# 🧩 MazeData
+# 🧩 Maze Data Structures
 
 MazeData é um jogo educacional desenvolvido em React com o objetivo de ensinar Estruturas de Dados de forma prática, visual e interativa.
 
