@@ -27,14 +27,14 @@ function MapaFases({
   const totalFases = 5;
   const finalLiberada = pecas.length >= totalFases || fasesLiberadas >= 6;
 
-  const fases = [
-    { n: 1, nome: "Fila", subtitulo: "Mercado", icone: "🏪", x: 82, y: 70, onClick: abrirFila },
-    { n: 2, nome: "Pilha", subtitulo: "Mochila", icone: "🎒", x: 318, y: 94, onClick: abrirPilha },
-    { n: 3, nome: "Lista", subtitulo: "Portais", icone: "🚪", x: 82, y: 245, onClick: abrirLista },
-    { n: 4, nome: "Árvore", subtitulo: "Hospital", icone: "🏥", x: 318, y: 270, onClick: abrirArvore },
-    { n: 5, nome: "Grafo", subtitulo: "Rede", icone: "🕸️", x: 82, y: 430, onClick: abrirGrafo },
-    { n: 6, nome: "Núcleo", subtitulo: "Final", icone: "💎", x: 318, y: 458, onClick: () => setFinalAberto(true) },
-  ];
+ const fases = [
+  { n: 1, nome: "Fila", subtitulo: "Queue", icone: "🏪", x: 82, y: 70, onClick: abrirFila },
+  { n: 2, nome: "Pilha", subtitulo: "Stack", icone: "🎒", x: 318, y: 94, onClick: abrirPilha },
+  { n: 3, nome: "Lista", subtitulo: "Linked List", icone: "🚪", x: 82, y: 245, onClick: abrirLista },
+  { n: 4, nome: "Árvore", subtitulo: "Binary Search Tree (BST)", icone: "🏥", x: 318, y: 270, onClick: abrirArvore },
+  { n: 5, nome: "Grafo", subtitulo: "Graph", icone: "🕸️", x: 82, y: 430, onClick: abrirGrafo },
+  { n: 6, nome: "Núcleo", subtitulo: "Final ", icone: "💎", x: 318, y: 458, onClick: () => setFinalAberto(true) },
+];
 
   const caminhoMapa = `
     M 82 70
